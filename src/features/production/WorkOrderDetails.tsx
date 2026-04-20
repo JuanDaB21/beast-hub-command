@@ -92,46 +92,59 @@ export function WorkOrderDetails({ wo, onClose }: Props) {
         <StatusBadge tone={workOrderTone(wo.status)} label={workOrderLabel(wo.status)} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <p className="text-xs text-muted-foreground">Fecha objetivo</p>
-          <p>{wo.target_date ?? "—"}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Total unidades</p>
-          <p className="tabular-nums">{totalUnits}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Iniciado</p>
-          <p>{wo.started_at ? new Date(wo.started_at).toLocaleString() : "—"}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Completado</p>
-          <p>{wo.completed_at ? new Date(wo.completed_at).toLocaleString() : "—"}</p>
-        </div>
-      </div>
+      <Tabs defaultValue="resumen" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="resumen">Resumen</TabsTrigger>
+          <TabsTrigger value="dtf">Archivo DTF</TabsTrigger>
+        </TabsList>
 
-      {wo.notes && (
-        <div className="rounded-md bg-muted/30 p-3 text-sm">
-          <p className="text-xs text-muted-foreground mb-1">Notas</p>
-          <p>{wo.notes}</p>
-        </div>
-      )}
+        <TabsContent value="resumen" className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">Fecha objetivo</p>
+              <p>{wo.target_date ?? "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Total unidades</p>
+              <p className="tabular-nums">{totalUnits}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Iniciado</p>
+              <p>{wo.started_at ? new Date(wo.started_at).toLocaleString() : "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Completado</p>
+              <p>{wo.completed_at ? new Date(wo.completed_at).toLocaleString() : "—"}</p>
+            </div>
+          </div>
 
-      <div className="rounded-md border">
-        <div className="p-3 border-b bg-muted/30 text-sm font-medium">Productos del lote</div>
-        <ul className="divide-y">
-          {wo.items.map((it) => (
-            <li key={it.id} className="flex items-center justify-between p-3 text-sm">
-              <div className="min-w-0">
-                <p className="font-medium truncate">{it.product?.name ?? "—"}</p>
-                <p className="text-xs text-muted-foreground">{it.product?.sku ?? ""}</p>
-              </div>
-              <p className="tabular-nums font-medium">×{it.quantity_to_produce}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
+          {wo.notes && (
+            <div className="rounded-md bg-muted/30 p-3 text-sm">
+              <p className="text-xs text-muted-foreground mb-1">Notas</p>
+              <p>{wo.notes}</p>
+            </div>
+          )}
+
+          <div className="rounded-md border">
+            <div className="p-3 border-b bg-muted/30 text-sm font-medium">Productos del lote</div>
+            <ul className="divide-y">
+              {wo.items.map((it) => (
+                <li key={it.id} className="flex items-center justify-between p-3 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{it.product?.name ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">{it.product?.sku ?? ""}</p>
+                  </div>
+                  <p className="tabular-nums font-medium">×{it.quantity_to_produce}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="dtf">
+          <DtfChecklist wo={wo} />
+        </TabsContent>
+      </Tabs>
 
       {!isClosed && (
         <div className="flex flex-wrap gap-2 pt-2">
