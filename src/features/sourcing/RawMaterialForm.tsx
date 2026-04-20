@@ -3,10 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
+import { Plus, X } from "lucide-react";
 import {
   useCategories,
   useColors,
+  useCreateCategory,
   useCreateRawMaterial,
+  useCreateSubcategory,
   useSizes,
   useSubcategories,
   useSuppliers,
@@ -37,6 +40,42 @@ export function RawMaterialForm({ onSuccess }: Props) {
   const { data: subcategories = [] } = useSubcategories(categoryId);
 
   const create = useCreateRawMaterial();
+  const createCategory = useCreateCategory();
+  const createSubcategory = useCreateSubcategory();
+
+  const [newCategory, setNewCategory] = useState("");
+  const [newSubcategory, setNewSubcategory] = useState("");
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [showNewSubcategory, setShowNewSubcategory] = useState(false);
+
+  const handleCreateCategory = async () => {
+    const name = newCategory.trim();
+    if (!name) return;
+    try {
+      const cat = await createCategory.mutateAsync(name);
+      setCategoryId(cat.id);
+      setSubcategoryId(null);
+      setNewCategory("");
+      setShowNewCategory(false);
+      toast({ title: "Categoría creada", description: cat.name });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleCreateSubcategory = async () => {
+    const name = newSubcategory.trim();
+    if (!name || !categoryId) return;
+    try {
+      const sub = await createSubcategory.mutateAsync({ name, category_id: categoryId });
+      setSubcategoryId(sub.id);
+      setNewSubcategory("");
+      setShowNewSubcategory(false);
+      toast({ title: "Subcategoría creada", description: sub.name });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   const supplierOptions = useMemo(
     () => suppliers.map((s) => ({ value: s.id, label: s.name })),
@@ -125,26 +164,101 @@ export function RawMaterialForm({ onSuccess }: Props) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label>Categoría *</Label>
-          <StandardCombobox
-            options={categoryOptions}
-            value={categoryId}
-            onChange={(v) => {
-              setCategoryId(v);
-              setSubcategoryId(null);
-            }}
-            placeholder="Seleccionar categoría"
-          />
+          <div className="flex items-center justify-between">
+            <Label>Categoría *</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 gap-1 px-2 text-xs"
+              onClick={() => setShowNewCategory((v) => !v)}
+            >
+              {showNewCategory ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+              {showNewCategory ? "Cancelar" : "Nueva"}
+            </Button>
+          </div>
+          {showNewCategory ? (
+            <div className="flex gap-2">
+              <Input
+                autoFocus
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="Nombre de categoría"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateCategory();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleCreateCategory}
+                disabled={createCategory.isPending || !newCategory.trim()}
+              >
+                {createCategory.isPending ? "..." : "Crear"}
+              </Button>
+            </div>
+          ) : (
+            <StandardCombobox
+              options={categoryOptions}
+              value={categoryId}
+              onChange={(v) => {
+                setCategoryId(v);
+                setSubcategoryId(null);
+              }}
+              placeholder="Seleccionar categoría"
+            />
+          )}
         </div>
         <div className="space-y-1.5">
-          <Label>Subcategoría</Label>
-          <StandardCombobox
-            options={subcategoryOptions}
-            value={subcategoryId}
-            onChange={setSubcategoryId}
-            placeholder={categoryId ? "Seleccionar subcategoría" : "Elige categoría primero"}
-            disabled={!categoryId}
-          />
+          <div className="flex items-center justify-between">
+            <Label>Subcategoría</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 gap-1 px-2 text-xs"
+              disabled={!categoryId}
+              onClick={() => setShowNewSubcategory((v) => !v)}
+            >
+              {showNewSubcategory ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+              {showNewSubcategory ? "Cancelar" : "Nueva"}
+            </Button>
+          </div>
+          {showNewSubcategory ? (
+            <div className="flex gap-2">
+              <Input
+                autoFocus
+                value={newSubcategory}
+                onChange={(e) => setNewSubcategory(e.target.value)}
+                placeholder="Nombre de subcategoría"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateSubcategory();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleCreateSubcategory}
+                disabled={createSubcategory.isPending || !newSubcategory.trim() || !categoryId}
+              >
+                {createSubcategory.isPending ? "..." : "Crear"}
+              </Button>
+            </div>
+          ) : (
+            <StandardCombobox
+              options={subcategoryOptions}
+              value={subcategoryId}
+              onChange={setSubcategoryId}
+              placeholder={categoryId ? "Seleccionar subcategoría" : "Elige categoría primero"}
+              disabled={!categoryId}
+            />
+          )}
         </div>
       </div>
 
