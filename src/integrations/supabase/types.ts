@@ -432,6 +432,89 @@ export type Database = {
           },
         ]
       }
+      supply_request_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_available: boolean
+          quantity_confirmed: number
+          quantity_requested: number
+          raw_material_id: string
+          supply_request_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          quantity_confirmed?: number
+          quantity_requested?: number
+          raw_material_id: string
+          supply_request_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          quantity_confirmed?: number
+          quantity_requested?: number
+          raw_material_id?: string
+          supply_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_request_items_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_request_items_supply_request_id_fkey"
+            columns: ["supply_request_id"]
+            isOneToOne: false
+            referencedRelation: "supply_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_requests: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          secure_token: string
+          status: string
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          secure_token?: string
+          status?: string
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          secure_token?: string
+          status?: string
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_requests_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_order_items: {
         Row: {
           created_at: string
