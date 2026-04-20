@@ -331,6 +331,38 @@ export function MaterialGroupCard({ group }: Props) {
           </div>
         </DrawerContent>
       </Drawer>
+
+      <EditRawMaterialDialog
+        material={editVariant}
+        open={!!editVariant}
+        onOpenChange={(o) => !o && setEditVariant(null)}
+      />
+
+      <AlertDialog
+        open={!!deleteVariant}
+        onOpenChange={(o) => !o && setDeleteVariant(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta variante?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará <span className="font-medium">{deleteVariant?.name}</span>.
+              Esta acción no se puede deshacer. Si la variante está usada en
+              recetas o solicitudes, la eliminación fallará.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteMut.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMut.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
