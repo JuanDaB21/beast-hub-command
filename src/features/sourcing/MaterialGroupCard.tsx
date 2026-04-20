@@ -43,65 +43,12 @@ import {
 } from "@/features/sourcing/api";
 import { EditRawMaterialDialog } from "@/features/sourcing/EditRawMaterialDialog";
 import { EditGroupDialog } from "@/features/sourcing/EditGroupDialog";
+import { type MaterialGroup, extractBaseName, groupMaterials } from "@/features/sourcing/groupHelpers";
+
+export { type MaterialGroup, extractBaseName, groupMaterials };
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
-
-export interface MaterialGroup {
-  key: string;
-  baseName: string;
-  supplier: RawMaterialWithRelations["supplier"];
-  category: RawMaterialWithRelations["category"];
-  subcategory: RawMaterialWithRelations["subcategory"];
-  variants: RawMaterialWithRelations[];
-}
-
-/** Extracts the base name by stripping color & size suffixes from the variant name. */
-export function extractBaseName(m: RawMaterialWithRelations): string {
-  let name = m.name;
-  const stripSuffix = (text: string, suffix?: string | null) => {
-    if (!suffix) return text;
-    const re = new RegExp(`\\s*-\\s*${suffix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "i");
-    return text.replace(re, "");
-  };
-  // Try stripping size first, then color (matches "Base - Color - Size" order)
-  name = stripSuffix(name, m.size?.label);
-  name = stripSuffix(name, m.color?.name);
-  return name.trim();
-}
-
-/** Groups raw materials by supplier + category + base name. */
-export function groupMaterials(materials: RawMaterialWithRelations[]): MaterialGroup[] {
-  const map = new Map<string, MaterialGroup>();
-  materials.forEach((m) => {
-    const baseName = extractBaseName(m);
-    const key = `${m.supplier_id}::${m.category_id}::${baseName.toLowerCase()}`;
-    let g = map.get(key);
-    if (!g) {
-      g = {
-        key,
-        baseName,
-        supplier: m.supplier,
-        category: m.category,
-        subcategory: m.subcategory,
-        variants: [],
-      };
-      map.set(key, g);
-    }
-    g.variants.push(m);
-  });
-
-  // Sort variants inside each group: size.sort_order, then color name
-  map.forEach((g) => {
-    g.variants.sort((a, b) => {
-      const so = (a.size?.sort_order ?? 9999) - (b.size?.sort_order ?? 9999);
-      if (so !== 0) return so;
-      return (a.color?.name ?? "").localeCompare(b.color?.name ?? "");
-    });
-  });
-
-  return Array.from(map.values()).sort((a, b) => a.baseName.localeCompare(b.baseName));
-}
 
 interface Props {
   group: MaterialGroup;
