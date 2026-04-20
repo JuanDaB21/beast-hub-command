@@ -53,15 +53,57 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string | null
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id?: string | null
+          quantity: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           cod_confirmed: boolean
           created_at: string
-          customer_name: string | null
+          customer_name: string
           customer_phone: string
           id: string
           is_cod: boolean
-          order_number: string | null
+          order_number: string
           source: Database["public"]["Enums"]["order_source"]
           status: Database["public"]["Enums"]["order_status"]
           total: number
@@ -70,11 +112,11 @@ export type Database = {
         Insert: {
           cod_confirmed?: boolean
           created_at?: string
-          customer_name?: string | null
+          customer_name: string
           customer_phone: string
           id?: string
           is_cod?: boolean
-          order_number?: string | null
+          order_number: string
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
@@ -83,11 +125,11 @@ export type Database = {
         Update: {
           cod_confirmed?: boolean
           created_at?: string
-          customer_name?: string | null
+          customer_name?: string
           customer_phone?: string
           id?: string
           is_cod?: boolean
-          order_number?: string | null
+          order_number?: string
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
