@@ -112,7 +112,10 @@ export function MaterialGroupCard({ group }: Props) {
   const [detailVariant, setDetailVariant] = useState<RawMaterialWithRelations | null>(null);
   const [editVariant, setEditVariant] = useState<RawMaterialWithRelations | null>(null);
   const [deleteVariant, setDeleteVariant] = useState<RawMaterialWithRelations | null>(null);
+  const [editGroupOpen, setEditGroupOpen] = useState(false);
+  const [deleteGroupOpen, setDeleteGroupOpen] = useState(false);
   const deleteMut = useDeleteRawMaterial();
+  const deleteGroupMut = useDeleteRawMaterialsGroup();
 
   const handleDelete = async () => {
     if (!deleteVariant) return;
@@ -122,6 +125,16 @@ export function MaterialGroupCard({ group }: Props) {
       setDeleteVariant(null);
     } catch (err: any) {
       toast.error(err?.message ?? "No se pudo eliminar (puede estar en uso)");
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    try {
+      await deleteGroupMut.mutateAsync(group.variants.map((v) => v.id));
+      toast.success(`Se eliminaron ${group.variants.length} variantes`);
+      setDeleteGroupOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message ?? "No se pudo eliminar el grupo (puede estar en uso)");
     }
   };
 
