@@ -127,7 +127,7 @@ export function useUpdateWorkOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: WorkOrderStatus }) => {
-      const patch: Record<string, unknown> = { status };
+      const patch: { status: WorkOrderStatus; started_at?: string } = { status };
       if (status === "in_progress") patch.started_at = new Date().toISOString();
       const { error } = await supabase.from("work_orders").update(patch).eq("id", id);
       if (error) throw error;
@@ -151,8 +151,13 @@ export function useCompleteWorkOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // @ts-expect-error - RPC tipada después de regen de types
-      const { data, error } = await supabase.rpc("complete_work_order", { _work_order_id: id });
+      const { data, error } = await (supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: { message: string } | null }>)(
+        "complete_work_order",
+        { _work_order_id: id },
+      );
       if (error) throw error;
       return data;
     },
