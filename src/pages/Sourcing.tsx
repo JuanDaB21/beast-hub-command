@@ -18,6 +18,7 @@ import { RawMaterialForm } from "@/features/sourcing/RawMaterialForm";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EntityDetailCard } from "@/components/shared/EntityDetailCard";
+import { MaterialGroupCard, groupMaterials } from "@/features/sourcing/MaterialGroupCard";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
