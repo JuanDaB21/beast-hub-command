@@ -213,3 +213,17 @@ export function useDeleteProductMaterial() {
     onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: QK_BOM(vars.product_id) }),
   });
 }
+
+export function useToggleWorkOrderItemDtf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, is_dtf_added }: { id: string; is_dtf_added: boolean }) => {
+      const { error } = await supabase
+        .from("work_order_items")
+        .update({ is_dtf_added })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_WO }),
+  });
+}
