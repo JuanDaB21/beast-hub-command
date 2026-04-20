@@ -146,20 +146,14 @@ export function RawMaterialForm({ onSuccess }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>Proveedor *</Label>
-          <StandardCombobox
-            options={supplierOptions}
-            value={supplierId}
-            onChange={setSupplierId}
-            placeholder="Seleccionar proveedor"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="rm-name">Nombre del insumo *</Label>
-          <Input id="rm-name" value={name} onChange={(e) => setName(e.target.value)} required />
-        </div>
+      <div className="space-y-1.5">
+        <Label>Proveedor *</Label>
+        <StandardCombobox
+          options={supplierOptions}
+          value={supplierId}
+          onChange={setSupplierId}
+          placeholder="Seleccionar proveedor"
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
