@@ -137,6 +137,45 @@ export type Database = {
         }
         Relationships: []
       }
+      product_materials: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity_required: number
+          raw_material_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity_required?: number
+          raw_material_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity_required?: number
+          raw_material_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_materials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_materials_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean
@@ -393,56 +432,106 @@ export type Database = {
           },
         ]
       }
-      work_orders: {
+      work_order_items: {
         Row: {
-          batch_id: string
-          completed_at: string | null
           created_at: string
           id: string
-          product_id: string | null
-          quantity: number
-          started_at: string | null
-          status: Database["public"]["Enums"]["work_order_status"]
-          updated_at: string
+          product_id: string
+          quantity_to_produce: number
+          work_order_id: string
         }
         Insert: {
-          batch_id: string
-          completed_at?: string | null
           created_at?: string
           id?: string
-          product_id?: string | null
-          quantity?: number
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["work_order_status"]
-          updated_at?: string
+          product_id: string
+          quantity_to_produce: number
+          work_order_id: string
         }
         Update: {
-          batch_id?: string
-          completed_at?: string | null
           created_at?: string
           id?: string
-          product_id?: string | null
-          quantity?: number
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["work_order_status"]
-          updated_at?: string
+          product_id?: string
+          quantity_to_produce?: number
+          work_order_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "work_orders_product_id_fkey"
+            foreignKeyName: "work_order_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "work_order_items_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      work_orders: {
+        Row: {
+          batch_number: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["work_order_status"]
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_number: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_work_order: {
+        Args: { _work_order_id: string }
+        Returns: {
+          batch_number: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["work_order_status"]
+          target_date: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "work_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       alert_issue_type:

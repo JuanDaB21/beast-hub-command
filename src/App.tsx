@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Sourcing from "./pages/Sourcing.tsx";
 import Inventory from "./pages/Inventory.tsx";
 import Orders from "./pages/Orders.tsx";
+import Production from "./pages/Production.tsx";
 import ModulePlaceholder from "./pages/ModulePlaceholder.tsx";
 
 const queryClient = new QueryClient();
@@ -23,7 +24,7 @@ const App = () => (
           <Route path="/sourcing" element={<Sourcing />} />
           <Route path="/inventario" element={<Inventory />} />
           <Route path="/ordenes" element={<Orders />} />
-          <Route path="/produccion" element={<ModulePlaceholder slug="produccion" />} />
+          <Route path="/produccion" element={<Production />} />
           <Route path="/almacen" element={<ModulePlaceholder slug="almacen" />} />
           <Route path="/alertas" element={<ModulePlaceholder slug="alertas" />} />
           <Route path="/cod" element={<ModulePlaceholder slug="cod" />} />
