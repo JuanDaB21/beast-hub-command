@@ -29,6 +29,7 @@ export interface WorkOrderItemRow {
   work_order_id: string;
   product_id: string;
   quantity_to_produce: number;
+  is_dtf_added: boolean;
   product: { id: string; sku: string; name: string } | null;
 }
 
