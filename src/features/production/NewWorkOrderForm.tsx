@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
 import { useProducts } from "@/features/inventory/api";
 import { useCreateWorkOrder } from "./api";
+import { ProductionRequirementsSummary } from "./RequirementsSummary";
+import { Label as UILabel } from "@/components/ui/label";
 import { toast } from "sonner";
 
 interface DraftItem {
@@ -121,6 +123,16 @@ export function NewWorkOrderForm({ onCreated }: Props) {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <UILabel>Componentes necesarios</UILabel>
+        <ProductionRequirementsSummary
+          items={items}
+          productLabels={Object.fromEntries(
+            products.map((p) => [p.id, `${p.sku} · ${p.name}`]),
+          )}
+        />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
