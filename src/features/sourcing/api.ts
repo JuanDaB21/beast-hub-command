@@ -264,3 +264,34 @@ export function useCreateRawMaterialsBatch() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
   });
 }
+
+export type RawMaterialUpdate = Partial<RawMaterialInput>;
+
+export function useUpdateRawMaterial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: RawMaterialUpdate }) => {
+      const { data, error } = await supabase
+        .from("raw_materials")
+        .update(patch)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
+  });
+}
+
+export function useDeleteRawMaterial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("raw_materials").delete().eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
+  });
+}

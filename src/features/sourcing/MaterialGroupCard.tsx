@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import {
   Collapsible,
@@ -21,11 +22,25 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
 import { cn } from "@/lib/utils";
-import type { RawMaterialWithRelations } from "@/features/sourcing/api";
+import {
+  type RawMaterialWithRelations,
+  useDeleteRawMaterial,
+} from "@/features/sourcing/api";
+import { EditRawMaterialDialog } from "@/features/sourcing/EditRawMaterialDialog";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
@@ -93,6 +108,20 @@ interface Props {
 export function MaterialGroupCard({ group }: Props) {
   const [open, setOpen] = useState(false);
   const [detailVariant, setDetailVariant] = useState<RawMaterialWithRelations | null>(null);
+  const [editVariant, setEditVariant] = useState<RawMaterialWithRelations | null>(null);
+  const [deleteVariant, setDeleteVariant] = useState<RawMaterialWithRelations | null>(null);
+  const deleteMut = useDeleteRawMaterial();
+
+  const handleDelete = async () => {
+    if (!deleteVariant) return;
+    try {
+      await deleteMut.mutateAsync(deleteVariant.id);
+      toast.success("Variante eliminada");
+      setDeleteVariant(null);
+    } catch (err: any) {
+      toast.error(err?.message ?? "No se pudo eliminar (puede estar en uso)");
+    }
+  };
 
   const totalStock = useMemo(
     () => group.variants.reduce((s, v) => s + Number(v.stock ?? 0), 0),
@@ -227,13 +256,32 @@ export function MaterialGroupCard({ group }: Props) {
                           />
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setDetailVariant(v)}
-                          >
-                            Ver detalle
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setDetailVariant(v)}
+                            >
+                              Ver
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setEditVariant(v)}
+                              aria-label="Editar"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setDeleteVariant(v)}
+                              aria-label="Eliminar"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -283,6 +331,38 @@ export function MaterialGroupCard({ group }: Props) {
           </div>
         </DrawerContent>
       </Drawer>
+
+      <EditRawMaterialDialog
+        material={editVariant}
+        open={!!editVariant}
+        onOpenChange={(o) => !o && setEditVariant(null)}
+      />
+
+      <AlertDialog
+        open={!!deleteVariant}
+        onOpenChange={(o) => !o && setDeleteVariant(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta variante?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará <span className="font-medium">{deleteVariant?.name}</span>.
+              Esta acción no se puede deshacer. Si la variante está usada en
+              recetas o solicitudes, la eliminación fallará.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteMut.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMut.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
