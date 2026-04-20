@@ -14,6 +14,7 @@ import {
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
 import {
+  useCompleteSupplyRequest,
   useDeleteSupplyRequest,
   useUpdateSupplyRequestStatus,
   type SupplyRequest,

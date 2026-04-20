@@ -111,6 +111,20 @@ export function useUpdateSupplyRequestStatus() {
   });
 }
 
+export function useCompleteSupplyRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("complete_supply_request" as any, { _request_id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK });
+      qc.invalidateQueries({ queryKey: ["raw_materials"] });
+    },
+  });
+}
+
 export function useDeleteSupplyRequest() {
   const qc = useQueryClient();
   return useMutation({
