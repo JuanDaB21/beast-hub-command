@@ -1,51 +1,56 @@
 
 
-## Plan: Agrupar Bases por nombre principal con variantes desplegables
+## Plan: Selector de Base → Color/Talla derivados de variantes
 
 ### Objetivo
-En la pestaña "Bases" de `/sourcing`, agrupar las variantes que comparten la misma "Base padre" (ej. *Camiseta Oversize*) en una sola tarjeta, y mostrar dentro las variantes (color × talla) con su stock individual.
+Eliminar los campos libres de "Talla" y "Color base" en el formulario de productos. En su lugar, al seleccionar la **Base padre**, el sistema mostrará dropdowns de Color y Talla únicamente con las variantes existentes de esa base en `raw_materials`, y enlazará el producto a la **variante específica** (color + talla) para que las alertas de inventario apunten al registro correcto.
 
-### Lógica de agrupación
-Cada `raw_material.name` tiene formato `"<Base> - <Color> - <Talla>"` (segmentos opcionales). Para agrupar:
+### Cambios en `src/features/inventory/ProductForm.tsx`
 
-- Extraer el **nombre base** removiendo del final los segmentos que coincidan con `color.name` y/o `size.label` de esa variante.
-- Si una base no tiene color ni talla, queda como grupo de 1.
-- Clave de grupo: `supplier_id + category_id + nombreBase` (evita mezclar bases homónimas de proveedores distintos).
+**1. Reemplazar los 3 inputs de texto** (`size`, `base_color`, `print_color`) por una sección estructurada:
 
-### Cambios en UI — `src/pages/Sourcing.tsx` (tab "Bases")
+```
+┌─ Base padre [Combobox: nombre base · proveedor] ──────┐
+│  Color base  [Select: solo colores con variantes]     │
+│  Talla       [Select: solo tallas con variantes]      │
+│  Estampado   [Input texto libre]   ← se mantiene      │
+└────────────────────────────────────────────────────────┘
+```
 
-Reemplazar el grid actual de tarjetas planas por una tarjeta por grupo:
+**2. Agrupar `raw_materials` por base padre** (reutilizando la lógica de `MaterialGroupCard.tsx` — extraer `extractBaseName` a un helper compartido en `src/features/sourcing/groupHelpers.ts`):
+- Clave: `supplier_id + category_id + baseName`.
+- Cada grupo expone: `baseName`, lista de `variants`, set de colores únicos, set de tallas únicas.
 
-**Tarjeta de grupo (colapsada por defecto)**
-- Título: nombre base (ej. *Camiseta Oversize*).
-- Subtítulo: proveedor · categoría/subcategoría.
-- Métricas resumidas:
-  - `N variantes`
-  - `Stock total: Σ stock`
-  - Mini-chips de colores únicos (swatches) y tallas únicas presentes.
-  - `StatusBadge` rojo si **alguna** variante tiene `stock <= 0`, verde si todas tienen stock.
-- Click → expande mediante `Collapsible` (ya disponible en `ui/collapsible.tsx`).
+**3. Lógica de selección encadenada**:
+- Al elegir grupo base → poblar Selects de Color y Talla con valores únicos del grupo.
+- Al elegir Color y Talla → resolver la variante exacta:  
+  `variant = group.variants.find(v => v.color_id === selectedColorId && v.size_id === selectedSizeId)`
+- Si la combinación no existe en el grupo, mostrar mensaje *"Esta combinación no está disponible como variante. Créala primero en Bases."* y bloquear submit.
+- `form.base_material_id` apunta a la variante específica resuelta (no al grupo).
 
-**Contenido expandido — tabla compacta de variantes**
-Columnas: Color (swatch + nombre) · Talla · SKU · Precio · **Stock** (con badge verde/rojo) · Acción.
-- Una fila por variante.
-- Acción "Ver detalle" abre el `EntityDetailCard` drawer existente con todos los campos (igual que hoy), reutilizando la misma UI de detalle por variante.
-- Si el grupo tiene una sola variante sin color/talla, se muestra la tabla con esa única fila (consistencia visual).
+**4. Persistencia en `products`**:
+- `base_color` ← `color.name` resuelto (texto, para mostrar en tablas/UI).
+- `size` ← `size.label` resuelto.
+- Los campos siguen guardándose como string en `products` (sin migración de schema).
+- `print_color` se mantiene como input libre.
 
-**Orden interno de variantes**: por `size.sort_order` y luego `color.name`.
+**5. Vínculo BOM (sin cambios de schema)**:
+- `product_materials` se enlaza con la **variante** (`raw_material_id` específico), no con el grupo.
+- Esto garantiza que las alertas de stock bajo, solicitudes a proveedor y consumo en `complete_work_order` apunten al `raw_material` correcto (la variante que comparte color/talla con el producto).
 
-**Buscador / filtro** (mejora ligera): mantener el listado tal cual, sin filtros nuevos en este iter (puede ser siguiente paso).
+**6. Comportamiento al editar**:
+- Al cargar un producto existente, leer `existingBom[0].raw_material_id`, encontrar el grupo padre y prefijar Base/Color/Talla automáticamente.
 
-### Tab "Proveedores"
-Sin cambios — el contador de "bases asociadas" por proveedor sigue contando registros individuales (variantes), que es correcto.
+**7. Nombre automático**: sigue armándose como `<base padre> <talla> <color base> / <estampado>` con los valores resueltos.
 
-### Compatibilidad
-- No se tocan API, esquema ni hooks. Solo es agrupación en cliente sobre el resultado de `useRawMaterials()`.
-- BOM, producción y solicitudes siguen operando sobre cada variante por su `id`.
+### Helper nuevo
+- `src/features/sourcing/groupHelpers.ts` — exporta `extractBaseName(material)` y `groupMaterials(materials)` actualmente locales en `MaterialGroupCard.tsx`. Refactor: importar desde el helper en ambos lugares (no duplicar).
 
-### Archivo a modificar
-- `src/pages/Sourcing.tsx` — refactor del render de la pestaña "Bases" para agrupar por nombre base + render de tabla expandible con `Collapsible`.
+### Archivos a modificar
+- `src/features/inventory/ProductForm.tsx` — rediseño de la sección Base/Color/Talla con selectores encadenados.
+- `src/features/sourcing/MaterialGroupCard.tsx` — importar helpers desde el nuevo módulo.
+- `src/features/sourcing/groupHelpers.ts` — **nuevo**, contiene la lógica de agrupación reutilizable.
 
 ### Resultado
-En lugar de 8 tarjetas sueltas para "Camiseta Oversize" en sus 4 colores × 2 tallas, se ve **1 tarjeta** "Camiseta Oversize · 8 variantes · stock total 120" que al expandir muestra la grilla `Color × Talla` con el stock por celda y badges de bajo stock por variante.
+Crear un producto = 1) elegir "Camiseta Oversize" (base padre), 2) elegir color "Negro" y talla "M" de las opciones disponibles en esa base, 3) escribir estampado. El producto queda enlazado a la variante exacta `Camiseta Oversize - Negro - M`, y cualquier alerta o solicitud automática apunta directamente a ese `raw_material_id`.
 
