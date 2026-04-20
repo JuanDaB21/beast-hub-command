@@ -4,13 +4,13 @@ import type { StatusTone } from "@/components/shared/StatusBadge";
 export function supplyRequestTone(status: SupplyRequestStatus): StatusTone {
   switch (status) {
     case "pending":
-      return "warning";
+      return "yellow";
     case "partial":
-      return "warning";
+      return "yellow";
     case "confirmed":
-      return "success";
+      return "green";
     case "delivered":
-      return "info";
+      return "neutral";
     default:
       return "neutral";
   }
