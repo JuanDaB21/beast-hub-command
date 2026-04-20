@@ -42,7 +42,14 @@ export interface ProductMaterial {
   product_id: string;
   raw_material_id: string;
   quantity_required: number;
-  raw_material?: { id: string; name: string; sku: string | null; stock: number; unit_of_measure: string } | null;
+  raw_material?: {
+    id: string;
+    name: string;
+    sku: string | null;
+    stock: number;
+    unit_of_measure: string;
+    supplier_id?: string | null;
+  } | null;
 }
 
 const QK_WO = ["work_orders"] as const;
@@ -181,7 +188,7 @@ export function useProductMaterials(productId: string | null) {
         .from("product_materials")
         .select(`
           id, product_id, raw_material_id, quantity_required,
-          raw_material:raw_materials ( id, name, sku, stock, unit_of_measure )
+          raw_material:raw_materials ( id, name, sku, stock, unit_of_measure, supplier_id )
         `)
         .eq("product_id", productId!);
       if (error) throw error;
@@ -200,7 +207,7 @@ export function useProductMaterialsBatch(productIds: string[]) {
         .from("product_materials")
         .select(`
           id, product_id, raw_material_id, quantity_required,
-          raw_material:raw_materials ( id, name, sku, stock, unit_of_measure )
+          raw_material:raw_materials ( id, name, sku, stock, unit_of_measure, supplier_id )
         `)
         .in("product_id", productIds);
       if (error) throw error;
