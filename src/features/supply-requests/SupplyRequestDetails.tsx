@@ -34,6 +34,7 @@ function buildPortalUrl(token: string) {
 
 export function SupplyRequestDetails({ request, onClose }: Props) {
   const updateStatus = useUpdateSupplyRequestStatus();
+  const complete = useCompleteSupplyRequest();
   const remove = useDeleteSupplyRequest();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const portalUrl = buildPortalUrl(request.secure_token);
@@ -59,8 +60,16 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
 
   const markDelivered = async () => {
     try {
-      await updateStatus.mutateAsync({ id: request.id, status: "delivered" });
-      toast.success("Solicitud marcada como entregada");
+      await complete.mutateAsync(request.id);
+      const summaryLines = request.items
+        .filter((it) => it.is_available && Number(it.quantity_confirmed) > 0)
+        .map((it) => `+${it.quantity_confirmed} ${it.raw_material?.name ?? ""}`)
+        .join(", ");
+      toast.success("Inventario actualizado", {
+        description: summaryLines
+          ? `Se han sumado: ${summaryLines}`
+          : "Solicitud marcada como entregada",
+      });
     } catch (err) {
       toast.error("Error", { description: (err as Error).message });
     }
@@ -174,8 +183,8 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
 
       <div className="flex flex-wrap gap-2 pt-2">
         {request.status !== "delivered" && (
-          <Button onClick={markDelivered} disabled={updateStatus.isPending}>
-            {updateStatus.isPending ? (
+          <Button onClick={markDelivered} disabled={complete.isPending}>
+            {complete.isPending ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
             ) : (
               <CheckCircle2 className="h-4 w-4 mr-1" />
