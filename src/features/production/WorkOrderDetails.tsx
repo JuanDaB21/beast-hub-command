@@ -11,7 +11,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { DtfChecklist } from "./DtfChecklist";
 import {
   useCompleteWorkOrder,
   useDeleteWorkOrder,
