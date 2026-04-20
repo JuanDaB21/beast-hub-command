@@ -7,7 +7,6 @@ import {
   Warehouse,
   AlertTriangle,
   PhoneCall,
-  BarChart3,
   Settings,
   Send,
   Truck as TruckIcon,
@@ -36,6 +35,5 @@ export const MODULES: ModuleDef[] = [
   { id: 6, slug: "solicitudes", path: "/solicitudes", title: "Solicitudes a Proveedor", short: "Solicitudes", icon: Send },
   { id: 7, slug: "alertas", path: "/alertas", title: "Módulo 7 · Alertas", short: "Alertas", icon: AlertTriangle },
   { id: 8, slug: "cod", path: "/cod", title: "Módulo 8 · COD", short: "COD", icon: PhoneCall },
-  { id: 9, slug: "analitica", path: "/analitica", title: "Módulo 9 · Analítica", short: "Analítica", icon: BarChart3 },
   { id: 10, slug: "config", path: "/config", title: "Configuración", short: "Config", icon: Settings },
 ];
