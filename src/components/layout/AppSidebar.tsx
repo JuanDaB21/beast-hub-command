@@ -12,8 +12,21 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { MODULES } from "@/lib/modules";
+import { MODULES, type ModuleDef } from "@/lib/modules";
 import { Boxes } from "lucide-react";
+
+const bySlug = (slug: string): ModuleDef | undefined =>
+  MODULES.find((m) => m.slug === slug);
+
+const SECTIONS: { label: string | null; slugs: string[] }[] = [
+  { label: null, slugs: ["dashboard"] },
+  {
+    label: "Envíos",
+    slugs: ["inventario", "ordenes", "logistica", "devoluciones", "cod"],
+  },
+  { label: "Lotes y producción", slugs: ["produccion", "solicitudes"] },
+  { label: "General", slugs: ["sourcing", "config", "alertas"] },
+];
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -37,30 +50,43 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Módulos</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {MODULES.map((m) => {
-                const isActive = m.path === "/" ? pathname === "/" : pathname.startsWith(m.path);
-                return (
-                  <SidebarMenuItem key={m.slug}>
-                    <SidebarMenuButton asChild isActive={isActive} tooltip={m.short}>
-                      <NavLink
-                        to={m.path}
-                        end={m.path === "/"}
-                        className="flex items-center gap-2"
-                      >
-                        <m.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span className="truncate">{m.short}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {SECTIONS.map((section, idx) => {
+          const items = section.slugs
+            .map(bySlug)
+            .filter((m): m is ModuleDef => Boolean(m));
+          if (items.length === 0) return null;
+          return (
+            <SidebarGroup key={section.label ?? `group-${idx}`}>
+              {section.label && (
+                <SidebarGroupLabel className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
+                  {section.label}
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {items.map((m) => {
+                    const isActive =
+                      m.path === "/" ? pathname === "/" : pathname.startsWith(m.path);
+                    return (
+                      <SidebarMenuItem key={m.slug}>
+                        <SidebarMenuButton asChild isActive={isActive} tooltip={m.short}>
+                          <NavLink
+                            to={m.path}
+                            end={m.path === "/"}
+                            className="flex items-center gap-2"
+                          >
+                            <m.icon className="h-4 w-4 shrink-0" />
+                            {!collapsed && <span className="truncate">{m.short}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
     </Sidebar>
   );
