@@ -29,6 +29,7 @@ export interface WorkOrderItemRow {
   work_order_id: string;
   product_id: string;
   quantity_to_produce: number;
+  is_dtf_added: boolean;
   product: { id: string; sku: string; name: string } | null;
 }
 
@@ -58,7 +59,7 @@ export function useWorkOrders() {
         .select(`
           *,
           items:work_order_items (
-            id, work_order_id, product_id, quantity_to_produce,
+            id, work_order_id, product_id, quantity_to_produce, is_dtf_added,
             product:products ( id, sku, name )
           )
         `)
@@ -210,5 +211,19 @@ export function useDeleteProductMaterial() {
       if (error) throw error;
     },
     onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: QK_BOM(vars.product_id) }),
+  });
+}
+
+export function useToggleWorkOrderItemDtf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, is_dtf_added }: { id: string; is_dtf_added: boolean }) => {
+      const { error } = await supabase
+        .from("work_order_items")
+        .update({ is_dtf_added })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_WO }),
   });
 }

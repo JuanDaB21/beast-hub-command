@@ -436,6 +436,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_dtf_added: boolean
           product_id: string
           quantity_to_produce: number
           work_order_id: string
@@ -443,6 +444,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_dtf_added?: boolean
           product_id: string
           quantity_to_produce: number
           work_order_id: string
@@ -450,6 +452,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_dtf_added?: boolean
           product_id?: string
           quantity_to_produce?: number
           work_order_id?: string
