@@ -97,7 +97,9 @@ export type Database = {
       }
       orders: {
         Row: {
+          carrier: string | null
           cod_confirmed: boolean
+          cod_received_at: string | null
           created_at: string
           customer_name: string
           customer_phone: string
@@ -105,6 +107,7 @@ export type Database = {
           id: string
           is_cod: boolean
           order_number: string
+          received_by_staff_id: string | null
           shipped_at: string | null
           source: Database["public"]["Enums"]["order_source"]
           status: Database["public"]["Enums"]["order_status"]
@@ -113,7 +116,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          carrier?: string | null
           cod_confirmed?: boolean
+          cod_received_at?: string | null
           created_at?: string
           customer_name: string
           customer_phone: string
@@ -121,6 +126,7 @@ export type Database = {
           id?: string
           is_cod?: boolean
           order_number: string
+          received_by_staff_id?: string | null
           shipped_at?: string | null
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
@@ -129,7 +135,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          carrier?: string | null
           cod_confirmed?: boolean
+          cod_received_at?: string | null
           created_at?: string
           customer_name?: string
           customer_phone?: string
@@ -137,6 +145,7 @@ export type Database = {
           id?: string
           is_cod?: boolean
           order_number?: string
+          received_by_staff_id?: string | null
           shipped_at?: string | null
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
@@ -144,7 +153,15 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_received_by_staff_id_fkey"
+            columns: ["received_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_materials: {
         Row: {
@@ -226,6 +243,33 @@ export type Database = {
           safety_stock?: number
           sku?: string
           stock?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
           updated_at?: string
         }
         Relationships: []

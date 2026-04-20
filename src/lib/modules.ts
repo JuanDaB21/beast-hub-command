@@ -11,6 +11,7 @@ import {
   Send,
   Truck as TruckIcon,
   Undo2,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,6 +35,6 @@ export const MODULES: ModuleDef[] = [
   { id: 12, slug: "devoluciones", path: "/devoluciones", title: "Módulo 7 · Devoluciones (RMA)", short: "Devoluciones", icon: Undo2 },
   { id: 6, slug: "solicitudes", path: "/solicitudes", title: "Solicitudes a Proveedor", short: "Solicitudes", icon: Send },
   { id: 7, slug: "alertas", path: "/alertas", title: "Módulo 7 · Alertas", short: "Alertas", icon: AlertTriangle },
-  { id: 8, slug: "cod", path: "/cod", title: "Módulo 8 · COD", short: "COD", icon: PhoneCall },
-  { id: 10, slug: "config", path: "/config", title: "Configuración", short: "Config", icon: Settings },
+  { id: 8, slug: "cod", path: "/cod", title: "Gestión COD · Recaudo", short: "COD", icon: PhoneCall },
+  { id: 10, slug: "config", path: "/config", title: "Configuración · Staff", short: "Configuración", icon: Users },
 ];

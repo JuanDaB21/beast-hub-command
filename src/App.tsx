@@ -14,6 +14,8 @@ import Returns from "./pages/Returns.tsx";
 import SupplyRequests from "./pages/SupplyRequests.tsx";
 import SupplierPortal from "./pages/SupplierPortal.tsx";
 import ModulePlaceholder from "./pages/ModulePlaceholder.tsx";
+import Cod from "./pages/Cod.tsx";
+import Config from "./pages/Config.tsx";
 
 const queryClient = new QueryClient();
 
@@ -38,9 +40,9 @@ const App = () => (
           <Route path="/solicitudes" element={<SupplyRequests />} />
           <Route path="/almacen" element={<ModulePlaceholder slug="almacen" />} />
           <Route path="/alertas" element={<ModulePlaceholder slug="alertas" />} />
-          <Route path="/cod" element={<ModulePlaceholder slug="cod" />} />
+          <Route path="/cod" element={<Cod />} />
           <Route path="/analitica" element={<Index />} />
-          <Route path="/config" element={<ModulePlaceholder slug="config" />} />
+          <Route path="/config" element={<Config />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
