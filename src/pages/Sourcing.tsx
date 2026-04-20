@@ -148,83 +148,10 @@ export default function Sourcing() {
               hint="Registra tu primera base asociándola a un proveedor."
             />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {materials.map((m) => {
-                const lowStock = m.stock <= 0;
-                return (
-                  <EntityDetailCard
-                    key={m.id}
-                    title={m.name}
-                    subtitle={m.sku ?? undefined}
-                    detailsTitle={m.name}
-                    detailsDescription={m.supplier?.name ?? "Sin proveedor"}
-                    summary={
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {m.category && (
-                            <span className="rounded-md bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
-                              {m.category.name}
-                            </span>
-                          )}
-                          {m.subcategory && (
-                            <span className="rounded-md bg-muted px-2 py-0.5 text-xs">
-                              {m.subcategory.name}
-                            </span>
-                          )}
-                          {m.color && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs">
-                              {m.color.hex_code && (
-                                <span
-                                  className="h-2 w-2 rounded-full border"
-                                  style={{ backgroundColor: m.color.hex_code }}
-                                />
-                              )}
-                              {m.color.name}
-                            </span>
-                          )}
-                          {m.size && (
-                            <span className="rounded-md bg-muted px-2 py-0.5 text-xs">
-                              {m.size.label}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-foreground">
-                            {currency(Number(m.unit_price))}/{m.unit_of_measure}
-                          </span>
-                          <StatusBadge
-                            tone={lowStock ? "red" : "green"}
-                            label={`Stock: ${m.stock}`}
-                          />
-                        </div>
-                      </div>
-                    }
-                    details={
-                      <div className="space-y-3 text-sm">
-                        <DetailRow label="Proveedor" value={m.supplier?.name ?? "—"} />
-                        <DetailRow label="Categoría" value={m.category?.name ?? "—"} />
-                        <DetailRow label="Subcategoría" value={m.subcategory?.name ?? "—"} />
-                        <DetailRow label="Color" value={m.color?.name ?? "—"} />
-                        <DetailRow label="Talla" value={m.size?.label ?? "—"} />
-                        <DetailRow label="SKU" value={m.sku ?? "—"} />
-                        <DetailRow
-                          label="Precio"
-                          value={`${currency(Number(m.unit_price))} / ${m.unit_of_measure}`}
-                        />
-                        <DetailRow label="Stock" value={String(m.stock)} />
-                        {m.supplier?.contact_phone && (
-                          <div className="pt-2">
-                            <WhatsAppContactButton
-                              phone={m.supplier.contact_phone}
-                              message={`Hola ${m.supplier.name}, consulta sobre ${m.name}.`}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    }
-                  />
-                );
-              })}
+            <div className="space-y-3">
+              {groupMaterials(materials).map((g) => (
+                <MaterialGroupCard key={g.key} group={g} />
+              ))}
             </div>
           )}
         </TabsContent>
