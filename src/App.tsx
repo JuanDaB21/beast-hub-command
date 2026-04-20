@@ -9,6 +9,8 @@ import Sourcing from "./pages/Sourcing.tsx";
 import Inventory from "./pages/Inventory.tsx";
 import Orders from "./pages/Orders.tsx";
 import Production from "./pages/Production.tsx";
+import SupplyRequests from "./pages/SupplyRequests.tsx";
+import SupplierPortal from "./pages/SupplierPortal.tsx";
 import ModulePlaceholder from "./pages/ModulePlaceholder.tsx";
 
 const queryClient = new QueryClient();
@@ -20,11 +22,16 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Portal público del proveedor (sin sidebar, sin auth) */}
+          <Route path="/supplier/:token" element={<SupplierPortal />} />
+
+          {/* Admin */}
           <Route path="/" element={<Index />} />
           <Route path="/sourcing" element={<Sourcing />} />
           <Route path="/inventario" element={<Inventory />} />
           <Route path="/ordenes" element={<Orders />} />
           <Route path="/produccion" element={<Production />} />
+          <Route path="/solicitudes" element={<SupplyRequests />} />
           <Route path="/almacen" element={<ModulePlaceholder slug="almacen" />} />
           <Route path="/alertas" element={<ModulePlaceholder slug="alertas" />} />
           <Route path="/cod" element={<ModulePlaceholder slug="cod" />} />
