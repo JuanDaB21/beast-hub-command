@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/card";
@@ -132,14 +132,17 @@ function NewStaffDialog({
       toast.error(parsed.error.errors[0]?.message ?? "Datos inválidos");
       return;
     }
-    create.mutate(parsed.data, {
+    create.mutate(
+      { full_name: parsed.data.full_name, email: parsed.data.email, password: parsed.data.password },
+      {
       onSuccess: () => {
         toast.success("Trabajador creado. Debe verificar su email para iniciar sesión.");
         reset();
         onOpenChange(false);
       },
-      onError: (e: any) => toast.error(e?.message ?? "Error al crear trabajador"),
-    });
+        onError: (e: any) => toast.error(e?.message ?? "Error al crear trabajador"),
+      }
+    );
   };
 
   return (
@@ -230,11 +233,10 @@ function EditStaffDialog({
   const [fullName, setFullName] = useState(staff?.full_name ?? "");
   const [active, setActive] = useState(staff?.active ?? true);
 
-  // Sync state when opening a different staff
-  useState(() => {
+  useEffect(() => {
     setFullName(staff?.full_name ?? "");
     setActive(staff?.active ?? true);
-  });
+  }, [staff]);
 
   if (!staff) return null;
 
