@@ -401,6 +401,36 @@ export function MaterialGroupCard({ group }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EditGroupDialog
+        group={editGroupOpen ? group : null}
+        open={editGroupOpen}
+        onOpenChange={setEditGroupOpen}
+      />
+
+      <AlertDialog open={deleteGroupOpen} onOpenChange={setDeleteGroupOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar la base padre?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán <span className="font-medium">{group.variants.length}</span> variantes
+              de <span className="font-medium">{group.baseName}</span>. Esta acción no se puede
+              deshacer. Si alguna variante está usada en recetas o solicitudes, la operación
+              fallará.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteGroupMut.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteGroup}
+              disabled={deleteGroupMut.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteGroupMut.isPending ? "Eliminando..." : "Eliminar todas"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
