@@ -28,7 +28,7 @@ export const MODULES: ModuleDef[] = [
   { id: 0, slug: "dashboard", path: "/", title: "Dashboard · BI & Finanzas", short: "Dashboard", icon: LayoutDashboard },
   { id: 1, slug: "inventario", path: "/inventario", title: "Módulo 1 · Inventario", short: "Inventario", icon: Package },
   { id: 2, slug: "ordenes", path: "/ordenes", title: "Módulo 2 · Órdenes", short: "Órdenes", icon: ShoppingCart },
-  { id: 3, slug: "sourcing", path: "/sourcing", title: "Módulo 3 · Sourcing", short: "Sourcing", icon: Truck },
+  { id: 3, slug: "sourcing", path: "/sourcing", title: "Módulo 3 · Sourcing", short: "Proveedores e insumos", icon: Truck },
   { id: 4, slug: "produccion", path: "/produccion", title: "Módulo 4 · Producción", short: "Producción", icon: Factory },
   { id: 5, slug: "almacen", path: "/almacen", title: "Módulo 5 · Almacén", short: "Almacén", icon: Warehouse },
   { id: 11, slug: "logistica", path: "/logistica", title: "Módulo 6 · Logística", short: "Logística", icon: TruckIcon },
