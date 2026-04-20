@@ -108,6 +108,20 @@ interface Props {
 export function MaterialGroupCard({ group }: Props) {
   const [open, setOpen] = useState(false);
   const [detailVariant, setDetailVariant] = useState<RawMaterialWithRelations | null>(null);
+  const [editVariant, setEditVariant] = useState<RawMaterialWithRelations | null>(null);
+  const [deleteVariant, setDeleteVariant] = useState<RawMaterialWithRelations | null>(null);
+  const deleteMut = useDeleteRawMaterial();
+
+  const handleDelete = async () => {
+    if (!deleteVariant) return;
+    try {
+      await deleteMut.mutateAsync(deleteVariant.id);
+      toast.success("Variante eliminada");
+      setDeleteVariant(null);
+    } catch (err: any) {
+      toast.error(err?.message ?? "No se pudo eliminar (puede estar en uso)");
+    }
+  };
 
   const totalStock = useMemo(
     () => group.variants.reduce((s, v) => s + Number(v.stock ?? 0), 0),
