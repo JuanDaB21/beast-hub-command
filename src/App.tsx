@@ -39,7 +39,7 @@ const App = () => (
           <Route path="/almacen" element={<ModulePlaceholder slug="almacen" />} />
           <Route path="/alertas" element={<ModulePlaceholder slug="alertas" />} />
           <Route path="/cod" element={<ModulePlaceholder slug="cod" />} />
-          <Route path="/analitica" element={<ModulePlaceholder slug="analitica" />} />
+          <Route path="/analitica" element={<Index />} />
           <Route path="/config" element={<ModulePlaceholder slug="config" />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
