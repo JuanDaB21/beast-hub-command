@@ -101,12 +101,15 @@ export type Database = {
           created_at: string
           customer_name: string
           customer_phone: string
+          delay_reason: string | null
           id: string
           is_cod: boolean
           order_number: string
+          shipped_at: string | null
           source: Database["public"]["Enums"]["order_source"]
           status: Database["public"]["Enums"]["order_status"]
           total: number
+          tracking_number: string | null
           updated_at: string
         }
         Insert: {
@@ -114,12 +117,15 @@ export type Database = {
           created_at?: string
           customer_name: string
           customer_phone: string
+          delay_reason?: string | null
           id?: string
           is_cod?: boolean
           order_number: string
+          shipped_at?: string | null
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
+          tracking_number?: string | null
           updated_at?: string
         }
         Update: {
@@ -127,12 +133,15 @@ export type Database = {
           created_at?: string
           customer_name?: string
           customer_phone?: string
+          delay_reason?: string | null
           id?: string
           is_cod?: boolean
           order_number?: string
+          shipped_at?: string | null
           source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
+          tracking_number?: string | null
           updated_at?: string
         }
         Relationships: []
