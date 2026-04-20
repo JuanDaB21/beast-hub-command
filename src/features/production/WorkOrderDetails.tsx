@@ -14,6 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DtfChecklist } from "./DtfChecklist";
+import { ProductionRequirementsSummary } from "./RequirementsSummary";
 import {
   useCompleteWorkOrder,
   useDeleteWorkOrder,
@@ -93,8 +94,9 @@ export function WorkOrderDetails({ wo, onClose }: Props) {
       </div>
 
       <Tabs defaultValue="resumen" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
+          <TabsTrigger value="componentes">Componentes</TabsTrigger>
           <TabsTrigger value="dtf">Archivo DTF</TabsTrigger>
         </TabsList>
 
@@ -139,6 +141,21 @@ export function WorkOrderDetails({ wo, onClose }: Props) {
               ))}
             </ul>
           </div>
+        </TabsContent>
+
+        <TabsContent value="componentes">
+          <ProductionRequirementsSummary
+            items={wo.items.map((it) => ({
+              product_id: it.product_id,
+              quantity_to_produce: it.quantity_to_produce,
+            }))}
+            productLabels={Object.fromEntries(
+              wo.items.map((it) => [
+                it.product_id,
+                it.product ? `${it.product.sku} · ${it.product.name}` : it.product_id,
+              ]),
+            )}
+          />
         </TabsContent>
 
         <TabsContent value="dtf">

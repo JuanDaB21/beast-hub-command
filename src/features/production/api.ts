@@ -190,6 +190,25 @@ export function useProductMaterials(productId: string | null) {
   });
 }
 
+export function useProductMaterialsBatch(productIds: string[]) {
+  const key = [...productIds].sort().join(",");
+  return useQuery({
+    queryKey: ["product_materials_batch", key],
+    enabled: productIds.length > 0,
+    queryFn: async (): Promise<ProductMaterial[]> => {
+      const { data, error } = await supabase
+        .from("product_materials")
+        .select(`
+          id, product_id, raw_material_id, quantity_required,
+          raw_material:raw_materials ( id, name, sku, stock, unit_of_measure )
+        `)
+        .in("product_id", productIds);
+      if (error) throw error;
+      return (data ?? []) as unknown as ProductMaterial[];
+    },
+  });
+}
+
 export function useUpsertProductMaterial() {
   const qc = useQueryClient();
   return useMutation({
