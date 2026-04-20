@@ -107,14 +107,22 @@ export function RawMaterialForm({ onSuccess }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supplierId || !categoryId || !name.trim() || !unitPrice) {
+    if (!supplierId || !categoryId || !unitPrice) {
       toast({
         title: "Faltan datos",
-        description: "Proveedor, categoría, nombre y precio son obligatorios.",
+        description: "Proveedor, categoría y precio son obligatorios.",
         variant: "destructive",
       });
       return;
     }
+    const category = categories.find((c) => c.id === categoryId);
+    const subcategory = subcategories.find((s) => s.id === subcategoryId);
+    const color = colors.find((c) => c.id === colorId);
+    const size = sizes.find((s) => s.id === sizeId);
+    const generatedName =
+      [category?.name, subcategory?.name, color?.name, size?.label].filter(Boolean).join(" · ") ||
+      category?.name ||
+      "Insumo";
     try {
       await create.mutateAsync({
         supplier_id: supplierId,
@@ -123,12 +131,12 @@ export function RawMaterialForm({ onSuccess }: Props) {
         color_id: colorId,
         size_id: sizeId,
         sku: sku.trim() || null,
-        name: name.trim(),
+        name: generatedName,
         unit_price: Number(unitPrice),
         unit_of_measure: unitOfMeasure || "unit",
         stock: Number(stock) || 0,
       });
-      toast({ title: "Insumo creado" });
+      toast({ title: "Insumo creado", description: generatedName });
       reset();
       onSuccess?.();
     } catch (err: any) {
@@ -146,20 +154,14 @@ export function RawMaterialForm({ onSuccess }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>Proveedor *</Label>
-          <StandardCombobox
-            options={supplierOptions}
-            value={supplierId}
-            onChange={setSupplierId}
-            placeholder="Seleccionar proveedor"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="rm-name">Nombre del insumo *</Label>
-          <Input id="rm-name" value={name} onChange={(e) => setName(e.target.value)} required />
-        </div>
+      <div className="space-y-1.5">
+        <Label>Proveedor *</Label>
+        <StandardCombobox
+          options={supplierOptions}
+          value={supplierId}
+          onChange={setSupplierId}
+          placeholder="Seleccionar proveedor"
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
