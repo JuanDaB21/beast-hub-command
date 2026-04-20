@@ -77,6 +77,41 @@ export function useCategories() {
   });
 }
 
+export function useCreateCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string): Promise<Category> => {
+      const { data, error } = await supabase
+        .from("categories")
+        .insert({ name: name.trim() })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+  });
+}
+
+export function useCreateSubcategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; category_id: string }): Promise<Subcategory> => {
+      const { data, error } = await supabase
+        .from("subcategories")
+        .insert({ name: input.name.trim(), category_id: input.category_id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["subcategories", vars.category_id] });
+      qc.invalidateQueries({ queryKey: ["subcategories", "all"] });
+    },
+  });
+}
+
 export function useSubcategories(categoryId?: string | null) {
   return useQuery({
     queryKey: ["subcategories", categoryId ?? "all"],
