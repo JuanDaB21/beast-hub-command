@@ -735,6 +735,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_supply_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
       complete_work_order: {
         Args: { _work_order_id: string }
         Returns: {
