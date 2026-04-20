@@ -39,8 +39,10 @@ import { cn } from "@/lib/utils";
 import {
   type RawMaterialWithRelations,
   useDeleteRawMaterial,
+  useDeleteRawMaterialsGroup,
 } from "@/features/sourcing/api";
 import { EditRawMaterialDialog } from "@/features/sourcing/EditRawMaterialDialog";
+import { EditGroupDialog } from "@/features/sourcing/EditGroupDialog";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
