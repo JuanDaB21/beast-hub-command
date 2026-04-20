@@ -70,7 +70,7 @@ export function useUpdateStaff() {
       full_name?: string;
       active?: boolean;
     }) => {
-      const patch: Record<string, unknown> = {};
+      const patch: { full_name?: string; active?: boolean } = {};
       if (full_name !== undefined) patch.full_name = full_name;
       if (active !== undefined) patch.active = active;
       const { error } = await supabase.from("profiles").update(patch).eq("id", id);
