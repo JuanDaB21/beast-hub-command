@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import {
   Collapsible,
@@ -21,11 +22,25 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
 import { cn } from "@/lib/utils";
-import type { RawMaterialWithRelations } from "@/features/sourcing/api";
+import {
+  type RawMaterialWithRelations,
+  useDeleteRawMaterial,
+} from "@/features/sourcing/api";
+import { EditRawMaterialDialog } from "@/features/sourcing/EditRawMaterialDialog";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
