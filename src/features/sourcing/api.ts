@@ -235,3 +235,32 @@ export function useCreateRawMaterial() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
   });
 }
+
+export async function findExistingVariantNames(
+  supplierId: string,
+  categoryId: string,
+  names: string[],
+): Promise<Set<string>> {
+  if (names.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from("raw_materials")
+    .select("name")
+    .eq("supplier_id", supplierId)
+    .eq("category_id", categoryId)
+    .in("name", names);
+  if (error) throw error;
+  return new Set((data ?? []).map((r) => r.name));
+}
+
+export function useCreateRawMaterialsBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (inputs: RawMaterialInput[]) => {
+      if (inputs.length === 0) throw new Error("No variants to create");
+      const { data, error } = await supabase.from("raw_materials").insert(inputs).select();
+      if (error) throw error;
+      return data ?? [];
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
+  });
+}
