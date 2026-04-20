@@ -295,3 +295,62 @@ export function useDeleteRawMaterial() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
   });
 }
+
+export interface UpdateGroupInput {
+  ids: string[];
+  /** Old base name to strip from each variant's name when renaming. */
+  oldBaseName: string;
+  /** New base name to prefix; if undefined, keep current name. */
+  newBaseName?: string;
+  shared: {
+    supplier_id?: string;
+    category_id?: string;
+    subcategory_id?: string | null;
+    unit_price?: number;
+    unit_of_measure?: string;
+  };
+  /** Per-variant suffix info to rebuild names: { id -> "<color> - <size>" } */
+  suffixById?: Record<string, string>;
+}
+
+export function useUpdateRawMaterialsGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: UpdateGroupInput) => {
+      const { ids, newBaseName, shared, suffixById } = input;
+      // If renaming, update each row individually so the variant suffix is preserved.
+      if (newBaseName !== undefined) {
+        for (const id of ids) {
+          const suffix = suffixById?.[id] ?? "";
+          const newName = [newBaseName, suffix].filter(Boolean).join(" - ");
+          const { error } = await supabase
+            .from("raw_materials")
+            .update({ ...shared, name: newName })
+            .eq("id", id);
+          if (error) throw error;
+        }
+      } else {
+        const { error } = await supabase
+          .from("raw_materials")
+          .update(shared)
+          .in("id", ids);
+        if (error) throw error;
+      }
+      return ids;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
+  });
+}
+
+export function useDeleteRawMaterialsGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!ids.length) return [];
+      const { error } = await supabase.from("raw_materials").delete().in("id", ids);
+      if (error) throw error;
+      return ids;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
+  });
+}

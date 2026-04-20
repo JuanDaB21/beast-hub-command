@@ -39,8 +39,10 @@ import { cn } from "@/lib/utils";
 import {
   type RawMaterialWithRelations,
   useDeleteRawMaterial,
+  useDeleteRawMaterialsGroup,
 } from "@/features/sourcing/api";
 import { EditRawMaterialDialog } from "@/features/sourcing/EditRawMaterialDialog";
+import { EditGroupDialog } from "@/features/sourcing/EditGroupDialog";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
@@ -110,7 +112,10 @@ export function MaterialGroupCard({ group }: Props) {
   const [detailVariant, setDetailVariant] = useState<RawMaterialWithRelations | null>(null);
   const [editVariant, setEditVariant] = useState<RawMaterialWithRelations | null>(null);
   const [deleteVariant, setDeleteVariant] = useState<RawMaterialWithRelations | null>(null);
+  const [editGroupOpen, setEditGroupOpen] = useState(false);
+  const [deleteGroupOpen, setDeleteGroupOpen] = useState(false);
   const deleteMut = useDeleteRawMaterial();
+  const deleteGroupMut = useDeleteRawMaterialsGroup();
 
   const handleDelete = async () => {
     if (!deleteVariant) return;
@@ -120,6 +125,16 @@ export function MaterialGroupCard({ group }: Props) {
       setDeleteVariant(null);
     } catch (err: any) {
       toast.error(err?.message ?? "No se pudo eliminar (puede estar en uso)");
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    try {
+      await deleteGroupMut.mutateAsync(group.variants.map((v) => v.id));
+      toast.success(`Se eliminaron ${group.variants.length} variantes`);
+      setDeleteGroupOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message ?? "No se pudo eliminar el grupo (puede estar en uso)");
     }
   };
 
@@ -149,62 +164,85 @@ export function MaterialGroupCard({ group }: Props) {
     <>
       <Card className="overflow-hidden">
         <Collapsible open={open} onOpenChange={setOpen}>
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="flex w-full items-start justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex items-baseline justify-between gap-2">
-                  <h3 className="truncate text-base font-semibold">{group.baseName}</h3>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {group.variants.length} variante{group.variants.length === 1 ? "" : "s"}
-                  </span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {group.supplier?.name ?? "—"}
-                  {group.category && <> · {group.category.name}</>}
-                  {group.subcategory && <> / {group.subcategory.name}</>}
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {uniqueColors.map((c) => (
-                    <span
-                      key={c.name}
-                      className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs"
-                    >
-                      {c.hex && (
-                        <span
-                          className="h-2 w-2 rounded-full border"
-                          style={{ backgroundColor: c.hex }}
-                        />
-                      )}
-                      {c.name}
+          <div className="flex items-start gap-2 p-4">
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="-m-2 flex flex-1 items-start justify-between gap-3 rounded-md p-2 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3 className="truncate text-base font-semibold">{group.baseName}</h3>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {group.variants.length} variante{group.variants.length === 1 ? "" : "s"}
                     </span>
-                  ))}
-                  {uniqueSizes.map((s) => (
-                    <span
-                      key={s.label}
-                      className="rounded-md bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
-                    >
-                      {s.label}
-                    </span>
-                  ))}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {group.supplier?.name ?? "—"}
+                    {group.category && <> · {group.category.name}</>}
+                    {group.subcategory && <> / {group.subcategory.name}</>}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {uniqueColors.map((c) => (
+                      <span
+                        key={c.name}
+                        className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs"
+                      >
+                        {c.hex && (
+                          <span
+                            className="h-2 w-2 rounded-full border"
+                            style={{ backgroundColor: c.hex }}
+                          />
+                        )}
+                        {c.name}
+                      </span>
+                    ))}
+                    {uniqueSizes.map((s) => (
+                      <span
+                        key={s.label}
+                        className="rounded-md bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+                      >
+                        {s.label}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <StatusBadge
+                      tone={anyOutOfStock ? "red" : "green"}
+                      label={`Stock total: ${totalStock}`}
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <StatusBadge
-                    tone={anyOutOfStock ? "red" : "green"}
-                    label={`Stock total: ${totalStock}`}
-                  />
-                </div>
-              </div>
-              <ChevronDown
-                className={cn(
-                  "mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-                  open && "rotate-180",
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
+                <ChevronDown
+                  className={cn(
+                    "mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                    open && "rotate-180",
+                  )}
+                />
+              </button>
+            </CollapsibleTrigger>
+            <div className="flex shrink-0 flex-col gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setEditGroupOpen(true)}
+                aria-label="Editar base padre"
+                title="Editar base padre"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setDeleteGroupOpen(true)}
+                aria-label="Eliminar base padre"
+                title="Eliminar base padre"
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
 
           <CollapsibleContent>
             <div className="border-t bg-muted/20">
@@ -359,6 +397,36 @@ export function MaterialGroupCard({ group }: Props) {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteMut.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <EditGroupDialog
+        group={editGroupOpen ? group : null}
+        open={editGroupOpen}
+        onOpenChange={setEditGroupOpen}
+      />
+
+      <AlertDialog open={deleteGroupOpen} onOpenChange={setDeleteGroupOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar la base padre?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán <span className="font-medium">{group.variants.length}</span> variantes
+              de <span className="font-medium">{group.baseName}</span>. Esta acción no se puede
+              deshacer. Si alguna variante está usada en recetas o solicitudes, la operación
+              fallará.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteGroupMut.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteGroup}
+              disabled={deleteGroupMut.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteGroupMut.isPending ? "Eliminando..." : "Eliminar todas"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
