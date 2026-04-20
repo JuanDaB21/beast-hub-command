@@ -39,8 +39,8 @@ export function DtfChecklist({ wo }: Props) {
       </div>
 
       {allDone && (
-        <Alert className="border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400">
-          <CheckCircle2 className="h-4 w-4 !text-green-600 dark:!text-green-400" />
+        <Alert className="border-success/40 bg-success/10 text-success-foreground">
+          <CheckCircle2 className="h-4 w-4" />
           <AlertTitle>Listo para imprimir</AlertTitle>
           <AlertDescription>
             Archivo de impresión consolidado y listo para DTF.
