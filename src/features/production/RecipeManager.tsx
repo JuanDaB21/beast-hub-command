@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Info, Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
 import { useProducts } from "@/features/inventory/api";
 import { useRawMaterials } from "@/features/sourcing/api";
@@ -12,6 +14,33 @@ import {
   useDeleteProductMaterial,
 } from "./api";
 import { toast } from "sonner";
+
+function stockBadge(stock: number, perUnit: number, unit: string) {
+  const unitsPossible = perUnit > 0 ? Math.floor(stock / perUnit) : 0;
+  if (stock <= 0)
+    return (
+      <Badge variant="outline" className="bg-status-red/15 text-status-red border-status-red/30">
+        Sin stock
+      </Badge>
+    );
+  if (unitsPossible < 10)
+    return (
+      <Badge
+        variant="outline"
+        className="bg-status-yellow/15 text-status-yellow border-status-yellow/40"
+      >
+        Alcanza ~{unitsPossible} u
+      </Badge>
+    );
+  return (
+    <Badge
+      variant="outline"
+      className="bg-status-green/15 text-status-green border-status-green/30"
+    >
+      {stock} {unit} en stock
+    </Badge>
+  );
+}
 
 /**
  * Gestor de Recetas (BOM): asocia un producto con sus insumos y cantidad por unidad.
@@ -70,15 +99,24 @@ export function RecipeManager() {
 
       {productId && (
         <>
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Define todos los componentes para producir <strong>1 unidad</strong> (camiseta base +
+              sticker DTF + hilos, etc.). Al completar un lote, se descontarán automáticamente del
+              inventario.
+            </AlertDescription>
+          </Alert>
+
           <div className="rounded-md border">
             <div className="p-3 border-b bg-muted/30">
-              <p className="text-sm font-medium">Insumos requeridos por unidad</p>
+              <p className="text-sm font-medium">Componentes / insumos por unidad</p>
             </div>
             {isLoading ? (
               <div className="p-4 text-sm text-muted-foreground">Cargando...</div>
             ) : bom.length === 0 ? (
               <div className="p-4 text-sm text-muted-foreground">
-                Sin receta definida. Agrega insumos abajo.
+                Sin receta definida. Agrega componentes abajo.
               </div>
             ) : (
               <ul className="divide-y">
@@ -86,13 +124,16 @@ export function RecipeManager() {
                   <li key={row.id} className="flex items-center justify-between gap-2 p-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{row.raw_material?.name ?? "—"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Stock disponible: {row.raw_material?.stock ?? 0}{" "}
-                        {row.raw_material?.unit_of_measure ?? ""}
-                      </p>
+                      <div className="mt-1">
+                        {stockBadge(
+                          Number(row.raw_material?.stock ?? 0),
+                          Number(row.quantity_required),
+                          row.raw_material?.unit_of_measure ?? "",
+                        )}
+                      </div>
                     </div>
-                    <div className="text-sm tabular-nums">
-                      {row.quantity_required} {row.raw_material?.unit_of_measure ?? ""}
+                    <div className="text-sm tabular-nums whitespace-nowrap">
+                      {row.quantity_required} {row.raw_material?.unit_of_measure ?? ""} / u
                     </div>
                     <Button
                       size="icon"
@@ -109,15 +150,15 @@ export function RecipeManager() {
           </div>
 
           <div className="rounded-md border p-3 space-y-2">
-            <p className="text-sm font-medium">Agregar / actualizar insumo</p>
+            <p className="text-sm font-medium">Agregar / actualizar componente</p>
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
                 <StandardCombobox
                   options={rmOptions}
                   value={newRm}
                   onChange={setNewRm}
-                  placeholder="Insumo"
-                  searchPlaceholder="Buscar insumo..."
+                  placeholder="Componente / insumo"
+                  searchPlaceholder="Buscar componente..."
                 />
               </div>
               <Input
@@ -135,7 +176,7 @@ export function RecipeManager() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Si el insumo ya existe en la receta, se actualizará la cantidad.
+              Si el componente ya existe en la receta, se actualizará la cantidad.
             </p>
           </div>
         </>
