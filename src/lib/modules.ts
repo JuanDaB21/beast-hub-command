@@ -25,7 +25,7 @@ export interface ModuleDef {
 }
 
 export const MODULES: ModuleDef[] = [
-  { id: 0, slug: "dashboard", path: "/", title: "Dashboard", short: "Inicio", icon: LayoutDashboard },
+  { id: 0, slug: "dashboard", path: "/", title: "Dashboard · BI & Finanzas", short: "Dashboard", icon: LayoutDashboard },
   { id: 1, slug: "inventario", path: "/inventario", title: "Módulo 1 · Inventario", short: "Inventario", icon: Package },
   { id: 2, slug: "ordenes", path: "/ordenes", title: "Módulo 2 · Órdenes", short: "Órdenes", icon: ShoppingCart },
   { id: 3, slug: "sourcing", path: "/sourcing", title: "Módulo 3 · Sourcing", short: "Sourcing", icon: Truck },

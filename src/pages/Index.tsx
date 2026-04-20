@@ -1,46 +1,148 @@
-import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { Card } from "@/components/ui/card";
-import { MODULES } from "@/lib/modules";
-import { ArrowRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DollarSign,
+  Package,
+  TrendingUp,
+  Undo2,
+  ShoppingCart,
+  AlertCircle,
+} from "lucide-react";
+import {
+  RANGE_OPTIONS,
+  rangeFromKey,
+  useBiData,
+  type RangeKey,
+} from "@/features/bi/api";
+import { KpiCard } from "@/features/bi/KpiCard";
+import {
+  ReturnsPieChart,
+  SalesLineChart,
+  TopProductsBarChart,
+} from "@/features/bi/Charts";
+import { MonthlyClosureTable } from "@/features/bi/MonthlyClosureTable";
+
+const currency = (n: number) =>
+  new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 export default function Index() {
+  const [rangeKey, setRangeKey] = useState<RangeKey>("30d");
+  const range = useMemo(() => rangeFromKey(rangeKey), [rangeKey]);
+  const { data, isLoading } = useBiData(range);
+
   return (
     <AppShell
-      title="Beast Club · Command Center"
-      description="Vista general — Fase 1: Sourcing operativo."
+      title="Dashboard · BI & Finanzas"
+      description="Rentabilidad real, eficiencia operativa y salud del inventario."
+      actions={
+        <Tabs value={rangeKey} onValueChange={(v) => setRangeKey(v as RangeKey)}>
+          <TabsList>
+            {RANGE_OPTIONS.map((opt) => (
+              <TabsTrigger key={opt.value} value={opt.value} className="text-xs">
+                {opt.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      }
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {MODULES.filter((m) => m.id !== 0).map((m) => {
-          const isReady = m.slug === "sourcing";
-          return (
-            <Link key={m.slug} to={m.path} className="group">
-              <Card className="flex h-full flex-col gap-3 p-4 transition-colors group-hover:border-primary/50 group-hover:bg-muted/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
-                    <m.icon className="h-5 w-5" />
-                  </div>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
-                      isReady
-                        ? "bg-status-green/15 text-status-green"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {isReady ? "Activo" : "Próximamente"}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold leading-tight">{m.title}</h3>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground transition-colors group-hover:text-foreground">
-                  Abrir <ArrowRight className="h-3 w-3" />
-                </div>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
+      {isLoading || !data ? (
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full" />
+            ))}
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+            <Skeleton className="h-72 w-full" />
+            <Skeleton className="h-72 w-full" />
+            <Skeleton className="h-72 w-full" />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* KPIs */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard
+              label="Ingresos totales"
+              value={currency(data.revenue)}
+              hint={`${data.ordersCount} pedidos · ${currency(data.revenueShopify)} Shopify`}
+              icon={DollarSign}
+              tone="primary"
+            />
+            <KpiCard
+              label="Costo de insumos"
+              value={currency(data.cogs)}
+              hint="Suma BOM × unidades"
+              icon={Package}
+            />
+            <KpiCard
+              label="Margen neto"
+              value={currency(data.margin)}
+              hint={`${data.marginPct.toFixed(1)}% rentabilidad`}
+              icon={TrendingUp}
+              tone={data.margin >= 0 ? "green" : "red"}
+            />
+            <KpiCard
+              label="Tasa de devoluciones"
+              value={`${(data.returnsRate * 100).toFixed(1)}%`}
+              hint={`${data.scrapCount} mermas registradas`}
+              icon={Undo2}
+              tone={
+                data.returnsRate > 0.1 ? "red" : data.returnsRate > 0.05 ? "yellow" : "green"
+              }
+            />
+          </div>
+
+          {/* Secondary KPIs */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <KpiCard
+              label="Ingresos WhatsApp"
+              value={currency(data.revenueManual)}
+              icon={ShoppingCart}
+              tone="default"
+            />
+            <KpiCard
+              label="Ingresos Shopify"
+              value={currency(data.revenueShopify)}
+              icon={ShoppingCart}
+              tone="default"
+            />
+          </div>
+
+          {/* Charts */}
+          <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="xl:col-span-2">
+              <SalesLineChart data={data.salesByDay} />
+            </div>
+            <ReturnsPieChart data={data.returnReasons} />
+            <div className="lg:col-span-2 xl:col-span-3">
+              <TopProductsBarChart data={data.topProducts} />
+            </div>
+          </div>
+
+          {/* Cierre mensual */}
+          <MonthlyClosureTable rows={data.monthlyClosure} />
+
+          {data.cogs === 0 && data.revenue > 0 && (
+            <div className="flex items-start gap-2 rounded-md border border-status-yellow/30 bg-status-yellow/5 p-3 text-xs">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-status-yellow" />
+              <div>
+                <strong>Costo de insumos en cero:</strong> aún no hay recetas (BOM) configuradas
+                para los productos vendidos. Configura las recetas en{" "}
+                <span className="font-medium">Producción → Recetas</span> para obtener un margen
+                preciso.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </AppShell>
   );
 }
