@@ -53,6 +53,24 @@ export type Database = {
         }
         Relationships: []
       }
+      global_configs: {
+        Row: {
+          id: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          id: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -206,13 +224,18 @@ export type Database = {
         Row: {
           active: boolean
           aging_days: number
+          base_color: string | null
           cost: number
           created_at: string
           description: string | null
           id: string
           name: string
           price: number
+          print_color: string | null
+          print_height_cm: number
+          product_url: string | null
           safety_stock: number
+          size: string | null
           sku: string
           stock: number
           updated_at: string
@@ -220,13 +243,18 @@ export type Database = {
         Insert: {
           active?: boolean
           aging_days?: number
+          base_color?: string | null
           cost?: number
           created_at?: string
           description?: string | null
           id?: string
           name: string
           price?: number
+          print_color?: string | null
+          print_height_cm?: number
+          product_url?: string | null
           safety_stock?: number
+          size?: string | null
           sku: string
           stock?: number
           updated_at?: string
@@ -234,13 +262,18 @@ export type Database = {
         Update: {
           active?: boolean
           aging_days?: number
+          base_color?: string | null
           cost?: number
           created_at?: string
           description?: string | null
           id?: string
           name?: string
           price?: number
+          print_color?: string | null
+          print_height_cm?: number
+          product_url?: string | null
           safety_stock?: number
+          size?: string | null
           sku?: string
           stock?: number
           updated_at?: string

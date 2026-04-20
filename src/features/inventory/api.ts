@@ -12,6 +12,11 @@ export interface Product {
   price: number;
   cost: number;
   active: boolean;
+  product_url: string | null;
+  base_color: string | null;
+  print_color: string | null;
+  size: string | null;
+  print_height_cm: number;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +31,11 @@ export interface ProductInput {
   price: number;
   cost: number;
   active: boolean;
+  product_url?: string | null;
+  base_color?: string | null;
+  print_color?: string | null;
+  size?: string | null;
+  print_height_cm?: number;
 }
 
 const QK = ["products"] as const;

@@ -15,6 +15,7 @@ import { useWorkOrders } from "@/features/production/api";
 import { NewWorkOrderForm } from "@/features/production/NewWorkOrderForm";
 import { WorkOrdersBoard } from "@/features/production/WorkOrdersBoard";
 import { RecipeManager } from "@/features/production/RecipeManager";
+import { PrintingConfigPanel } from "@/features/production/PrintingConfigPanel";
 
 function KPI({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
@@ -74,6 +75,7 @@ export default function Production() {
           <TabsList>
             <TabsTrigger value="lotes">Lotes</TabsTrigger>
             <TabsTrigger value="recetas">Recetas (BOM)</TabsTrigger>
+            <TabsTrigger value="config">Configuración de Estampado</TabsTrigger>
           </TabsList>
 
           <TabsContent value="lotes">
@@ -88,6 +90,10 @@ export default function Production() {
 
           <TabsContent value="recetas">
             <RecipeManager />
+          </TabsContent>
+
+          <TabsContent value="config">
+            <PrintingConfigPanel />
           </TabsContent>
         </Tabs>
       </div>
