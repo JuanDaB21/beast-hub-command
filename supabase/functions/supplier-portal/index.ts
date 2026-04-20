@@ -51,7 +51,10 @@ Deno.serve(async (req) => {
         .eq("secure_token", token)
         .maybeSingle();
 
-      if (error) return json({ error: error.message }, 500);
+      if (error) {
+        console.error("supplier-portal GET error:", error);
+        return json({ error: "Error interno del servidor" }, 500);
+      }
       if (!request) return json({ error: "Solicitud no encontrada" }, 404);
 
       return json({ request });
@@ -70,7 +73,10 @@ Deno.serve(async (req) => {
         .select("id, status")
         .eq("secure_token", body.token)
         .maybeSingle();
-      if (reqErr) return json({ error: reqErr.message }, 500);
+      if (reqErr) {
+        console.error("supplier-portal POST lookup error:", reqErr);
+        return json({ error: "Error interno del servidor" }, 500);
+      }
       if (!request) return json({ error: "Solicitud no encontrada" }, 404);
       if (request.status === "delivered") {
         return json({ error: "Esta solicitud ya fue entregada" }, 409);
@@ -81,7 +87,10 @@ Deno.serve(async (req) => {
         .from("supply_request_items")
         .select("id, quantity_requested")
         .eq("supply_request_id", request.id);
-      if (exErr) return json({ error: exErr.message }, 500);
+      if (exErr) {
+        console.error("supplier-portal items lookup error:", exErr);
+        return json({ error: "Error interno del servidor" }, 500);
+      }
 
       const validIds = new Set((existing ?? []).map((i) => i.id));
 
@@ -98,7 +107,10 @@ Deno.serve(async (req) => {
           })
           .eq("id", it.id)
           .eq("supply_request_id", request.id);
-        if (upErr) return json({ error: upErr.message }, 500);
+        if (upErr) {
+          console.error("supplier-portal item update error:", upErr);
+          return json({ error: "Error interno del servidor" }, 500);
+        }
       }
 
       // Recalcular status automático
@@ -124,13 +136,17 @@ Deno.serve(async (req) => {
         .from("supply_requests")
         .update(patch)
         .eq("id", request.id);
-      if (stErr) return json({ error: stErr.message }, 500);
+      if (stErr) {
+        console.error("supplier-portal status update error:", stErr);
+        return json({ error: "Error interno del servidor" }, 500);
+      }
 
       return json({ ok: true, status: nextStatus });
     }
 
     return json({ error: "Método no permitido" }, 405);
   } catch (err) {
-    return json({ error: (err as Error).message }, 500);
+    console.error("supplier-portal unhandled error:", err);
+    return json({ error: "Error interno del servidor" }, 500);
   }
 });
