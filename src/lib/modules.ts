@@ -10,6 +10,7 @@ import {
   BarChart3,
   Settings,
   Send,
+  Truck as TruckIcon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -29,6 +30,7 @@ export const MODULES: ModuleDef[] = [
   { id: 3, slug: "sourcing", path: "/sourcing", title: "Módulo 3 · Sourcing", short: "Sourcing", icon: Truck },
   { id: 4, slug: "produccion", path: "/produccion", title: "Módulo 4 · Producción", short: "Producción", icon: Factory },
   { id: 5, slug: "almacen", path: "/almacen", title: "Módulo 5 · Almacén", short: "Almacén", icon: Warehouse },
+  { id: 11, slug: "logistica", path: "/logistica", title: "Módulo 6 · Logística", short: "Logística", icon: TruckIcon },
   { id: 6, slug: "solicitudes", path: "/solicitudes", title: "Solicitudes a Proveedor", short: "Solicitudes", icon: Send },
   { id: 7, slug: "alertas", path: "/alertas", title: "Módulo 7 · Alertas", short: "Alertas", icon: AlertTriangle },
   { id: 8, slug: "cod", path: "/cod", title: "Módulo 8 · COD", short: "COD", icon: PhoneCall },
