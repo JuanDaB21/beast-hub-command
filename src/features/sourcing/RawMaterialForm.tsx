@@ -440,7 +440,7 @@ export function RawMaterialForm({ onSuccess }: Props) {
               Se crearán {variants.length} variante{variants.length !== 1 ? "s" : ""}.
             </p>
             {variants.length > 20 && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Cantidad alta — confirma con cuidado
               </span>
