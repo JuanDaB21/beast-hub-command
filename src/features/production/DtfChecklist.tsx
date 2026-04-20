@@ -39,7 +39,7 @@ export function DtfChecklist({ wo }: Props) {
       </div>
 
       {allDone && (
-        <Alert className="border-success/40 bg-success/10 text-success-foreground">
+        <Alert className="border-primary/40 bg-primary/10">
           <CheckCircle2 className="h-4 w-4" />
           <AlertTitle>Listo para imprimir</AlertTitle>
           <AlertDescription>
