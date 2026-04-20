@@ -314,6 +314,57 @@ export type Database = {
           },
         ]
       }
+      returns: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          product_id: string | null
+          reason_category: string
+          resolution_status: string
+          resolved_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          product_id?: string | null
+          reason_category: string
+          resolution_status?: string
+          resolved_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          product_id?: string | null
+          reason_category?: string
+          resolution_status?: string
+          resolved_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sizes: {
         Row: {
           created_at: string
