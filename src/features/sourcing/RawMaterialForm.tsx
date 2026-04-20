@@ -40,6 +40,42 @@ export function RawMaterialForm({ onSuccess }: Props) {
   const { data: subcategories = [] } = useSubcategories(categoryId);
 
   const create = useCreateRawMaterial();
+  const createCategory = useCreateCategory();
+  const createSubcategory = useCreateSubcategory();
+
+  const [newCategory, setNewCategory] = useState("");
+  const [newSubcategory, setNewSubcategory] = useState("");
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [showNewSubcategory, setShowNewSubcategory] = useState(false);
+
+  const handleCreateCategory = async () => {
+    const name = newCategory.trim();
+    if (!name) return;
+    try {
+      const cat = await createCategory.mutateAsync(name);
+      setCategoryId(cat.id);
+      setSubcategoryId(null);
+      setNewCategory("");
+      setShowNewCategory(false);
+      toast({ title: "Categoría creada", description: cat.name });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleCreateSubcategory = async () => {
+    const name = newSubcategory.trim();
+    if (!name || !categoryId) return;
+    try {
+      const sub = await createSubcategory.mutateAsync({ name, category_id: categoryId });
+      setSubcategoryId(sub.id);
+      setNewSubcategory("");
+      setShowNewSubcategory(false);
+      toast({ title: "Subcategoría creada", description: sub.name });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   const supplierOptions = useMemo(
     () => suppliers.map((s) => ({ value: s.id, label: s.name })),
