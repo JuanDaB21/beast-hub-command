@@ -3,10 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
+import { Plus, X } from "lucide-react";
 import {
   useCategories,
   useColors,
+  useCreateCategory,
   useCreateRawMaterial,
+  useCreateSubcategory,
   useSizes,
   useSubcategories,
   useSuppliers,
