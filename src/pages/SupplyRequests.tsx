@@ -46,7 +46,7 @@ export default function SupplyRequests() {
         <DialogHeader>
           <DialogTitle>Nueva solicitud a proveedor</DialogTitle>
           <DialogDescription>
-            Selecciona el proveedor y los insumos que necesitas confirmar.
+            Selecciona el proveedor y las bases que necesitas confirmar.
           </DialogDescription>
         </DialogHeader>
         <NewSupplyRequestForm onCreated={() => setOpen(false)} />
@@ -97,7 +97,7 @@ export default function SupplyRequests() {
               <EntityDetailCard
                 key={r.id}
                 title={r.supplier?.name ?? "—"}
-                subtitle={`${r.items.length} insumo(s)`}
+                subtitle={`${r.items.length} base(s)`}
                 detailsTitle={`Solicitud · ${r.supplier?.name ?? ""}`}
                 detailsDescription="Detalle de la solicitud y URL del proveedor"
                 summary={

@@ -71,7 +71,7 @@ export function useCreateSupplyRequest() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: NewSupplyRequestInput): Promise<SupplyRequest> => {
-      if (!input.items.length) throw new Error("Agrega al menos un insumo");
+      if (!input.items.length) throw new Error("Agrega al menos una base");
 
       const { data: req, error } = await supabase
         .from("supply_requests")

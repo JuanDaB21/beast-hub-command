@@ -180,7 +180,7 @@ export function ProductForm({ product, onSuccess }: Props) {
         toast({ title: "Producto creado" });
       }
 
-      // Vincular la Camisa Base como insumo (1 unidad por producto)
+      // Vincular la Camisa Base como componente (1 unidad por producto)
       if (form.base_material_id) {
         await upsertBom.mutateAsync({
           product_id: productId,
@@ -248,7 +248,7 @@ export function ProductForm({ product, onSuccess }: Props) {
       {/* Receta base */}
       <div className="rounded-lg border p-4 space-y-3 bg-muted/30">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Camisa base (insumo)</Label>
+          <Label className="text-sm font-medium">Camisa base</Label>
           {selectedBase && (
             <span className="text-xs text-muted-foreground">
               Stock: {Number(selectedBase.stock)} {selectedBase.unit_of_measure}
@@ -261,7 +261,7 @@ export function ProductForm({ product, onSuccess }: Props) {
           onChange={(v) => set("base_material_id", v)}
           placeholder="Selecciona la camisa base..."
           searchPlaceholder="Buscar por nombre o SKU..."
-          emptyText="Sin insumos. Crea una camisa base en Sourcing primero."
+          emptyText="Sin bases. Crea una camisa base en Proveedores y Bases primero."
         />
         <div className="space-y-1.5">
           <Label htmlFor="p-print-h">Altura del estampado (cm)</Label>

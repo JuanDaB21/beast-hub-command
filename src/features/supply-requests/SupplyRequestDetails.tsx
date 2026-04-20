@@ -53,7 +53,7 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
   };
 
   const waMessage =
-    `Hola ${request.supplier?.name ?? ""}, te comparto la solicitud de insumos. ` +
+    `Hola ${request.supplier?.name ?? ""}, te comparto la solicitud de bases. ` +
     `Por favor confírmame disponibilidad en este enlace:\n${portalUrl}`;
 
   const markDelivered = async () => {
@@ -141,7 +141,7 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
       )}
 
       <div className="rounded-md border">
-        <div className="p-3 border-b bg-muted/30 text-sm font-medium">Insumos solicitados</div>
+        <div className="p-3 border-b bg-muted/30 text-sm font-medium">Bases solicitadas</div>
         <ul className="divide-y">
           {request.items.map((it) => {
             const reqQ = Number(it.quantity_requested);

@@ -45,19 +45,19 @@ export default function Sourcing() {
         <Button size="sm" className="gap-2">
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">
-            {tab === "suppliers" ? "Nuevo proveedor" : "Nuevo insumo"}
+            {tab === "suppliers" ? "Nuevo proveedor" : "Nueva base"}
           </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {tab === "suppliers" ? "Crear proveedor" : "Registrar insumo"}
+            {tab === "suppliers" ? "Crear proveedor" : "Registrar base"}
           </DialogTitle>
           <DialogDescription>
             {tab === "suppliers"
               ? "Datos de contacto del proveedor."
-              : "Catalogación normalizada del insumo."}
+              : "Catalogación normalizada de la base."}
           </DialogDescription>
         </DialogHeader>
         {tab === "suppliers" ? (
@@ -71,14 +71,14 @@ export default function Sourcing() {
 
   return (
     <AppShell
-      title="Módulo 3 · Sourcing y Gestión de Insumos"
-      description="Administrador de proveedores y configuración de bases."
+      title="Módulo 3 · Proveedores y Bases"
+      description="Administrador de proveedores y gestión de bases."
       actions={headerActions}
     >
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="suppliers">Proveedores ({suppliers?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="materials">Insumos ({materials?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="materials">Bases ({materials?.length ?? 0})</TabsTrigger>
         </TabsList>
 
         {/* ------- SUPPLIERS ------- */}
@@ -88,7 +88,7 @@ export default function Sourcing() {
           ) : !suppliers?.length ? (
             <EmptyState
               title="Sin proveedores aún"
-              hint="Crea tu primer proveedor para empezar a registrar insumos."
+              hint="Crea tu primer proveedor para empezar a registrar bases."
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -108,7 +108,7 @@ export default function Sourcing() {
                           label={s.active ? "Activo" : "Inactivo"}
                         />
                         <span className="text-xs text-muted-foreground">
-                          {supplierUsage.get(s.id) ?? 0} insumo(s)
+                          {supplierUsage.get(s.id) ?? 0} base(s)
                         </span>
                       </div>
                     </div>
@@ -120,7 +120,7 @@ export default function Sourcing() {
                       <DetailRow label="Dirección" value={s.address ?? "—"} />
                       <DetailRow label="Notas" value={s.notes ?? "—"} />
                       <DetailRow
-                        label="Insumos asociados"
+                        label="Bases asociadas"
                         value={String(supplierUsage.get(s.id) ?? 0)}
                       />
                       <div className="pt-2">
@@ -143,8 +143,8 @@ export default function Sourcing() {
             <SkeletonGrid />
           ) : !materials?.length ? (
             <EmptyState
-              title="Sin insumos aún"
-              hint="Registra tu primer insumo asociándolo a un proveedor."
+              title="Sin bases aún"
+              hint="Registra tu primera base asociándola a un proveedor."
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

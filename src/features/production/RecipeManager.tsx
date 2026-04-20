@@ -43,7 +43,7 @@ function stockBadge(stock: number, perUnit: number, unit: string) {
 }
 
 /**
- * Gestor de Recetas (BOM): asocia un producto con sus insumos y cantidad por unidad.
+ * Gestor de Recetas (BOM): asocia un producto con sus bases y cantidad por unidad.
  */
 export function RecipeManager() {
   const { data: products = [] } = useProducts();
@@ -67,7 +67,7 @@ export function RecipeManager() {
 
   const handleAdd = async () => {
     if (!productId || !newRm || newQty <= 0) {
-      toast.error("Selecciona producto, insumo y cantidad");
+      toast.error("Selecciona producto, base y cantidad");
       return;
     }
     try {
@@ -76,7 +76,7 @@ export function RecipeManager() {
         raw_material_id: newRm,
         quantity_required: newQty,
       });
-      toast.success("Insumo agregado a la receta");
+      toast.success("Base agregada a la receta");
       setNewRm(null);
       setNewQty(1);
     } catch (err) {
@@ -110,7 +110,7 @@ export function RecipeManager() {
 
           <div className="rounded-md border">
             <div className="p-3 border-b bg-muted/30">
-              <p className="text-sm font-medium">Componentes / insumos por unidad</p>
+              <p className="text-sm font-medium">Componentes / bases por unidad</p>
             </div>
             {isLoading ? (
               <div className="p-4 text-sm text-muted-foreground">Cargando...</div>
@@ -157,7 +157,7 @@ export function RecipeManager() {
                   options={rmOptions}
                   value={newRm}
                   onChange={setNewRm}
-                  placeholder="Componente / insumo"
+                  placeholder="Componente / base"
                   searchPlaceholder="Buscar componente..."
                 />
               </div>

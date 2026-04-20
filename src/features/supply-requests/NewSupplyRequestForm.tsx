@@ -66,7 +66,7 @@ export function NewSupplyRequestForm({ onCreated }: Props) {
       .filter((it) => it.quantity_requested > 0);
 
     if (!cleanItems.length) {
-      toast.error("Agrega al menos un insumo con cantidad");
+      toast.error("Agrega al menos una base con cantidad");
       return;
     }
 
@@ -95,7 +95,7 @@ export function NewSupplyRequestForm({ onCreated }: Props) {
           value={supplierId}
           onChange={(v) => {
             setSupplierId(v);
-            // limpiar items si cambia el proveedor (los insumos pueden no aplicar)
+            // limpiar items si cambia el proveedor (las bases pueden no aplicar)
             setItems([{ raw_material_id: null, quantity_requested: "1" }]);
           }}
           placeholder="Selecciona un proveedor"
@@ -104,7 +104,7 @@ export function NewSupplyRequestForm({ onCreated }: Props) {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label>Insumos solicitados</Label>
+          <Label>Bases solicitadas</Label>
           <Button type="button" variant="outline" size="sm" onClick={addItem}>
             <Plus className="h-4 w-4 mr-1" /> Agregar
           </Button>
@@ -117,12 +117,12 @@ export function NewSupplyRequestForm({ onCreated }: Props) {
               className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end rounded-md border p-2"
             >
               <div className="flex-1 min-w-0">
-                <Label className="text-xs text-muted-foreground">Insumo</Label>
+                <Label className="text-xs text-muted-foreground">Base</Label>
                 <StandardCombobox
                   options={materialOptions}
                   value={it.raw_material_id}
                   onChange={(v) => updateItem(idx, { raw_material_id: v })}
-                  placeholder={supplierId ? "Selecciona insumo" : "Primero elige proveedor"}
+                  placeholder={supplierId ? "Selecciona base" : "Primero elige proveedor"}
                   disabled={!supplierId}
                 />
               </div>
@@ -143,7 +143,7 @@ export function NewSupplyRequestForm({ onCreated }: Props) {
                 size="icon"
                 onClick={() => removeItem(idx)}
                 disabled={items.length === 1}
-                aria-label="Quitar insumo"
+                aria-label="Quitar base"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
