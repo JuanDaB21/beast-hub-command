@@ -1,51 +1,66 @@
 
 
-## Plan: Cálculo de necesidades de insumos al producir referencias
+## Plan: Creador de Bases multi-variante
 
-### Contexto
-Las **referencias estampadas** (productos finales en `products`) ya pueden tener una receta (BOM) en `product_materials` que apunta a sus componentes en `raw_materials`. Los **productos base** (camisetas en blanco) viven en `raw_materials` junto con los stickers DTF. La función `complete_work_order` ya descuenta correctamente los insumos y suma stock al producto final.
+### Objetivo
+Permitir crear múltiples variantes de una Base en una sola operación, generando automáticamente todas las combinaciones de tallas × colores como registros independientes en `raw_materials` (para preservar el control de stock por variante y la compatibilidad con BOM y solicitudes).
 
-El problema real: **al armar un lote no se ve qué insumos hacen falta ni cuántos comprar**. Vamos a hacer ese cálculo visible.
+### Cambios en UI — `RawMaterialForm.tsx`
 
-### Cambios
+Rediseñar el formulario en modo "creador masivo":
 
-**1. Receta (Recetas BOM) — UX más clara** (`RecipeManager.tsx`)
-- Renombrar "Insumo" a "Componente / Insumo" para reflejar que aplica tanto a bases como a stickers.
-- Al seleccionar un producto, mostrar un banner: "Define todos los componentes necesarios para producir 1 unidad (camiseta base + sticker + hilos, etc.)".
-- Mostrar el stock actual del componente al lado de la cantidad requerida con badge de color (verde si alcanza para 10+ unidades, ámbar si poco, rojo si 0).
+1. **Datos compartidos** (aplican a todas las variantes):
+   - Proveedor (combobox, requerido).
+   - Categoría / Subcategoría (igual que hoy, con creación inline).
+   - Nombre principal (texto, ej. "Camiseta Oversize"). Requerido.
+   - Precio unitario, Unidad de medida, Stock inicial por variante.
+   - SKU base (opcional) — si se ingresa, se sufija con color/talla.
 
-**2. Nuevo: Resumen de necesidades en `NewWorkOrderForm.tsx`**
+2. **Selectores multi-valor** (reemplazan los selectores únicos de Color y Talla):
+   - **Tallas**: chips multi-select sobre el catálogo `sizes`. UI con `Badge` clicable (toggle add/remove) + opción "Sin talla" para crear una variante sin talla.
+   - **Colores**: chips multi-select sobre el catálogo `colors` (mostrando swatch del `hex_code`) + opción "Sin color".
+   - Si el usuario no selecciona ninguna talla ni ningún color, se crea **una sola** variante (comportamiento equivalente al actual).
 
-Al agregar productos y cantidades al lote, calcular y mostrar en tiempo real una tabla:
+3. **Vista previa de matriz**:
+   - Bloque debajo del formulario que calcula `tallas.length × colores.length` (tratando "ninguno" como 1) y lista los nombres que se generarán:
+     - Formato: `"<Nombre principal> - <Color> - <Talla>"` (omitiendo segmentos vacíos).
+   - Mensaje: *"Se crearán N variantes. ¿Confirmar?"*.
+   - Si N > 20, mostrar advertencia visual antes de habilitar el botón.
 
-```text
-Componente              Requerido   Stock actual   Faltante / Comprar
-Camiseta Negra Oversize L    50          12             38 unidades
-Sticker DTF "Beast"          50          200            ✓ Suficiente
-Hilo negro (m)               25          5              20 m
-```
+4. **Botón submit** cambia a "Crear N variante(s)".
 
-- Hook nuevo `useProductMaterialsBatch(productIds)` en `production/api.ts` — un solo fetch del BOM de todos los productos del lote.
-- Componente `ProductionRequirementsSummary` que recibe los items del draft y agrega: `cantidad_requerida = quantity_to_produce × quantity_required` por componente, suma duplicados, y compara con `raw_materials.stock`.
-- Banner de advertencia si hay faltantes: "Faltan X componentes para completar este lote — considera ajustar cantidades o reabastecer antes de iniciar."
-- Aviso si algún producto no tiene receta definida: link rápido a la pestaña "Recetas".
+### Lógica de generación
 
-**3. Visualización en detalle del lote** (`WorkOrderDetails.tsx`)
-- Nueva pestaña "Componentes requeridos" junto a "Resumen" y "DTF" que muestre la misma tabla de necesidades para el lote ya creado, útil para revisión antes de iniciar/completar.
+En el handler de submit:
 
-**4. Sin cambios de schema**
-La estructura `products → product_materials → raw_materials` ya soporta todo el flujo. El RPC `complete_work_order` ya:
-- Verifica stock suficiente de cada `raw_material` (incluyendo bases).
-- Resta `quantity_required × quantity_to_produce` de `raw_materials.stock`.
-- Suma `quantity_to_produce` a `products.stock`.
+1. Construir el producto cartesiano `sizesSel × colorsSel` (con `[null]` cuando esté vacío).
+2. Para cada combinación construir el payload de `raw_materials`:
+   - `name` = `[principal, color?.name, size?.label].filter(Boolean).join(" - ")`.
+   - `sku` = `skuBase ? \`${skuBase}-${color?.name ?? ""}${size?.label ?? ""}\` : null` (sanitizado).
+   - `supplier_id`, `category_id`, `subcategory_id`, `unit_price`, `unit_of_measure`, `stock` compartidos.
+   - `color_id`, `size_id` específicos de la variante.
+3. **Validación de duplicados** (cliente):
+   - Antes de insertar, leer `raw_materials` filtrando por `supplier_id` + `category_id` + `name IN (...)`.
+   - Si hay coincidencias, mostrar toast con la lista omitida y continuar solo con las nuevas. Si todas existen, abortar con error.
+4. **Inserción masiva**: una sola llamada `supabase.from("raw_materials").insert(payloads).select()`.
+5. Toast de éxito: *"Se crearon X variantes (Y omitidas por duplicado)"*. Reset del formulario y `onSuccess()`.
 
-### Archivos afectados
-- `src/features/production/api.ts` — agregar `useProductMaterialsBatch`.
-- `src/features/production/RequirementsSummary.tsx` — nuevo componente.
-- `src/features/production/NewWorkOrderForm.tsx` — integrar el resumen.
-- `src/features/production/WorkOrderDetails.tsx` — nueva pestaña.
-- `src/features/production/RecipeManager.tsx` — mejoras de UX y badges de stock.
+### Cambios en API — `src/features/sourcing/api.ts`
 
-### Resultado esperado
-Al armar un lote de "GYMSHARK Training Shirt L × 50", el usuario ve inmediatamente que necesita 50 camisetas base + 50 stickers, cuánto tiene y cuánto debe comprar — antes de crear la orden de trabajo.
+- Agregar hook `useCreateRawMaterialsBatch()` que recibe `RawMaterialInput[]` y hace un único `insert`. Invalida `["raw_materials"]`.
+- Mantener `useCreateRawMaterial` por compatibilidad.
+- Agregar helper interno `findExistingVariantNames(supplierId, categoryId, names[])` para la validación de duplicados.
+
+### Compatibilidad
+
+- **BOM y Producción**: cada variante sigue siendo un registro `raw_materials` con su propio `id`, por lo que `product_materials`, `RecipeManager`, `RequirementsSummary` y selectores de bases en producción funcionan sin cambios.
+- **Solicitudes a proveedor**: igual — operan sobre `raw_material_id` individual.
+- **Listado en `Sourcing.tsx`**: ya muestra cada variante como tarjeta independiente con sus chips de color/talla; sin cambios.
+
+### Archivos a modificar
+- `src/features/sourcing/RawMaterialForm.tsx` — rediseño multi-variante con chips, vista previa y submit masivo.
+- `src/features/sourcing/api.ts` — nuevo `useCreateRawMaterialsBatch` + helper de duplicados.
+
+### Resultado
+El usuario abre "Nueva base", escribe "Camiseta Oversize", selecciona chips `[S, M, L]` y `[Negro, Blanco]`, ve "Se crearán 6 variantes" con la lista, confirma, y los 6 registros aparecen al instante en el listado de Bases — listos para usarse en producción y solicitudes.
 
