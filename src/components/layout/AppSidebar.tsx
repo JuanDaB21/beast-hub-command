@@ -12,8 +12,21 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { MODULES } from "@/lib/modules";
+import { MODULES, type ModuleDef } from "@/lib/modules";
 import { Boxes } from "lucide-react";
+
+const bySlug = (slug: string): ModuleDef | undefined =>
+  MODULES.find((m) => m.slug === slug);
+
+const SECTIONS: { label: string | null; slugs: string[] }[] = [
+  { label: null, slugs: ["dashboard"] },
+  {
+    label: "Envíos",
+    slugs: ["inventario", "ordenes", "logistica", "devoluciones", "cod"],
+  },
+  { label: "Lotes y producción", slugs: ["produccion", "solicitudes"] },
+  { label: "General", slugs: ["sourcing", "config", "alertas"] },
+];
 
 export function AppSidebar() {
   const { state } = useSidebar();
