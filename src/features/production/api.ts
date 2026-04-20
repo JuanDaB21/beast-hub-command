@@ -59,7 +59,7 @@ export function useWorkOrders() {
         .select(`
           *,
           items:work_order_items (
-            id, work_order_id, product_id, quantity_to_produce,
+            id, work_order_id, product_id, quantity_to_produce, is_dtf_added,
             product:products ( id, sku, name )
           )
         `)
