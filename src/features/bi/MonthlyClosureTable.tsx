@@ -43,7 +43,7 @@ export function MonthlyClosureTable({ rows }: { rows: Row[] }) {
       <div className="border-b p-4">
         <h3 className="text-sm font-semibold">Cierre Mensual Analítico</h3>
         <p className="text-xs text-muted-foreground">
-          Últimos 6 meses · ingresos por canal vs. costo de insumos
+          Últimos 6 meses · ingresos por canal vs. costo de bases
         </p>
       </div>
       <div className="overflow-x-auto">
@@ -54,7 +54,7 @@ export function MonthlyClosureTable({ rows }: { rows: Row[] }) {
               <TableHead className="text-right">Shopify</TableHead>
               <TableHead className="text-right">WhatsApp</TableHead>
               <TableHead className="text-right">Total ingresos</TableHead>
-              <TableHead className="text-right">Costo insumos</TableHead>
+              <TableHead className="text-right">Costo bases</TableHead>
               <TableHead className="text-right">Margen</TableHead>
               <TableHead className="text-right">%</TableHead>
             </TableRow>

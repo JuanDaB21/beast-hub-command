@@ -122,7 +122,7 @@ export function RawMaterialForm({ onSuccess }: Props) {
     const generatedName =
       [category?.name, subcategory?.name, color?.name, size?.label].filter(Boolean).join(" · ") ||
       category?.name ||
-      "Insumo";
+      "Base";
     try {
       await create.mutateAsync({
         supplier_id: supplierId,
@@ -136,7 +136,7 @@ export function RawMaterialForm({ onSuccess }: Props) {
         unit_of_measure: unitOfMeasure || "unit",
         stock: Number(stock) || 0,
       });
-      toast({ title: "Insumo creado", description: generatedName });
+      toast({ title: "Base creada", description: generatedName });
       reset();
       onSuccess?.();
     } catch (err: any) {
@@ -147,7 +147,7 @@ export function RawMaterialForm({ onSuccess }: Props) {
   if (suppliers.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-        Primero crea al menos un proveedor para poder registrar insumos.
+        Primero crea al menos un proveedor para poder registrar bases.
       </div>
     );
   }

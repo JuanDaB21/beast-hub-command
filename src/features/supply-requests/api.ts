@@ -71,7 +71,7 @@ export function useCreateSupplyRequest() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: NewSupplyRequestInput): Promise<SupplyRequest> => {
-      if (!input.items.length) throw new Error("Agrega al menos un insumo");
+      if (!input.items.length) throw new Error("Agrega al menos una base");
 
       const { data: req, error } = await supabase
         .from("supply_requests")
@@ -108,6 +108,20 @@ export function useUpdateSupplyRequestStatus() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+  });
+}
+
+export function useCompleteSupplyRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("complete_supply_request" as any, { _request_id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK });
+      qc.invalidateQueries({ queryKey: ["raw_materials"] });
+    },
   });
 }
 
