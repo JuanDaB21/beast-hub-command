@@ -1,1 +1,4 @@
 project_id = "tfbfbscuiqdqshacexqf"
+
+[functions.supplier-portal]
+verify_jwt = false
