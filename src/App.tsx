@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Sourcing from "./pages/Sourcing.tsx";
+import ModulePlaceholder from "./pages/ModulePlaceholder.tsx";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +18,15 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/sourcing" element={<Sourcing />} />
+          <Route path="/inventario" element={<ModulePlaceholder slug="inventario" />} />
+          <Route path="/ordenes" element={<ModulePlaceholder slug="ordenes" />} />
+          <Route path="/produccion" element={<ModulePlaceholder slug="produccion" />} />
+          <Route path="/almacen" element={<ModulePlaceholder slug="almacen" />} />
+          <Route path="/alertas" element={<ModulePlaceholder slug="alertas" />} />
+          <Route path="/cod" element={<ModulePlaceholder slug="cod" />} />
+          <Route path="/analitica" element={<ModulePlaceholder slug="analitica" />} />
+          <Route path="/config" element={<ModulePlaceholder slug="config" />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
