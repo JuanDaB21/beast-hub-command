@@ -2,23 +2,29 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
-import { Plus, X } from "lucide-react";
+import { Plus, X, AlertTriangle } from "lucide-react";
 import {
+  findExistingVariantNames,
   useCategories,
   useColors,
   useCreateCategory,
-  useCreateRawMaterial,
+  useCreateRawMaterialsBatch,
   useCreateSubcategory,
   useSizes,
   useSubcategories,
   useSuppliers,
+  type RawMaterialInput,
 } from "./api";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface Props {
   onSuccess?: () => void;
 }
+
+const sanitizeSku = (s: string) => s.replace(/\s+/g, "").toUpperCase();
 
 export function RawMaterialForm({ onSuccess }: Props) {
   const { data: suppliers = [] } = useSuppliers();
@@ -29,17 +35,17 @@ export function RawMaterialForm({ onSuccess }: Props) {
   const [supplierId, setSupplierId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [subcategoryId, setSubcategoryId] = useState<string | null>(null);
-  const [colorId, setColorId] = useState<string | null>(null);
-  const [sizeId, setSizeId] = useState<string | null>(null);
+  const [colorIds, setColorIds] = useState<string[]>([]);
+  const [sizeIds, setSizeIds] = useState<string[]>([]);
   const [name, setName] = useState("");
-  const [sku, setSku] = useState("");
+  const [skuBase, setSkuBase] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [unitOfMeasure, setUnitOfMeasure] = useState("unit");
   const [stock, setStock] = useState("0");
 
   const { data: subcategories = [] } = useSubcategories(categoryId);
 
-  const create = useCreateRawMaterial();
+  const createBatch = useCreateRawMaterialsBatch();
   const createCategory = useCreateCategory();
   const createSubcategory = useCreateSubcategory();
 
@@ -49,10 +55,10 @@ export function RawMaterialForm({ onSuccess }: Props) {
   const [showNewSubcategory, setShowNewSubcategory] = useState(false);
 
   const handleCreateCategory = async () => {
-    const name = newCategory.trim();
-    if (!name) return;
+    const value = newCategory.trim();
+    if (!value) return;
     try {
-      const cat = await createCategory.mutateAsync(name);
+      const cat = await createCategory.mutateAsync(value);
       setCategoryId(cat.id);
       setSubcategoryId(null);
       setNewCategory("");
@@ -64,10 +70,10 @@ export function RawMaterialForm({ onSuccess }: Props) {
   };
 
   const handleCreateSubcategory = async () => {
-    const name = newSubcategory.trim();
-    if (!name || !categoryId) return;
+    const value = newSubcategory.trim();
+    if (!value || !categoryId) return;
     try {
-      const sub = await createSubcategory.mutateAsync({ name, category_id: categoryId });
+      const sub = await createSubcategory.mutateAsync({ name: value, category_id: categoryId });
       setSubcategoryId(sub.id);
       setNewSubcategory("");
       setShowNewSubcategory(false);
@@ -89,17 +95,42 @@ export function RawMaterialForm({ onSuccess }: Props) {
     () => subcategories.map((s) => ({ value: s.id, label: s.name })),
     [subcategories],
   );
-  const colorOptions = useMemo(() => colors.map((c) => ({ value: c.id, label: c.name })), [colors]);
-  const sizeOptions = useMemo(() => sizes.map((s) => ({ value: s.id, label: s.label })), [sizes]);
+
+  const toggle = (arr: string[], id: string) =>
+    arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
+
+  // Build variants matrix
+  const variants = useMemo(() => {
+    const trimmed = name.trim();
+    if (!trimmed) return [];
+    const cs = colorIds.length > 0 ? colorIds.map((id) => colors.find((c) => c.id === id) ?? null) : [null];
+    const ss = sizeIds.length > 0 ? sizeIds.map((id) => sizes.find((s) => s.id === id) ?? null) : [null];
+    const out: { name: string; color_id: string | null; size_id: string | null; sku: string | null }[] = [];
+    for (const c of cs) {
+      for (const s of ss) {
+        const variantName = [trimmed, c?.name, s?.label].filter(Boolean).join(" - ");
+        const sku = skuBase.trim()
+          ? sanitizeSku(`${skuBase}-${c?.name ?? ""}${s?.label ?? ""}`)
+          : null;
+        out.push({
+          name: variantName,
+          color_id: c?.id ?? null,
+          size_id: s?.id ?? null,
+          sku,
+        });
+      }
+    }
+    return out;
+  }, [name, colorIds, sizeIds, colors, sizes, skuBase]);
 
   const reset = () => {
     setSupplierId(null);
     setCategoryId(null);
     setSubcategoryId(null);
-    setColorId(null);
-    setSizeId(null);
+    setColorIds([]);
+    setSizeIds([]);
     setName("");
-    setSku("");
+    setSkuBase("");
     setUnitPrice("");
     setUnitOfMeasure("unit");
     setStock("0");
@@ -107,36 +138,52 @@ export function RawMaterialForm({ onSuccess }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supplierId || !categoryId || !unitPrice) {
+    if (!supplierId || !categoryId || !unitPrice || !name.trim()) {
       toast({
         title: "Faltan datos",
-        description: "Proveedor, categoría y precio son obligatorios.",
+        description: "Proveedor, categoría, nombre y precio son obligatorios.",
         variant: "destructive",
       });
       return;
     }
-    const category = categories.find((c) => c.id === categoryId);
-    const subcategory = subcategories.find((s) => s.id === subcategoryId);
-    const color = colors.find((c) => c.id === colorId);
-    const size = sizes.find((s) => s.id === sizeId);
-    const generatedName =
-      [category?.name, subcategory?.name, color?.name, size?.label].filter(Boolean).join(" · ") ||
-      category?.name ||
-      "Base";
+    if (variants.length === 0) return;
+
     try {
-      await create.mutateAsync({
+      const existing = await findExistingVariantNames(
+        supplierId,
+        categoryId,
+        variants.map((v) => v.name),
+      );
+      const toInsert = variants.filter((v) => !existing.has(v.name));
+      const skipped = variants.length - toInsert.length;
+
+      if (toInsert.length === 0) {
+        toast({
+          title: "Todas las variantes ya existen",
+          description: "No se creó ningún registro nuevo.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const payloads: RawMaterialInput[] = toInsert.map((v) => ({
         supplier_id: supplierId,
         category_id: categoryId,
         subcategory_id: subcategoryId,
-        color_id: colorId,
-        size_id: sizeId,
-        sku: sku.trim() || null,
-        name: generatedName,
+        color_id: v.color_id,
+        size_id: v.size_id,
+        sku: v.sku,
+        name: v.name,
         unit_price: Number(unitPrice),
         unit_of_measure: unitOfMeasure || "unit",
         stock: Number(stock) || 0,
+      }));
+
+      await createBatch.mutateAsync(payloads);
+      toast({
+        title: `${toInsert.length} variante(s) creada(s)`,
+        description: skipped > 0 ? `${skipped} omitida(s) por duplicado.` : "Listas para producción.",
       });
-      toast({ title: "Base creada", description: generatedName });
       reset();
       onSuccess?.();
     } catch (err: any) {
@@ -264,21 +311,92 @@ export function RawMaterialForm({ onSuccess }: Props) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>Color</Label>
-          <StandardCombobox options={colorOptions} value={colorId} onChange={setColorId} placeholder="Sin color" />
+      <div className="space-y-1.5">
+        <Label htmlFor="rm-name">Nombre principal *</Label>
+        <Input
+          id="rm-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Ej: Camiseta Oversize"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Colores</Label>
+        <div className="flex flex-wrap gap-2 rounded-md border bg-muted/30 p-2">
+          {colors.length === 0 && (
+            <span className="text-xs text-muted-foreground">No hay colores en el catálogo.</span>
+          )}
+          {colors.map((c) => {
+            const active = colorIds.includes(c.id);
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setColorIds((prev) => toggle(prev, c.id))}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:bg-accent",
+                )}
+              >
+                {c.hex_code && (
+                  <span
+                    className="inline-block h-3 w-3 rounded-full border border-border/50"
+                    style={{ backgroundColor: c.hex_code }}
+                  />
+                )}
+                {c.name}
+              </button>
+            );
+          })}
         </div>
-        <div className="space-y-1.5">
-          <Label>Talla</Label>
-          <StandardCombobox options={sizeOptions} value={sizeId} onChange={setSizeId} placeholder="Sin talla" />
+        <p className="text-xs text-muted-foreground">
+          Sin selección = una variante sin color asignado.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Tallas</Label>
+        <div className="flex flex-wrap gap-2 rounded-md border bg-muted/30 p-2">
+          {sizes.length === 0 && (
+            <span className="text-xs text-muted-foreground">No hay tallas en el catálogo.</span>
+          )}
+          {sizes.map((s) => {
+            const active = sizeIds.includes(s.id);
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setSizeIds((prev) => toggle(prev, s.id))}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:bg-accent",
+                )}
+              >
+                {s.label}
+              </button>
+            );
+          })}
         </div>
+        <p className="text-xs text-muted-foreground">
+          Sin selección = una variante sin talla asignada.
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1.5">
-          <Label htmlFor="rm-sku">SKU</Label>
-          <Input id="rm-sku" value={sku} onChange={(e) => setSku(e.target.value)} />
+          <Label htmlFor="rm-sku">SKU base</Label>
+          <Input
+            id="rm-sku"
+            value={skuBase}
+            onChange={(e) => setSkuBase(e.target.value)}
+            placeholder="Opcional"
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="rm-price">Precio unitario *</Label>
@@ -302,7 +420,7 @@ export function RawMaterialForm({ onSuccess }: Props) {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="rm-stock">Stock inicial</Label>
+          <Label htmlFor="rm-stock">Stock por variante</Label>
           <Input
             id="rm-stock"
             type="number"
@@ -314,8 +432,43 @@ export function RawMaterialForm({ onSuccess }: Props) {
         </div>
       </div>
 
-      <Button type="submit" disabled={create.isPending} className="w-full sm:w-auto">
-        {create.isPending ? "Guardando..." : "Crear insumo"}
+      {/* Preview */}
+      {variants.length > 0 && (
+        <div className="rounded-md border bg-muted/40 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-sm font-medium">
+              Se crearán {variants.length} variante{variants.length !== 1 ? "s" : ""}.
+            </p>
+            {variants.length > 20 && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Cantidad alta — confirma con cuidado
+              </span>
+            )}
+          </div>
+          <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
+            {variants.slice(0, 50).map((v, i) => (
+              <Badge key={i} variant="secondary" className="font-normal">
+                {v.name}
+              </Badge>
+            ))}
+            {variants.length > 50 && (
+              <span className="text-xs text-muted-foreground">
+                +{variants.length - 50} más…
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      <Button
+        type="submit"
+        disabled={createBatch.isPending || variants.length === 0}
+        className="w-full sm:w-auto"
+      >
+        {createBatch.isPending
+          ? "Guardando..."
+          : `Crear ${variants.length || ""} variante${variants.length !== 1 ? "s" : ""}`.trim()}
       </Button>
     </form>
   );
