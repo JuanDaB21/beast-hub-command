@@ -1,57 +1,72 @@
 
 
-## Plan: Método de pago en pedidos manuales + desglose de ingresos por canal
+## Plan: Costo de envío por pedido + impacto en rentabilidad
 
 ### Objetivo
-Permitir registrar el **método de pago** al crear pedidos manuales y mostrar en el dashboard el **desglose de ingresos por canal**.
-
-### Métodos de pago
-`Fisico`, `Nequi`, `Daviplata`, `Bancolombia`.
+Capturar el **costo de envío** al despachar un pedido y restarlo de la rentabilidad de la orden (margen = total − COGS − costo de envío).
 
 ### Cambio de schema (migración)
 
 Añadir a `orders`:
-- `payment_method text NULL` — uno de `'fisico' | 'nequi' | 'daviplata' | 'bancolombia'` para pedidos manuales. NULL para pedidos Shopify (ya tienen su propio flujo de pago).
+- `shipping_cost numeric NOT NULL DEFAULT 0` — costo de envío asociado a la orden (lo paga el negocio, reduce el margen).
 
-Validación vía trigger (no CHECK constraint) que valide el dominio de valores cuando no es NULL.
+Sin trigger adicional: el campo es numérico simple, no requiere validación de dominio. Backfill = 0 para pedidos existentes.
 
 ### Cambios en API
 
+**`src/features/logistics/api.ts`:**
+- Extender `ShipmentOrder` con `shipping_cost: number`.
+- Extender `ShipPayload` con `shipping_cost: number`.
+- `useMarkShipped()` envía `shipping_cost` en el `update`.
+- Nuevo hook `useUpdateShippingCost()` para editar el costo después (cuando ya está enviado).
+
 **`src/features/orders/api.ts`:**
-- Extender `Order` y `NewOrderInput` con `payment_method?: 'fisico' | 'nequi' | 'daviplata' | 'bancolombia' | null`.
-- `useCreateManualOrder()` envía `payment_method` al insertar.
-- Exportar constante `PAYMENT_METHODS` con labels en español para reutilizar en UI.
+- Extender `Order` y `OrderWithItems` con `shipping_cost: number`.
 
 **`src/features/bi/api.ts`:**
-- Añadir hook `useRevenueByPaymentMethod()` que devuelve `{ method, label, total, count }[]` agrupando `orders` donde `payment_method IS NOT NULL` (manuales) sumando `total`. Considerar también un bucket separado para Shopify (`payment_method IS NULL`) etiquetado como "Shopify / Online".
+- En `useBiData`, traer `shipping_cost` en el select de orders.
+- Nuevo acumulador `shippingCost` durante el loop de `validOrders`.
+- `margin = revenue − cogs − shippingCost`.
+- `marginPct` recalculado con el nuevo margen.
+- En `monthlyClosure`, añadir `shipping` al bucket y restarlo del `margin` mensual.
+- Exponer `shippingCost` en `BiData` para mostrarlo como KPI opcional.
 
 ### Cambios en UI
 
-**`src/features/orders/NewOrderForm.tsx`:**
-- Nuevo `Select` debajo del switch COD: *"Método de pago"*, opciones: Físico, Nequi, Daviplata, Bancolombia.
-- Estado `paymentMethod`, validación: requerido al crear.
-- Pasar `payment_method` al mutation.
+**`src/features/logistics/ShipDialog.tsx`:**
+- Nuevo `Input type="number"` *"Costo de envío (COP)"* requerido (≥ 0). Estado `shippingCost`.
+- Validación: número válido, no negativo. Pre-llenar con valor actual si ya existe.
+- Pasar `shipping_cost` al `useMarkShipped` / `useUpdateShippingCost` según corresponda.
+- Mostrar en el resumen del diálogo: total pedido, COGS estimado (si disponible) y margen tentativo (informativo, no bloqueante).
+
+**`src/features/logistics/FulfillmentBoard.tsx`:**
+- En `ShipmentCard`, mostrar el `shipping_cost` cuando exista.
 
 **`src/features/orders/OrderDetails.tsx`:**
-- Mostrar el método de pago como badge/línea informativa cuando exista.
+- Línea informativa: *Costo de envío: $X* (cuando > 0).
+- Línea de margen: *Rentabilidad: total − COGS − envío*.
 
 **`src/pages/Index.tsx` (dashboard):**
-- Nueva sección **"Ingresos por canal de pago"** con:
-  - Tarjetas por método (Físico, Nequi, Daviplata, Bancolombia, Shopify/Online) mostrando monto + count.
-  - Mini gráfico de barras horizontal (reutilizando `Charts.tsx` / Recharts ya presente).
-- Colocada junto a los KPIs existentes.
+- KPI nuevo *"Costos de envío"* junto a COGS.
+- Margen ya reflejará el nuevo cálculo automáticamente vía `useBiData`.
+
+**`src/features/bi/MonthlyClosureTable.tsx`:**
+- Nueva columna *"Envíos"* entre COGS y Margen.
 
 ### Archivos
 
-**Migración nueva:** añade `payment_method` + trigger de validación.
+**Migración nueva:** `ALTER TABLE orders ADD COLUMN shipping_cost numeric NOT NULL DEFAULT 0`.
 
 **Modificados:**
-- `src/features/orders/api.ts` — tipo + constante `PAYMENT_METHODS` + insert con método.
-- `src/features/orders/NewOrderForm.tsx` — Select de método de pago.
-- `src/features/orders/OrderDetails.tsx` — mostrar método de pago.
-- `src/features/bi/api.ts` — hook `useRevenueByPaymentMethod`.
-- `src/pages/Index.tsx` — sección de ingresos por canal.
+- `src/features/logistics/api.ts` — tipos + `shipping_cost` en mutaciones + hook de update.
+- `src/features/logistics/ShipDialog.tsx` — input requerido de costo de envío.
+- `src/features/logistics/FulfillmentBoard.tsx` — mostrar costo en tarjeta.
+- `src/features/orders/api.ts` — tipo extendido.
+- `src/features/orders/OrderDetails.tsx` — mostrar envío y margen por orden.
+- `src/features/bi/api.ts` — incluir `shipping_cost` en agregaciones, restar del margen.
+- `src/features/bi/MonthlyClosureTable.tsx` — columna de envíos.
+- `src/pages/Index.tsx` — KPI de costos de envío.
 
 ### Resultado
-Al crear un pedido manual el usuario elige el método de pago (Físico/Nequi/Daviplata/Bancolombia) y queda guardado en la orden. En el dashboard aparece un desglose de ingresos por canal con monto y cantidad por método, más un bucket separado para órdenes de Shopify.
+Al despachar un pedido el operador captura el costo de envío junto con la guía. Ese valor se guarda en la orden, se muestra en el detalle, y reduce el margen tanto a nivel de orden como en los KPIs y cierre mensual del dashboard. La fórmula de rentabilidad pasa a ser **total − COGS − envío**, manteniendo toda la lógica consistente entre `orders`, `order_items`, `product_materials` y `raw_materials`.
 
