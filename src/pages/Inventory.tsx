@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search } from "lucide-react";
 import {
   useDeleteProduct,
@@ -33,6 +34,7 @@ import { ProductsTable } from "@/features/inventory/ProductsTable";
 import { ProductsMobileList } from "@/features/inventory/ProductsMobileList";
 import { ProductForm } from "@/features/inventory/ProductForm";
 import { VariantEditDialog } from "@/features/inventory/VariantEditDialog";
+import { AvailableVariantsList } from "@/features/inventory/AvailableVariantsList";
 import { getStockStatus, isAgingFlagged } from "@/features/inventory/status";
 import { toast } from "@/hooks/use-toast";
 
