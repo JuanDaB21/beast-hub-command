@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -27,19 +27,30 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+const currency = (n: number) =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n);
+
 export function ShipDialog({ order, open, onOpenChange }: Props) {
   const ship = useMarkShipped();
   const updateTracking = useUpdateTracking();
 
   const [tracking, setTracking] = useState("");
   const [reason, setReason] = useState("");
+  const [shippingCost, setShippingCost] = useState<string>("");
 
   useEffect(() => {
     if (order) {
       setTracking(order.tracking_number ?? "");
       setReason(order.delay_reason ?? "");
+      setShippingCost(order.shipping_cost ? String(order.shipping_cost) : "");
     }
   }, [order]);
+
+  const tentativeMargin = useMemo(() => {
+    if (!order) return 0;
+    const cost = Number(shippingCost) || 0;
+    return Number(order.total) - cost;
+  }, [order, shippingCost]);
 
   if (!order) return null;
 
@@ -53,6 +64,15 @@ export function ShipDialog({ order, open, onOpenChange }: Props) {
       toast({ title: "Falta la guía", description: "Captura el tracking number.", variant: "destructive" });
       return;
     }
+    const costNum = Number(shippingCost);
+    if (shippingCost === "" || Number.isNaN(costNum) || costNum < 0) {
+      toast({
+        title: "Costo de envío inválido",
+        description: "Captura un costo de envío válido (≥ 0).",
+        variant: "destructive",
+      });
+      return;
+    }
     if (requiresReason && reason.trim().length < 5 && !isShipped) {
       toast({
         title: "Motivo requerido",
@@ -64,12 +84,17 @@ export function ShipDialog({ order, open, onOpenChange }: Props) {
 
     try {
       if (isShipped) {
-        await updateTracking.mutateAsync({ id: order.id, tracking_number: tn });
+        await updateTracking.mutateAsync({
+          id: order.id,
+          tracking_number: tn,
+          shipping_cost: costNum,
+        });
         toast({ title: "Guía actualizada" });
       } else {
         await ship.mutateAsync({
           id: order.id,
           tracking_number: tn,
+          shipping_cost: costNum,
           delay_reason: requiresReason ? reason.trim() : null,
         });
         toast({ title: "Pedido despachado", description: `Guía ${tn} registrada.` });
@@ -117,6 +142,38 @@ export function ShipDialog({ order, open, onOpenChange }: Props) {
             />
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="shipping_cost">Costo de envío (COP) *</Label>
+            <Input
+              id="shipping_cost"
+              type="number"
+              min={0}
+              step="100"
+              inputMode="numeric"
+              value={shippingCost}
+              onChange={(e) => setShippingCost(e.target.value)}
+              placeholder="Ej. 12000"
+            />
+            <p className="text-xs text-muted-foreground">
+              Se restará del margen del pedido.
+            </p>
+          </div>
+
+          <div className="rounded-md border bg-muted/30 p-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total pedido</span>
+              <span className="tabular-nums font-medium">{currency(Number(order.total))}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Costo de envío</span>
+              <span className="tabular-nums font-medium">-{currency(Number(shippingCost) || 0)}</span>
+            </div>
+            <div className="mt-1 flex justify-between border-t pt-1">
+              <span className="text-muted-foreground">Total - envío</span>
+              <span className="tabular-nums font-semibold">{currency(tentativeMargin)}</span>
+            </div>
+          </div>
+
           {requiresReason && !isShipped && (
             <div className="space-y-1.5">
               <Label htmlFor="reason">Motivo del retraso *</Label>
@@ -136,7 +193,7 @@ export function ShipDialog({ order, open, onOpenChange }: Props) {
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={pending}>
-            {pending ? "Guardando..." : isShipped ? "Guardar guía" : "Marcar como enviado"}
+            {pending ? "Guardando..." : isShipped ? "Guardar cambios" : "Marcar como enviado"}
           </Button>
         </DialogFooter>
       </DialogContent>

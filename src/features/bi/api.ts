@@ -104,6 +104,7 @@ interface OrderRow {
   source: "manual" | "shopify";
   status: string;
   total: number;
+  shipping_cost: number;
   created_at: string;
   items: {
     quantity: number;
@@ -132,6 +133,7 @@ export interface BiData {
   revenueShopify: number;
   revenueManual: number;
   cogs: number;
+  shippingCost: number;
   margin: number;
   marginPct: number;
   ordersCount: number;
@@ -147,6 +149,7 @@ export interface BiData {
     shopify: number;
     manual: number;
     cogs: number;
+    shipping: number;
     margin: number;
   }[];
 }
@@ -167,7 +170,7 @@ export function useBiData(range: DateRange) {
       let q = supabase
         .from("orders")
         .select(`
-          id, order_number, source, status, total, created_at,
+          id, order_number, source, status, total, shipping_cost, created_at,
           items:order_items (
             quantity, unit_price,
             product:products ( id, name, sku )
@@ -222,6 +225,7 @@ export function useBiData(range: DateRange) {
       let revenueShopify = 0;
       let revenueManual = 0;
       let cogs = 0;
+      let shippingCost = 0;
 
       const dayBucket = new Map<string, { revenue: number; orders: number }>();
       const productBucket = new Map<string, { name: string; quantity: number; revenue: number }>();
@@ -229,6 +233,7 @@ export function useBiData(range: DateRange) {
       for (const o of validOrders) {
         const total = Number(o.total);
         revenue += total;
+        shippingCost += Number(o.shipping_cost) || 0;
         if (o.source === "shopify") revenueShopify += total;
         else revenueManual += total;
 
@@ -254,7 +259,7 @@ export function useBiData(range: DateRange) {
         }
       }
 
-      const margin = revenue - cogs;
+      const margin = revenue - cogs - shippingCost;
       const marginPct = revenue > 0 ? (margin / revenue) * 100 : 0;
 
       const distinctReturnedOrders = new Set(returns.map((r) => r.order_id).filter(Boolean));
@@ -286,14 +291,15 @@ export function useBiData(range: DateRange) {
       // Monthly closure (always last 6 months regardless of filter, for context)
       const monthBucket = new Map<
         string,
-        { shopify: number; manual: number; cogs: number }
+        { shopify: number; manual: number; cogs: number; shipping: number }
       >();
       for (const o of validOrders) {
         const m = o.created_at.slice(0, 7);
-        const cur = monthBucket.get(m) ?? { shopify: 0, manual: 0, cogs: 0 };
+        const cur = monthBucket.get(m) ?? { shopify: 0, manual: 0, cogs: 0, shipping: 0 };
         const total = Number(o.total);
         if (o.source === "shopify") cur.shopify += total;
         else cur.manual += total;
+        cur.shipping += Number(o.shipping_cost) || 0;
         for (const it of o.items) {
           if (!it.product) continue;
           cur.cogs += (costMap.get(it.product.id) ?? 0) * Number(it.quantity);
@@ -308,7 +314,8 @@ export function useBiData(range: DateRange) {
           shopify: Math.round(v.shopify),
           manual: Math.round(v.manual),
           cogs: Math.round(v.cogs),
-          margin: Math.round(v.shopify + v.manual - v.cogs),
+          shipping: Math.round(v.shipping),
+          margin: Math.round(v.shopify + v.manual - v.cogs - v.shipping),
         }));
 
       return {
@@ -316,6 +323,7 @@ export function useBiData(range: DateRange) {
         revenueShopify,
         revenueManual,
         cogs,
+        shippingCost,
         margin,
         marginPct,
         ordersCount: validOrders.length,

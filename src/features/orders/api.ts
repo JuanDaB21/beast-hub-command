@@ -38,6 +38,7 @@ export interface Order {
   cod_confirmed: boolean;
   payment_method: PaymentMethod | null;
   total: number;
+  shipping_cost: number;
   created_at: string;
   updated_at: string;
 }
