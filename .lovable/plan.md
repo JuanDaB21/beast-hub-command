@@ -1,56 +1,96 @@
 
 
-## Plan: Selector de Base → Color/Talla derivados de variantes
+## Plan: Producto padre con variantes (multi-creación por checkbox)
 
 ### Objetivo
-Eliminar los campos libres de "Talla" y "Color base" en el formulario de productos. En su lugar, al seleccionar la **Base padre**, el sistema mostrará dropdowns de Color y Talla únicamente con las variantes existentes de esa base en `raw_materials`, y enlazará el producto a la **variante específica** (color + talla) para que las alertas de inventario apunten al registro correcto.
+Convertir productos en un modelo **padre → hijos**:
+- Un **producto padre** (ej. *Gymshark Training Shirt*) está atado a una **Base padre** de `raw_materials`.
+- Sus **variantes hijas** son combinaciones de **Color × Talla × Estampado**, creadas masivamente desde checkboxes, cada una con su propio SKU, stock, stock de seguridad, aging, precio y `raw_material_id` específico.
+- En la tabla de Inventario se ve una fila por **producto padre** que se expande para mostrar sus variantes.
 
-### Cambios en `src/features/inventory/ProductForm.tsx`
+### Cambio de schema (migración)
 
-**1. Reemplazar los 3 inputs de texto** (`size`, `base_color`, `print_color`) por una sección estructurada:
+Añadir a `products`:
+- `parent_id uuid NULL` → FK lógica al producto padre (sin constraint para evitar problemas, validación por app).
+- `is_parent boolean NOT NULL DEFAULT false` → marca al padre (no tiene stock propio, solo agrupa).
+- `print_design text NULL` → nombre del estampado de la variante (ej. "Estampado Negro").
+
+Índice: `CREATE INDEX ON products(parent_id);`
+
+Los registros existentes quedan como productos sueltos (`parent_id = null`, `is_parent = false`) — sin migración destructiva.
+
+### Cambios en API (`src/features/inventory/api.ts`)
+
+- Extender `Product` y `ProductInput` con `parent_id`, `is_parent`, `print_design`.
+- Nuevo hook `useCreateProductWithVariants(parentInput, variants[])`:
+  1. Crea el producto padre (`is_parent = true`, sin stock).
+  2. Itera sobre el array de variantes seleccionadas y crea cada hija con su SKU autogenerado, `parent_id` apuntando al padre.
+  3. Inserta el `product_materials` correspondiente para cada hija (apuntando al `raw_material_id` resuelto color×talla).
+- Nuevo hook `useProductTree()` que devuelve `{ parents: ProductWithChildren[], orphans: Product[] }` agrupando hijos bajo su padre.
+
+### Cambios en `ProductForm.tsx` — modo "Producto padre + variantes"
+
+Rediseño en 4 secciones:
+
+**1. Producto padre**
+- SKU base (prefijo, ej. `GYM-TRAIN`), nombre padre (*Gymshark Training Shirt*), URL, descripción, activo.
+- Combobox **Base padre** (igual que hoy) → determina los colores y tallas disponibles del raw_material.
+
+**2. Selector de variantes (multi-checkbox)**
+```
+Colores disponibles (de la base):  ☑ Negro  ☑ Blanco  ☐ Gris
+Tallas disponibles (de la base):   ☑ S  ☑ M  ☑ L  ☐ XL
+Estampados (libre, agregables):    [+ Añadir estampado]
+                                   ☑ Estampado Negro  ☑ Estampado Blanco
+```
+- Colores y tallas vienen del grupo de raw_materials (chips marcables).
+- Estampados: input + botón "Añadir" → genera chips removibles. El usuario puede añadir tantos como quiera.
+
+**3. Vista previa de variantes a crear**
+Muestra tabla con todas las combinaciones `color × talla × estampado` seleccionadas:
 
 ```
-┌─ Base padre [Combobox: nombre base · proveedor] ──────┐
-│  Color base  [Select: solo colores con variantes]     │
-│  Talla       [Select: solo tallas con variantes]      │
-│  Estampado   [Input texto libre]   ← se mantiene      │
-└────────────────────────────────────────────────────────┘
+SKU              | Nombre completo                          | Variante material
+GYM-TRAIN-N-S-EN | Gymshark Training Shirt Negro S / EN     | Camiseta Oversize - Negro - S ✓
+GYM-TRAIN-N-M-EN | Gymshark Training Shirt Negro M / EN     | Camiseta Oversize - Negro - M ✓
+...
 ```
+- Si alguna combinación no tiene raw_material disponible → fila marcada en rojo y excluida del submit.
+- Contador: *"Se crearán 12 variantes"*.
 
-**2. Agrupar `raw_materials` por base padre** (reutilizando la lógica de `MaterialGroupCard.tsx` — extraer `extractBaseName` a un helper compartido en `src/features/sourcing/groupHelpers.ts`):
-- Clave: `supplier_id + category_id + baseName`.
-- Cada grupo expone: `baseName`, lista de `variants`, set de colores únicos, set de tallas únicas.
+**4. Defaults aplicados a todas las variantes**
+- Stock inicial, stock seguridad, aging, precio venta, altura estampado → un input por defecto que se aplica a todas (editable individualmente después, en el detalle del producto padre).
 
-**3. Lógica de selección encadenada**:
-- Al elegir grupo base → poblar Selects de Color y Talla con valores únicos del grupo.
-- Al elegir Color y Talla → resolver la variante exacta:  
-  `variant = group.variants.find(v => v.color_id === selectedColorId && v.size_id === selectedSizeId)`
-- Si la combinación no existe en el grupo, mostrar mensaje *"Esta combinación no está disponible como variante. Créala primero en Bases."* y bloquear submit.
-- `form.base_material_id` apunta a la variante específica resuelta (no al grupo).
+### Cambios en `Inventory.tsx` y `ProductsTable.tsx`
 
-**4. Persistencia en `products`**:
-- `base_color` ← `color.name` resuelto (texto, para mostrar en tablas/UI).
-- `size` ← `size.label` resuelto.
-- Los campos siguen guardándose como string en `products` (sin migración de schema).
-- `print_color` se mantiene como input libre.
+- Listar solo productos padre (`is_parent = true`) + productos sueltos legacy (`parent_id = null && !is_parent`).
+- Cada fila padre es expandible (`Collapsible`) y muestra dentro una mini-tabla con sus variantes hijas (SKU, color, talla, estampado, stock, aging, acciones editar/eliminar por variante).
+- KPIs: agregar stock total/agotados sumando hijos del padre.
 
-**5. Vínculo BOM (sin cambios de schema)**:
-- `product_materials` se enlaza con la **variante** (`raw_material_id` específico), no con el grupo.
-- Esto garantiza que las alertas de stock bajo, solicitudes a proveedor y consumo en `complete_work_order` apunten al `raw_material` correcto (la variante que comparte color/talla con el producto).
+### Edición
+- Editar **producto padre**: cambia nombre, descripción, URL, activo. No toca variantes.
+- Editar **variante hija**: cambia stock, safety_stock, aging, precio, estampado, altura — formulario simple sin selector de base.
+- Eliminar padre: confirma y elimina padre + todas sus hijas + sus `product_materials`.
 
-**6. Comportamiento al editar**:
-- Al cargar un producto existente, leer `existingBom[0].raw_material_id`, encontrar el grupo padre y prefijar Base/Color/Talla automáticamente.
+### Modo legacy
+Productos existentes sin `parent_id` siguen mostrándose como filas sueltas y editables con el formulario actual (sin romper nada).
 
-**7. Nombre automático**: sigue armándose como `<base padre> <talla> <color base> / <estampado>` con los valores resueltos.
+### Archivos
 
-### Helper nuevo
-- `src/features/sourcing/groupHelpers.ts` — exporta `extractBaseName(material)` y `groupMaterials(materials)` actualmente locales en `MaterialGroupCard.tsx`. Refactor: importar desde el helper en ambos lugares (no duplicar).
+**Migración:**
+- Nueva migración SQL: añade columnas `parent_id`, `is_parent`, `print_design` + índice.
 
-### Archivos a modificar
-- `src/features/inventory/ProductForm.tsx` — rediseño de la sección Base/Color/Talla con selectores encadenados.
-- `src/features/sourcing/MaterialGroupCard.tsx` — importar helpers desde el nuevo módulo.
-- `src/features/sourcing/groupHelpers.ts` — **nuevo**, contiene la lógica de agrupación reutilizable.
+**Modificados:**
+- `src/features/inventory/api.ts` — tipos extendidos + `useCreateProductWithVariants`, `useProductTree`, `useUpdateProductVariant`.
+- `src/features/inventory/ProductForm.tsx` — rediseño completo con checkboxes, estampados dinámicos y vista previa.
+- `src/features/inventory/ProductsTable.tsx` — filas expandibles padre→hijos.
+- `src/features/inventory/ProductsMobileList.tsx` — tarjetas padre con acordeón de variantes.
+- `src/pages/Inventory.tsx` — usar `useProductTree`, KPIs ajustados.
+
+**Nuevos:**
+- `src/features/inventory/VariantPreviewTable.tsx` — tabla de vista previa de combinaciones.
+- `src/features/inventory/VariantEditDialog.tsx` — diálogo simple para editar una variante hija.
 
 ### Resultado
-Crear un producto = 1) elegir "Camiseta Oversize" (base padre), 2) elegir color "Negro" y talla "M" de las opciones disponibles en esa base, 3) escribir estampado. El producto queda enlazado a la variante exacta `Camiseta Oversize - Negro - M`, y cualquier alerta o solicitud automática apunta directamente a ese `raw_material_id`.
+Crear *Gymshark Training Shirt* = 1) elegir base "Camiseta Oversize", 2) marcar `[Negro, Blanco] × [S, M, L]`, 3) añadir estampados `[Estampado Negro, Estampado Blanco]`, 4) ver vista previa de 12 variantes y confirmar. En `/inventory` aparece **1 fila padre** *"Gymshark Training Shirt · 12 variantes · stock total X"* expandible para gestionar cada variante con su propio stock, aging y BOM apuntando a la variante exacta de raw_materials.
 
