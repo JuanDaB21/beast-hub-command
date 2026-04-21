@@ -53,6 +53,39 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          reference_type: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type?: string
+        }
+        Relationships: []
+      }
       global_configs: {
         Row: {
           id: string
@@ -427,6 +460,7 @@ export type Database = {
       }
       returns: {
         Row: {
+          company_assumes_shipping: boolean
           created_at: string
           id: string
           notes: string | null
@@ -435,9 +469,11 @@ export type Database = {
           reason_category: string
           resolution_status: string
           resolved_at: string | null
+          return_shipping_cost: number
           updated_at: string
         }
         Insert: {
+          company_assumes_shipping?: boolean
           created_at?: string
           id?: string
           notes?: string | null
@@ -446,9 +482,11 @@ export type Database = {
           reason_category: string
           resolution_status?: string
           resolved_at?: string | null
+          return_shipping_cost?: number
           updated_at?: string
         }
         Update: {
+          company_assumes_shipping?: boolean
           created_at?: string
           id?: string
           notes?: string | null
@@ -457,6 +495,7 @@ export type Database = {
           reason_category?: string
           resolution_status?: string
           resolved_at?: string | null
+          return_shipping_cost?: number
           updated_at?: string
         }
         Relationships: [
