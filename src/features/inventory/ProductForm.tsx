@@ -1,137 +1,117 @@
 import { useEffect, useMemo, useState } from "react";
-import { Calculator, Loader2, AlertTriangle } from "lucide-react";
+import { Calculator, Loader2, AlertTriangle, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
-import { useCreateProduct, useUpdateProduct, useProducts, type Product, type ProductInput } from "./api";
+import {
+  useCreateProductWithVariants,
+  useUpdateProduct,
+  useProducts,
+  type Product,
+  type ProductInput,
+  type VariantInput,
+} from "./api";
 import { useRawMaterials } from "@/features/sourcing/api";
 import { groupMaterials } from "@/features/sourcing/groupHelpers";
 import { useGlobalConfigs } from "@/features/production/configApi";
-import { useUpsertProductMaterial, useProductMaterials } from "@/features/production/api";
 import { toast } from "@/hooks/use-toast";
+import { VariantPreviewTable, type PreviewRow } from "./VariantPreviewTable";
 
 interface Props {
   product?: Product | null;
   onSuccess?: () => void;
 }
 
-interface FormState extends ProductInput {
-  base_group_key: string | null;
-  base_color_id: string | null;
-  base_size_id: string | null;
-  base_material_id: string | null;
-}
-
-const empty: FormState = {
-  sku: "",
-  name: "",
-  description: "",
-  stock: 0,
-  safety_stock: 0,
-  aging_days: 30,
-  price: 0,
-  cost: 0,
-  active: true,
-  product_url: "",
-  base_color: "",
-  print_color: "",
-  size: "",
-  print_height_cm: 0,
-  base_group_key: null,
-  base_color_id: null,
-  base_size_id: null,
-  base_material_id: null,
-};
-
 const COP = (n: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
+const slug = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toUpperCase();
+
+const shortCode = (s: string, n = 3) => slug(s).replace(/-/g, "").slice(0, n) || "X";
+
 export function ProductForm({ product, onSuccess }: Props) {
-  const [form, setForm] = useState<FormState>(empty);
+  // ── Modo edición de un padre legacy/existente ─────────────────────
+  const isEdit = !!product;
+
+  // ── Datos generales (padre) ──────────────────────────────────────
+  const [skuPrefix, setSkuPrefix] = useState("");
+  const [parentName, setParentName] = useState("");
+  const [productUrl, setProductUrl] = useState("");
+  const [description, setDescription] = useState("");
+  const [active, setActive] = useState(true);
+
+  // ── Selección de base ─────────────────────────────────────────────
+  const [baseGroupKey, setBaseGroupKey] = useState<string | null>(null);
+  const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set());
+  const [selectedSizes, setSelectedSizes] = useState<Set<string>>(new Set());
+
+  // ── Estampados (lista dinámica) ──────────────────────────────────
+  const [prints, setPrints] = useState<string[]>([]);
+  const [newPrint, setNewPrint] = useState("");
+
+  // ── Defaults aplicados a todas las variantes ─────────────────────
+  const [defStock, setDefStock] = useState(0);
+  const [defSafety, setDefSafety] = useState(0);
+  const [defAging, setDefAging] = useState(30);
+  const [defPrice, setDefPrice] = useState(0);
+  const [defPrintHeight, setDefPrintHeight] = useState(0);
 
   const { data: products = [] } = useProducts();
   const { data: rawMaterials = [] } = useRawMaterials();
   const { data: configs } = useGlobalConfigs();
-  const { data: existingBom = [] } = useProductMaterials(product?.id ?? null);
-
-  const create = useCreateProduct();
+  const createWithVariants = useCreateProductWithVariants();
   const update = useUpdateProduct();
-  const upsertBom = useUpsertProductMaterial();
-
-  const isEdit = !!product;
-  const pending = create.isPending || update.isPending || upsertBom.isPending;
+  const pending = createWithVariants.isPending || update.isPending;
 
   const printingPerMeter = Number(configs?.printing_cost_per_meter ?? 0);
   const ironingCost = Number(configs?.ironing_cost ?? 0);
 
-  // Agrupar bases padre
-  const groups = useMemo(() => groupMaterials(rawMaterials), [rawMaterials]);
-  const selectedGroup = useMemo(
-    () => groups.find((g) => g.key === form.base_group_key) ?? null,
-    [groups, form.base_group_key],
-  );
-
-  // Cargar producto existente
+  // Cargar producto en modo edición (sólo edita campos del padre)
   useEffect(() => {
     if (product) {
-      setForm({
-        sku: product.sku,
-        name: product.name,
-        description: product.description ?? "",
-        stock: Number(product.stock),
-        safety_stock: Number(product.safety_stock),
-        aging_days: Number(product.aging_days),
-        price: Number(product.price),
-        cost: Number(product.cost),
-        active: product.active,
-        product_url: product.product_url ?? "",
-        base_color: product.base_color ?? "",
-        print_color: product.print_color ?? "",
-        size: product.size ?? "",
-        print_height_cm: Number(product.print_height_cm ?? 0),
-        base_group_key: null,
-        base_color_id: null,
-        base_size_id: null,
-        base_material_id: null,
-      });
+      setSkuPrefix(product.sku);
+      setParentName(product.name);
+      setProductUrl(product.product_url ?? "");
+      setDescription(product.description ?? "");
+      setActive(product.active);
     } else {
-      setForm(empty);
+      setSkuPrefix("");
+      setParentName("");
+      setProductUrl("");
+      setDescription("");
+      setActive(true);
+      setBaseGroupKey(null);
+      setSelectedColors(new Set());
+      setSelectedSizes(new Set());
+      setPrints([]);
+      setNewPrint("");
+      setDefStock(0);
+      setDefSafety(0);
+      setDefAging(30);
+      setDefPrice(0);
+      setDefPrintHeight(0);
     }
   }, [product]);
 
-  // Al editar, reconstruir Base/Color/Talla desde el BOM existente
-  useEffect(() => {
-    if (!isEdit) return;
-    if (form.base_material_id) return;
-    if (existingBom.length === 0 || groups.length === 0) return;
-    const variantId = existingBom[0].raw_material_id;
-    const grp = groups.find((g) => g.variants.some((v) => v.id === variantId));
-    if (!grp) return;
-    const variant = grp.variants.find((v) => v.id === variantId)!;
-    setForm((f) => ({
-      ...f,
-      base_group_key: grp.key,
-      base_color_id: variant.color_id ?? null,
-      base_size_id: variant.size_id ?? null,
-      base_material_id: variant.id,
-    }));
-  }, [existingBom, groups, isEdit, form.base_material_id]);
+  const groups = useMemo(() => groupMaterials(rawMaterials), [rawMaterials]);
+  const selectedGroup = useMemo(
+    () => groups.find((g) => g.key === baseGroupKey) ?? null,
+    [groups, baseGroupKey],
+  );
 
-  const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
-
-  // Opciones de Base padre
   const baseOptions = useMemo(
     () =>
       groups.map((g) => ({
@@ -141,9 +121,8 @@ export function ProductForm({ product, onSuccess }: Props) {
     [groups],
   );
 
-  // Colores y tallas únicos del grupo seleccionado
   const colorOptions = useMemo(() => {
-    if (!selectedGroup) return [];
+    if (!selectedGroup) return [] as { id: string; name: string }[];
     const map = new Map<string, { id: string; name: string }>();
     selectedGroup.variants.forEach((v) => {
       if (v.color_id && v.color?.name) map.set(v.color_id, { id: v.color_id, name: v.color.name });
@@ -152,7 +131,7 @@ export function ProductForm({ product, onSuccess }: Props) {
   }, [selectedGroup]);
 
   const sizeOptions = useMemo(() => {
-    if (!selectedGroup) return [];
+    if (!selectedGroup) return [] as { id: string; label: string; sort: number }[];
     const map = new Map<string, { id: string; label: string; sort: number }>();
     selectedGroup.variants.forEach((v) => {
       if (v.size_id && v.size?.label)
@@ -161,311 +140,476 @@ export function ProductForm({ product, onSuccess }: Props) {
     return Array.from(map.values()).sort((a, b) => a.sort - b.sort);
   }, [selectedGroup]);
 
-  // Resolver variante exacta
-  const resolvedVariant = useMemo(() => {
-    if (!selectedGroup || !form.base_color_id || !form.base_size_id) return null;
-    return (
-      selectedGroup.variants.find(
-        (v) => v.color_id === form.base_color_id && v.size_id === form.base_size_id,
-      ) ?? null
-    );
-  }, [selectedGroup, form.base_color_id, form.base_size_id]);
-
-  const variantMissing =
-    !!selectedGroup && !!form.base_color_id && !!form.base_size_id && !resolvedVariant;
-
-  // Sincronizar variante resuelta + textos en form
-  useEffect(() => {
-    const colorName = colorOptions.find((c) => c.id === form.base_color_id)?.name ?? "";
-    const sizeLabel = sizeOptions.find((s) => s.id === form.base_size_id)?.label ?? "";
-    setForm((f) => ({
-      ...f,
-      base_material_id: resolvedVariant?.id ?? null,
-      base_color: colorName,
-      size: sizeLabel,
-    }));
-  }, [resolvedVariant, form.base_color_id, form.base_size_id, colorOptions, sizeOptions]);
-
-  // Reset color/talla cuando cambia el grupo
-  const handleGroupChange = (key: string | null) => {
-    setForm((f) => ({
-      ...f,
-      base_group_key: key,
-      base_color_id: null,
-      base_size_id: null,
-      base_material_id: null,
-      base_color: "",
-      size: "",
-    }));
+  // Reset selecciones al cambiar la base
+  const handleBaseChange = (key: string | null) => {
+    setBaseGroupKey(key);
+    setSelectedColors(new Set());
+    setSelectedSizes(new Set());
   };
 
-  // Cálculo automático del costo
-  const baseCost = resolvedVariant ? Number(resolvedVariant.unit_price) : 0;
-  const printingCost = (Number(form.print_height_cm) / 100) * printingPerMeter;
-  const computedCost = baseCost + printingCost + ironingCost;
+  const toggle = (set: Set<string>, id: string, fn: (s: Set<string>) => void) => {
+    const next = new Set(set);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    fn(next);
+  };
 
-  useEffect(() => {
-    setForm((f) => ({ ...f, cost: Math.round(computedCost) }));
-  }, [computedCost]);
+  const addPrint = () => {
+    const v = newPrint.trim();
+    if (!v) return;
+    if (prints.includes(v)) return;
+    setPrints([...prints, v]);
+    setNewPrint("");
+  };
+  const removePrint = (p: string) => setPrints(prints.filter((x) => x !== p));
 
-  // Nombre automático
-  useEffect(() => {
-    if (isEdit) return;
-    const baseName = selectedGroup?.baseName ?? "";
-    const parts = [baseName, form.size, form.base_color].filter(Boolean).join(" ").trim();
-    const tail = form.print_color ? ` / ${form.print_color}` : "";
-    const auto = (parts + tail).trim();
-    if (auto) setForm((f) => ({ ...f, name: auto }));
-  }, [selectedGroup, form.size, form.base_color, form.print_color, isEdit]);
+  // ── Vista previa de variantes ───────────────────────────────────
+  const previewRows: PreviewRow[] = useMemo(() => {
+    if (!selectedGroup || selectedColors.size === 0 || selectedSizes.size === 0) return [];
+    const printList = prints.length > 0 ? prints : [""]; // permite crear sin estampado
+    const rows: PreviewRow[] = [];
+    selectedColors.forEach((cId) => {
+      const colorName = colorOptions.find((c) => c.id === cId)?.name ?? "";
+      selectedSizes.forEach((sId) => {
+        const sizeLabel = sizeOptions.find((s) => s.id === sId)?.label ?? "";
+        const variant = selectedGroup.variants.find(
+          (v) => v.color_id === cId && v.size_id === sId,
+        );
+        printList.forEach((print) => {
+          const printSuffix = print ? `-${shortCode(print, 3)}` : "";
+          const sku =
+            (skuPrefix ? slug(skuPrefix) : "PROD") +
+            `-${shortCode(colorName, 2)}-${shortCode(sizeLabel, 2)}${printSuffix}`;
+          const fullName = [parentName || "Producto", colorName, sizeLabel]
+            .filter(Boolean)
+            .join(" ") + (print ? ` / ${print}` : "");
+          rows.push({
+            key: `${cId}-${sId}-${print}`,
+            sku,
+            name: fullName.trim(),
+            variantLabel: variant?.name ?? `${selectedGroup.baseName} - ${colorName} - ${sizeLabel}`,
+            available: !!variant,
+          });
+        });
+      });
+    });
+    return rows;
+  }, [
+    selectedGroup,
+    selectedColors,
+    selectedSizes,
+    prints,
+    skuPrefix,
+    parentName,
+    colorOptions,
+    sizeOptions,
+  ]);
 
+  // ── Costo por variante ────────────────────────────────────────────
+  const baseCostSample = selectedGroup?.variants[0] ? Number(selectedGroup.variants[0].unit_price) : 0;
+  const printingCost = (defPrintHeight / 100) * printingPerMeter;
+  const computedCost = baseCostSample + printingCost + ironingCost;
+
+  // ── SUBMIT ─────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.sku.trim() || !form.name.trim()) {
+
+    if (isEdit && product) {
+      // Modo edición: sólo metadatos del padre (legacy soportado)
+      try {
+        await update.mutateAsync({
+          id: product.id,
+          name: parentName.trim(),
+          sku: skuPrefix.trim(),
+          description: description.trim() || null,
+          product_url: productUrl.trim() || null,
+          active,
+        });
+        toast({ title: "Producto actualizado" });
+        onSuccess?.();
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: err instanceof Error ? err.message : "No se pudo actualizar",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // Validaciones creación
+    if (!skuPrefix.trim() || !parentName.trim()) {
       toast({ title: "Faltan datos", description: "SKU y nombre son obligatorios.", variant: "destructive" });
       return;
     }
-    if (!form.base_material_id) {
+    if (!selectedGroup) {
+      toast({ title: "Falta base padre", description: "Selecciona una base de raw_materials.", variant: "destructive" });
+      return;
+    }
+    const validRows = previewRows.filter((r) => r.available);
+    if (validRows.length === 0) {
       toast({
-        title: "Falta variante base",
-        description: "Selecciona Base padre, Color y Talla disponibles.",
+        title: "Sin variantes",
+        description: "Selecciona al menos un color y una talla con variante material disponible.",
         variant: "destructive",
       });
       return;
     }
 
-    const skuTaken = products.some(
-      (p) => p.sku.toLowerCase() === form.sku.trim().toLowerCase() && p.id !== product?.id,
-    );
-    if (skuTaken) {
-      toast({ title: "SKU duplicado", description: "Ya existe un producto con ese SKU.", variant: "destructive" });
+    // Resolver mapping row→raw_material_id
+    const variants: VariantInput[] = [];
+    const printList = prints.length > 0 ? prints : [""];
+    selectedColors.forEach((cId) => {
+      const colorName = colorOptions.find((c) => c.id === cId)?.name ?? "";
+      selectedSizes.forEach((sId) => {
+        const sizeLabel = sizeOptions.find((s) => s.id === sId)?.label ?? "";
+        const variant = selectedGroup.variants.find(
+          (v) => v.color_id === cId && v.size_id === sId,
+        );
+        if (!variant) return;
+        printList.forEach((print) => {
+          const printSuffix = print ? `-${shortCode(print, 3)}` : "";
+          const sku =
+            slug(skuPrefix) +
+            `-${shortCode(colorName, 2)}-${shortCode(sizeLabel, 2)}${printSuffix}`;
+          const fullName = [parentName, colorName, sizeLabel]
+            .filter(Boolean)
+            .join(" ") + (print ? ` / ${print}` : "");
+          const baseCost = Number(variant.unit_price);
+          const totalCost = baseCost + (defPrintHeight / 100) * printingPerMeter + ironingCost;
+          variants.push({
+            sku,
+            name: fullName.trim(),
+            base_color: colorName,
+            size: sizeLabel,
+            print_design: print || null,
+            print_color: print || null,
+            print_height_cm: defPrintHeight,
+            raw_material_id: variant.id,
+            stock: defStock,
+            safety_stock: defSafety,
+            aging_days: defAging,
+            price: defPrice,
+            cost: Math.round(totalCost),
+          });
+        });
+      });
+    });
+
+    // Verificar SKUs duplicados (entre sí o existentes)
+    const seenSku = new Set<string>();
+    for (const v of variants) {
+      if (seenSku.has(v.sku)) {
+        toast({ title: "SKUs duplicados", description: `Repetido: ${v.sku}`, variant: "destructive" });
+        return;
+      }
+      seenSku.add(v.sku);
+    }
+    const existingSkus = new Set(products.map((p) => p.sku.toLowerCase()));
+    const conflict = variants.find((v) => existingSkus.has(v.sku.toLowerCase()));
+    if (conflict) {
+      toast({ title: "SKU existente", description: `${conflict.sku} ya existe.`, variant: "destructive" });
+      return;
+    }
+    if (existingSkus.has(skuPrefix.trim().toLowerCase())) {
+      toast({
+        title: "SKU padre existente",
+        description: "Cambia el SKU base del producto padre.",
+        variant: "destructive",
+      });
       return;
     }
 
-    const payload: ProductInput = {
-      sku: form.sku.trim(),
-      name: form.name.trim(),
-      description: (form.description ?? "").toString().trim() || null,
-      stock: form.stock,
-      safety_stock: form.safety_stock,
-      aging_days: form.aging_days,
-      price: form.price,
-      cost: form.cost,
-      active: form.active,
-      product_url: (form.product_url ?? "").toString().trim() || null,
-      base_color: (form.base_color ?? "").toString().trim() || null,
-      print_color: (form.print_color ?? "").toString().trim() || null,
-      size: (form.size ?? "").toString().trim() || null,
-      print_height_cm: Number(form.print_height_cm) || 0,
+    const parentInput: ProductInput = {
+      sku: skuPrefix.trim(),
+      name: parentName.trim(),
+      description: description.trim() || null,
+      product_url: productUrl.trim() || null,
+      stock: 0,
+      safety_stock: 0,
+      aging_days: defAging,
+      price: defPrice,
+      cost: 0,
+      active,
+      base_color: null,
+      print_color: null,
+      size: null,
+      print_height_cm: 0,
+      is_parent: true,
     };
 
     try {
-      let productId: string;
-      if (isEdit && product) {
-        const updated = await update.mutateAsync({ id: product.id, ...payload });
-        productId = (updated as Product).id;
-        toast({ title: "Producto actualizado" });
-      } else {
-        const created = await create.mutateAsync(payload);
-        productId = (created as Product).id;
-        toast({ title: "Producto creado" });
-      }
-
-      await upsertBom.mutateAsync({
-        product_id: productId,
-        raw_material_id: form.base_material_id,
-        quantity_required: 1,
-      });
-
+      await createWithVariants.mutateAsync({ parent: parentInput, variants });
+      toast({ title: "Producto creado", description: `${variants.length} variantes generadas.` });
       onSuccess?.();
     } catch (err) {
       toast({
-        title: "Error al guardar",
+        title: "Error al crear",
         description: err instanceof Error ? err.message : "Inténtalo de nuevo",
         variant: "destructive",
       });
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Identificación */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="p-sku">SKU *</Label>
-          <Input id="p-sku" value={form.sku} onChange={(e) => set("sku", e.target.value)} required />
+  // ────────────────────────────── RENDER ──────────────────────────────
+  if (isEdit) {
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Alert>
+          <AlertDescription className="text-xs">
+            En modo edición sólo se modifican los datos del producto padre. Para editar stock, precio
+            o estampado de cada variante, abre la variante desde la tabla.
+          </AlertDescription>
+        </Alert>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>SKU base *</Label>
+            <Input value={skuPrefix} onChange={(e) => setSkuPrefix(e.target.value)} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>URL</Label>
+            <Input type="url" value={productUrl} onChange={(e) => setProductUrl(e.target.value)} />
+          </div>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="p-url">URL del producto</Label>
+          <Label>Nombre del producto *</Label>
+          <Input value={parentName} onChange={(e) => setParentName(e.target.value)} required />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Descripción</Label>
+          <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+        </div>
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <Label>Producto activo</Label>
+          <Switch checked={active} onCheckedChange={setActive} />
+        </div>
+        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+          {pending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+          Guardar cambios
+        </Button>
+      </form>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* 1. Producto padre */}
+      <section className="space-y-3">
+        <h3 className="text-sm font-semibold">1. Producto padre</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="p-sku">SKU base *</Label>
+            <Input
+              id="p-sku"
+              placeholder="GYM-TRAIN"
+              value={skuPrefix}
+              onChange={(e) => setSkuPrefix(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="p-url">URL del producto</Label>
+            <Input
+              id="p-url"
+              type="url"
+              placeholder="https://..."
+              value={productUrl}
+              onChange={(e) => setProductUrl(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="p-name">Nombre del producto *</Label>
           <Input
-            id="p-url"
-            type="url"
-            placeholder="https://..."
-            value={form.product_url ?? ""}
-            onChange={(e) => set("product_url", e.target.value)}
+            id="p-name"
+            placeholder="Gymshark Training Shirt"
+            value={parentName}
+            onChange={(e) => setParentName(e.target.value)}
+            required
           />
         </div>
-      </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="p-desc">Descripción</Label>
+          <Textarea
+            id="p-desc"
+            rows={2}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+      </section>
 
-      {/* Variante base */}
-      <div className="rounded-lg border p-4 space-y-3 bg-muted/30">
-        <Label className="text-sm font-medium">Base padre *</Label>
+      {/* 2. Base padre */}
+      <section className="space-y-3 rounded-lg border p-4 bg-muted/30">
+        <h3 className="text-sm font-semibold">2. Base padre (raw material)</h3>
         <StandardCombobox
           options={baseOptions}
-          value={form.base_group_key}
-          onChange={handleGroupChange}
+          value={baseGroupKey}
+          onChange={handleBaseChange}
           placeholder="Selecciona la base padre..."
           searchPlaceholder="Buscar por nombre..."
           emptyText="No hay bases. Crea una en Proveedores y Bases primero."
         />
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="p-color">Color base *</Label>
-            <Select
-              value={form.base_color_id ?? ""}
-              onValueChange={(v) => set("base_color_id", v || null)}
-              disabled={!selectedGroup || colorOptions.length === 0}
-            >
-              <SelectTrigger id="p-color">
-                <SelectValue placeholder={selectedGroup ? "Selecciona color" : "Elige base primero"} />
-              </SelectTrigger>
-              <SelectContent>
-                {colorOptions.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {selectedGroup && (
+          <>
+            {/* Colores */}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Colores disponibles</Label>
+              {colorOptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">La base no tiene colores configurados.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {colorOptions.map((c) => (
+                    <label
+                      key={c.id}
+                      className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 cursor-pointer hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        checked={selectedColors.has(c.id)}
+                        onCheckedChange={() => toggle(selectedColors, c.id, setSelectedColors)}
+                      />
+                      <span className="text-sm">{c.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Tallas */}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Tallas disponibles</Label>
+              {sizeOptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">La base no tiene tallas configuradas.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {sizeOptions.map((s) => (
+                    <label
+                      key={s.id}
+                      className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 cursor-pointer hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        checked={selectedSizes.has(s.id)}
+                        onCheckedChange={() => toggle(selectedSizes, s.id, setSelectedSizes)}
+                      />
+                      <span className="text-sm">{s.label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* 3. Estampados */}
+      <section className="space-y-3 rounded-lg border p-4">
+        <h3 className="text-sm font-semibold">3. Estampados</h3>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Ej. Estampado Negro"
+            value={newPrint}
+            onChange={(e) => setNewPrint(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addPrint();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" onClick={addPrint}>
+            <Plus className="h-4 w-4 mr-1" /> Añadir
+          </Button>
+        </div>
+        {prints.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {prints.map((p) => (
+              <Badge key={p} variant="secondary" className="gap-1 pr-1">
+                {p}
+                <button
+                  type="button"
+                  onClick={() => removePrint(p)}
+                  className="ml-1 rounded hover:bg-background/50 p-0.5"
+                  aria-label={`Quitar ${p}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="p-size">Talla *</Label>
-            <Select
-              value={form.base_size_id ?? ""}
-              onValueChange={(v) => set("base_size_id", v || null)}
-              disabled={!selectedGroup || sizeOptions.length === 0}
-            >
-              <SelectTrigger id="p-size">
-                <SelectValue placeholder={selectedGroup ? "Selecciona talla" : "Elige base primero"} />
-              </SelectTrigger>
-              <SelectContent>
-                {sizeOptions.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Si no añades estampados, se creará una variante por color×talla sin estampado.
+          </p>
+        )}
+      </section>
+
+      {/* 4. Defaults */}
+      <section className="space-y-3 rounded-lg border p-4">
+        <h3 className="text-sm font-semibold">4. Valores por defecto (aplicados a todas las variantes)</h3>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <NumField label="Stock inicial" value={defStock} onChange={setDefStock} />
+          <NumField label="Stock seguridad" value={defSafety} onChange={setDefSafety} />
+          <NumField label="Aging (días)" value={defAging} onChange={setDefAging} />
+          <NumField label="Precio venta" step="100" value={defPrice} onChange={setDefPrice} />
+          <NumField label="Altura estampado (cm)" step="0.5" value={defPrintHeight} onChange={setDefPrintHeight} />
         </div>
 
-        {variantMissing && (
+        <Alert className="border-primary/30 bg-primary/5">
+          <Calculator className="h-4 w-4" />
+          <AlertDescription>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Costo base (ejemplo variante)</span>
+                <span className="tabular-nums">{COP(baseCostSample)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Impresión ({defPrintHeight} cm × {COP(printingPerMeter)}/m)
+                </span>
+                <span className="tabular-nums">{COP(printingCost)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Planchado</span>
+                <span className="tabular-nums">{COP(ironingCost)}</span>
+              </div>
+              <div className="flex justify-between border-t pt-1 mt-1 font-semibold">
+                <span>Costo estimado por variante</span>
+                <span className="tabular-nums">{COP(computedCost)}</span>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <Label htmlFor="p-active">Producto activo</Label>
+          <Switch id="p-active" checked={active} onCheckedChange={setActive} />
+        </div>
+      </section>
+
+      {/* 5. Vista previa */}
+      <section className="space-y-2">
+        <h3 className="text-sm font-semibold">5. Vista previa de variantes</h3>
+        {previewRows.length > 0 && previewRows.some((r) => !r.available) && (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Esta combinación no está disponible como variante. Créala primero en Bases.
+              Algunas combinaciones no tienen variante material. Créalas en Bases o desmárcalas.
             </AlertDescription>
           </Alert>
         )}
+        <VariantPreviewTable rows={previewRows} />
+      </section>
 
-        {resolvedVariant && (
-          <p className="text-xs text-muted-foreground">
-            Variante: <span className="font-medium text-foreground">{resolvedVariant.name}</span> · Stock:{" "}
-            {Number(resolvedVariant.stock)} {resolvedVariant.unit_of_measure}
-          </p>
-        )}
-
-        <div className="space-y-1.5">
-          <Label htmlFor="p-print-color">Estampado</Label>
-          <Input
-            id="p-print-color"
-            placeholder="Logo blanco, full color..."
-            value={form.print_color ?? ""}
-            onChange={(e) => set("print_color", e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="p-print-h">Altura del estampado (cm)</Label>
-          <Input
-            id="p-print-h"
-            type="number"
-            min="0"
-            step="0.5"
-            value={form.print_height_cm ?? 0}
-            onChange={(e) => set("print_height_cm", Number(e.target.value))}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="p-name">Nombre {isEdit ? "" : "(auto)"} *</Label>
-        <Input id="p-name" value={form.name} onChange={(e) => set("name", e.target.value)} required />
-        {!isEdit && (
-          <p className="text-xs text-muted-foreground">
-            Se arma automáticamente con Base + Talla + Color base / Estampado. Puedes editarlo.
-          </p>
-        )}
-      </div>
-
-      {/* Costo calculado */}
-      <Alert className="border-primary/30 bg-primary/5">
-        <Calculator className="h-4 w-4" />
-        <AlertDescription>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Costo base (variante)</span>
-              <span className="tabular-nums">{COP(baseCost)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                Impresión ({Number(form.print_height_cm) || 0} cm × {COP(printingPerMeter)}/m)
-              </span>
-              <span className="tabular-nums">{COP(printingCost)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Planchado</span>
-              <span className="tabular-nums">{COP(ironingCost)}</span>
-            </div>
-            <div className="flex justify-between border-t pt-1 mt-1 font-semibold">
-              <span>Costo total</span>
-              <span className="tabular-nums">{COP(computedCost)}</span>
-            </div>
-          </div>
-        </AlertDescription>
-      </Alert>
-
-      {/* Precio venta + stock */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <NumField label="Precio de venta" id="p-price" value={form.price} step="100" onChange={(v) => set("price", v)} />
-        <NumField label="Stock inicial" id="p-stock" value={form.stock} onChange={(v) => set("stock", v)} />
-        <NumField label="Stock seguridad" id="p-safety" value={form.safety_stock} onChange={(v) => set("safety_stock", v)} />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <NumField label="Aging (días)" id="p-aging" value={form.aging_days} onChange={(v) => set("aging_days", v)} />
-        <div className="flex items-center justify-between rounded-md border p-3">
-          <div>
-            <Label htmlFor="p-active" className="text-sm">Producto activo</Label>
-            <p className="text-xs text-muted-foreground">Si se desactiva, no aparecerá en operaciones nuevas.</p>
-          </div>
-          <Switch id="p-active" checked={form.active} onCheckedChange={(v) => set("active", v)} />
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="p-desc">Descripción</Label>
-        <Textarea
-          id="p-desc"
-          rows={2}
-          value={form.description ?? ""}
-          onChange={(e) => set("description", e.target.value)}
-        />
-      </div>
-
-      <Button type="submit" disabled={pending || variantMissing} className="w-full sm:w-auto">
+      <Button
+        type="submit"
+        disabled={pending || previewRows.filter((r) => r.available).length === 0}
+        className="w-full sm:w-auto"
+      >
         {pending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-        {pending ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear producto"}
+        {pending
+          ? "Creando..."
+          : `Crear producto + ${previewRows.filter((r) => r.available).length} variantes`}
       </Button>
     </form>
   );
@@ -473,28 +617,19 @@ export function ProductForm({ product, onSuccess }: Props) {
 
 function NumField({
   label,
-  id,
   value,
   onChange,
   step = "1",
 }: {
   label: string;
-  id: string;
   value: number;
   onChange: (n: number) => void;
   step?: string;
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type="number"
-        step={step}
-        min="0"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
+      <Label className="text-xs">{label}</Label>
+      <Input type="number" step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} />
     </div>
   );
 }

@@ -21,75 +21,80 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { Plus, Search } from "lucide-react";
-import { useDeleteProduct, useProducts, type Product } from "@/features/inventory/api";
+import {
+  useDeleteProduct,
+  useDeleteProductTree,
+  useProductTree,
+  type Product,
+  type ProductWithChildren,
+} from "@/features/inventory/api";
 import { ProductsTable } from "@/features/inventory/ProductsTable";
 import { ProductsMobileList } from "@/features/inventory/ProductsMobileList";
 import { ProductForm } from "@/features/inventory/ProductForm";
-import { ProductDetails } from "@/features/inventory/ProductDetails";
+import { VariantEditDialog } from "@/features/inventory/VariantEditDialog";
 import { getStockStatus, isAgingFlagged } from "@/features/inventory/status";
 import { toast } from "@/hooks/use-toast";
 
 export default function Inventory() {
-  const { data: products = [], isLoading } = useProducts();
-  const del = useDeleteProduct();
+  const { parents, orphans, isLoading } = useProductTree();
+  const delOne = useDeleteProduct();
+  const delTree = useDeleteProductTree();
 
   const [filter, setFilter] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
-  const [detail, setDetail] = useState<Product | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editingParent, setEditingParent] = useState<Product | null>(null);
+  const [editingVariant, setEditingVariant] = useState<Product | null>(null);
+  const [confirmDeleteVariant, setConfirmDeleteVariant] = useState<Product | null>(null);
+  const [confirmDeleteTree, setConfirmDeleteTree] = useState<ProductWithChildren | null>(null);
 
+  // KPIs sumando hijos + huérfanos
   const stats = useMemo(() => {
-    const total = products.length;
+    const allItems: Product[] = [...orphans, ...parents.flatMap((p) => p.children)];
     let outOfStock = 0;
     let critical = 0;
     let aging = 0;
-    products.forEach((p) => {
+    allItems.forEach((p) => {
       const s = getStockStatus(p);
       if (s.tone === "red") outOfStock++;
       else if (s.tone === "yellow") critical++;
       if (isAgingFlagged(p)) aging++;
     });
-    return { total, outOfStock, critical, aging };
-  }, [products]);
+    return {
+      totalParents: parents.length + orphans.length,
+      totalVariants: allItems.length,
+      outOfStock,
+      critical,
+      aging,
+    };
+  }, [parents, orphans]);
 
-  const openCreate = () => {
-    setEditing(null);
-    setFormOpen(true);
-  };
-  const openEdit = (p: Product) => {
-    setEditing(p);
-    setDetail(null);
-    setFormOpen(true);
-  };
-  const openDetail = (p: Product) => setDetail(p);
-  const askDelete = (p: Product) => {
-    setDetail(null);
-    setConfirmDelete(p);
-  };
-
-  const handleDelete = async () => {
-    if (!confirmDelete) return;
+  const handleDeleteVariant = async () => {
+    if (!confirmDeleteVariant) return;
     try {
-      await del.mutateAsync(confirmDelete.id);
-      toast({ title: "Producto eliminado" });
+      await delOne.mutateAsync(confirmDeleteVariant.id);
+      toast({ title: "Eliminado" });
     } catch (err: any) {
-      toast({ title: "Error al eliminar", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
-      setConfirmDelete(null);
+      setConfirmDeleteVariant(null);
+    }
+  };
+
+  const handleDeleteTree = async () => {
+    if (!confirmDeleteTree) return;
+    try {
+      await delTree.mutateAsync(confirmDeleteTree.id);
+      toast({ title: "Producto y variantes eliminados" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setConfirmDeleteTree(null);
     }
   };
 
   const headerActions = (
-    <Button size="sm" className="gap-2" onClick={openCreate}>
+    <Button size="sm" className="gap-2" onClick={() => setCreateOpen(true)}>
       <Plus className="h-4 w-4" />
       <span className="hidden sm:inline">Nuevo producto</span>
     </Button>
@@ -98,13 +103,14 @@ export default function Inventory() {
   return (
     <AppShell
       title="Módulo 1 · Inventario"
-      description="Catálogo de productos finales, stock y aging."
+      description="Productos padre con variantes (color × talla × estampado)."
       actions={headerActions}
     >
       {/* KPIs */}
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KPI label="Productos" value={stats.total} />
-        <KPI label="Agotados" value={stats.outOfStock} tone="red" />
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <KPI label="Productos padre" value={stats.totalParents} />
+        <KPI label="Variantes" value={stats.totalVariants} />
+        <KPI label="Agotadas" value={stats.outOfStock} tone="red" />
         <KPI label="Stock crítico" value={stats.critical} tone="yellow" />
         <KPI label="En aging" value={stats.aging} tone="yellow" />
       </div>
@@ -122,7 +128,6 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Loading */}
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -131,86 +136,123 @@ export default function Inventory() {
         </div>
       ) : (
         <>
-          {/* Mobile cards */}
           <div className="lg:hidden">
             <ProductsMobileList
-              products={products.filter((p) => {
-                const v = filter.toLowerCase();
-                return !v || p.sku.toLowerCase().includes(v) || p.name.toLowerCase().includes(v);
-              })}
-              onEdit={openEdit}
-              onDelete={askDelete}
+              parents={parents.filter(
+                (p) =>
+                  !filter ||
+                  p.name.toLowerCase().includes(filter.toLowerCase()) ||
+                  p.sku.toLowerCase().includes(filter.toLowerCase()) ||
+                  p.children.some(
+                    (c) =>
+                      c.name.toLowerCase().includes(filter.toLowerCase()) ||
+                      c.sku.toLowerCase().includes(filter.toLowerCase()),
+                  ),
+              )}
+              orphans={orphans.filter(
+                (p) =>
+                  !filter ||
+                  p.name.toLowerCase().includes(filter.toLowerCase()) ||
+                  p.sku.toLowerCase().includes(filter.toLowerCase()),
+              )}
+              onEditParent={setEditingParent}
+              onDeleteParent={setConfirmDeleteTree}
+              onEditVariant={setEditingVariant}
+              onDeleteVariant={setConfirmDeleteVariant}
             />
           </div>
-          {/* Desktop table */}
           <div className="hidden lg:block">
             <ProductsTable
-              data={products}
+              parents={parents}
+              orphans={orphans}
               globalFilter={filter}
-              onRowClick={openDetail}
-              onEdit={openEdit}
-              onDelete={askDelete}
+              onEditParent={setEditingParent}
+              onDeleteParent={setConfirmDeleteTree}
+              onEditVariant={setEditingVariant}
+              onDeleteVariant={setConfirmDeleteVariant}
             />
           </div>
         </>
       )}
 
-      {/* Create / Edit dialog */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-2xl">
+      {/* Crear producto padre + variantes */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar producto" : "Nuevo producto"}</DialogTitle>
+            <DialogTitle>Nuevo producto</DialogTitle>
             <DialogDescription>
-              {editing ? "Actualiza los datos del producto." : "Registra un producto final."}
+              Selecciona base, colores, tallas y estampados para crear todas las variantes en bloque.
             </DialogDescription>
           </DialogHeader>
-          <ProductForm product={editing} onSuccess={() => setFormOpen(false)} />
+          <ProductForm onSuccess={() => setCreateOpen(false)} />
         </DialogContent>
       </Dialog>
 
-      {/* Detail drawer (desktop row click) */}
-      <Drawer open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
-        <DrawerContent>
-          <div className="mx-auto w-full max-w-2xl">
-            <DrawerHeader>
-              <DrawerTitle>{detail?.name}</DrawerTitle>
-              <DrawerDescription>SKU {detail?.sku}</DrawerDescription>
-            </DrawerHeader>
-            <div className="space-y-4 px-4 pb-8">
-              {detail && <ProductDetails product={detail} />}
-              {detail && (
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => openEdit(detail)}>
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 text-destructive hover:text-destructive"
-                    onClick={() => askDelete(detail)}
-                  >
-                    Eliminar
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      {/* Editar padre */}
+      <Dialog open={!!editingParent} onOpenChange={(o) => !o && setEditingParent(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Editar producto padre</DialogTitle>
+            <DialogDescription>{editingParent?.name}</DialogDescription>
+          </DialogHeader>
+          {editingParent && (
+            <ProductForm product={editingParent} onSuccess={() => setEditingParent(null)} />
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Confirm delete */}
-      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+      {/* Editar variante */}
+      <VariantEditDialog
+        variant={editingVariant}
+        open={!!editingVariant}
+        onOpenChange={(o) => !o && setEditingVariant(null)}
+      />
+
+      {/* Confirmar borrar variante */}
+      <AlertDialog
+        open={!!confirmDeleteVariant}
+        onOpenChange={(o) => !o && setConfirmDeleteVariant(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar producto</AlertDialogTitle>
+            <AlertDialogTitle>Eliminar variante</AlertDialogTitle>
             <AlertDialogDescription>
-              Vas a eliminar <strong>{confirmDelete?.name}</strong> ({confirmDelete?.sku}). Esta
-              acción no se puede deshacer.
+              Vas a eliminar <strong>{confirmDeleteVariant?.name}</strong> ({confirmDeleteVariant?.sku}).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDeleteVariant}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmar borrar padre + todas variantes */}
+      <AlertDialog
+        open={!!confirmDeleteTree}
+        onOpenChange={(o) => !o && setConfirmDeleteTree(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar producto y variantes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a eliminar <strong>{confirmDeleteTree?.name}</strong> y todas sus{" "}
+              <strong>{confirmDeleteTree?.children.length ?? 0} variantes</strong>. Esta acción no se
+              puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTree}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar todo
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,0 +1,68 @@
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { CheckCircle2, XCircle } from "lucide-react";
+
+export interface PreviewRow {
+  key: string;
+  sku: string;
+  name: string;
+  variantLabel: string;
+  available: boolean;
+}
+
+interface Props {
+  rows: PreviewRow[];
+}
+
+export function VariantPreviewTable({ rows }: Props) {
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+        Selecciona color, talla y al menos un estampado para ver las variantes.
+      </div>
+    );
+  }
+  const okCount = rows.filter((r) => r.available).length;
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">
+          Se crearán <span className="font-semibold text-foreground">{okCount}</span> variantes
+          {rows.length !== okCount && (
+            <span className="text-status-red"> · {rows.length - okCount} sin material disponible</span>
+          )}
+        </span>
+      </div>
+      <div className="rounded-md border bg-card max-h-72 overflow-auto">
+        <Table>
+          <TableHeader className="sticky top-0 bg-card z-10">
+            <TableRow>
+              <TableHead className="w-8"></TableHead>
+              <TableHead>SKU</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Material</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.key} className={!r.available ? "bg-status-red/5" : ""}>
+                <TableCell>
+                  {r.available ? (
+                    <CheckCircle2 className="h-4 w-4 text-status-green" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-status-red" />
+                  )}
+                </TableCell>
+                <TableCell className="font-mono text-xs">{r.sku}</TableCell>
+                <TableCell className="text-sm">{r.name}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {r.available ? r.variantLabel : <StatusBadge tone="red" label="Variante material no existe" />}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
