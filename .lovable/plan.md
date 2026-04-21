@@ -1,33 +1,61 @@
 
 
-## Plan: Tab "Disponibles" en Inventario
+## Plan: Estado "Pedido confirmado" previo en gestión COD
 
 ### Objetivo
-Añadir tabs en `/inventario` para alternar entre dos vistas:
-- **Productos** (actual): jerarquía padre → variantes con todas las acciones de gestión.
-- **Disponibles** (nueva): lista plana de variantes con stock > 0, solo lectura/consulta.
+Añadir un paso previo de confirmación de pedido en el flujo COD para órdenes provenientes de Shopify. Las órdenes manuales saltan este paso.
 
-### Cambios en `src/pages/Inventory.tsx`
+### Flujo nuevo
 
-**1. Envolver el contenido con `Tabs`** (`@/components/ui/tabs`):
-- Tab 1 — *"Productos"*: la vista actual sin cambios (KPIs + filtro + tabla padre/hijo + modales de creación/edición/borrado).
-- Tab 2 — *"Disponibles"*: nueva vista.
+**Manual (COD):** `Pendiente recaudo` → `Recaudo confirmado` (ingresa al dinero recaudado).
 
-**2. Vista "Disponibles"** — nuevo componente `src/features/inventory/AvailableVariantsList.tsx`:
-- Aplana `parents.flatMap(p => p.children)` + `orphans`, filtra por `stock > 0` y `active = true`.
-- Filtro por SKU/nombre (input propio).
-- Mini-KPIs arriba: *Variantes disponibles*, *Stock total*, *En aging*.
-- **Desktop (`lg:`)**: tabla con columnas SKU · Producto padre · Color · Talla · Estampado · Stock · Estado · Aging · Precio.
-- **Mobile**: tarjetas compactas (nombre, SKU, badges de stock/aging, precio).
-- Orden por defecto: stock descendente.
-- Sin acciones de edición/borrado — es una vista de consulta rápida (ej. para ventas/picking).
+**Shopify (COD):** `Pendiente confirmación` → `Pedido confirmado` → `Recaudo confirmado` (ingresa al dinero recaudado).
 
-**3. Persistencia del tab activo**: estado local `useState`, default `"productos"`.
+Solo cuando `cod_confirmed = true` (recaudo) el pedido suma al "dinero ingresado".
+
+### Cambio de schema (migración)
+
+Añadir a `orders`:
+- `order_confirmed boolean NOT NULL DEFAULT false` — marca si el pedido fue confirmado por el cliente (paso previo al recaudo).
+- `order_confirmed_at timestamptz NULL` — fecha de confirmación del pedido.
+- `confirmed_by_staff_id uuid NULL` — quién confirmó.
+
+Backfill: las órdenes existentes con `source = 'manual'` se marcan `order_confirmed = true` (saltan el paso). Las de `source = 'shopify'` quedan en `false` salvo que ya estén `cod_confirmed`, en cuyo caso también `true`.
+
+### Cambios en API (`src/features/cod/api.ts`)
+
+- Extender `CodOrder` con `source`, `order_confirmed`, `order_confirmed_at`, `confirmed_by_staff_id`.
+- Nuevo hook `useConfirmCodOrder()` — marca `order_confirmed = true`, setea `order_confirmed_at` y `confirmed_by_staff_id`.
+- `useConfirmCodReceipt()` (existente) — sigue marcando `cod_confirmed = true` y `cod_received_at`. Validación: solo permite si `order_confirmed = true` o `source = 'manual'`.
+
+### Cambios en `src/pages/Cod.tsx`
+
+**Tabs nuevos** (reemplazan los actuales):
+1. **Por confirmar** — `source = 'shopify'` AND `order_confirmed = false` AND `cod_confirmed = false`. Botón **"Confirmar pedido"**.
+2. **Por recaudar** — (`order_confirmed = true` OR `source = 'manual'`) AND `cod_confirmed = false`. Botón **"Confirmar recaudo"**.
+3. **Recaudados** — `cod_confirmed = true`. Solo lectura.
+4. **Todos** — vista completa con badges del estado actual.
+
+**KPIs ajustados:**
+- *Pendientes de confirmación* (Shopify por confirmar) — count + monto.
+- *Pendientes de recaudo* — count + monto.
+- *Dinero recaudado* — suma de `total` donde `cod_confirmed = true` (esto es el "dinero ingresado").
+- *Total COD* — count general.
+
+**Tarjeta de pedido:**
+- Badge de estado: `Pendiente confirmación` (rojo) / `Pedido confirmado` (amarillo) / `Recaudo confirmado` (verde).
+- Para Shopify sin confirmar: botón primario "Confirmar pedido".
+- Para confirmados (o manuales) sin recaudar: botón primario "Confirmar recaudo".
+- Para recaudados: muestra fecha de confirmación de pedido (si aplica) + fecha de recaudo + staff.
 
 ### Archivos
-- **Modificar**: `src/pages/Inventory.tsx` — envolver con `Tabs`, mover contenido actual al tab "Productos".
-- **Nuevo**: `src/features/inventory/AvailableVariantsList.tsx` — componente con filtro, KPIs, tabla desktop y tarjetas mobile.
+
+**Migración:** nueva — añade `order_confirmed`, `order_confirmed_at`, `confirmed_by_staff_id` + backfill.
+
+**Modificados:**
+- `src/features/cod/api.ts` — tipos extendidos + `useConfirmCodOrder`.
+- `src/pages/Cod.tsx` — nuevos tabs, KPIs, badges y botones por estado.
 
 ### Resultado
-En `/inventario` el usuario ve dos pestañas: **Productos** (gestión completa actual) y **Disponibles** (solo variantes con stock > 0, vista plana de consulta con filtros y semáforo de stock/aging).
+Pedidos COD desde Shopify pasan por dos clics: primero "Confirmar pedido" (cliente confirmó por WhatsApp/llamada), luego "Confirmar recaudo" cuando llega el dinero. Los manuales saltan directo al recaudo. El KPI "Dinero recaudado" solo cuenta pedidos con `cod_confirmed = true`.
 
