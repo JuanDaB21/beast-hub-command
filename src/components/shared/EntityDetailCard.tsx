@@ -59,13 +59,13 @@ export function EntityDetailCard({
       </Card>
 
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent>
-          <div className="mx-auto w-full max-w-2xl">
-            <DrawerHeader>
+        <DrawerContent className="h-[90vh] max-h-[90vh]">
+          <div className="mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden">
+            <DrawerHeader className="shrink-0">
               <DrawerTitle>{detailsTitle ?? title}</DrawerTitle>
               {detailsDescription && <DrawerDescription>{detailsDescription}</DrawerDescription>}
             </DrawerHeader>
-            <div className="px-4 pb-8">{details}</div>
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-8">{details}</div>
           </div>
         </DrawerContent>
       </Drawer>
