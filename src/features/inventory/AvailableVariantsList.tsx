@@ -106,8 +106,8 @@ export function AvailableVariantsList({ parents, orphans }: Props) {
                     </div>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <StatusBadge tone={stock.tone}>{stock.label}</StatusBadge>
-                    {aging && <StatusBadge tone="yellow">Aging</StatusBadge>}
+                    <StatusBadge tone={stock.tone} label={stock.label} />
+                    {aging && <StatusBadge tone="yellow" label="Aging" />}
                     {r.print_design && (
                       <Badge variant="outline" className="text-xs">
                         {r.print_design}
