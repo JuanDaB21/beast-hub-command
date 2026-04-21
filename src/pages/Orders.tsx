@@ -169,13 +169,15 @@ export default function Orders() {
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-3xl flex-col overflow-hidden p-0 sm:w-full">
-          <DialogHeader>
+          <DialogHeader className="border-b px-6 py-4">
             <DialogTitle>Nuevo pedido manual</DialogTitle>
             <DialogDescription>
               Registra los datos del cliente y agrega productos del catálogo.
             </DialogDescription>
           </DialogHeader>
-          <NewOrderForm onSuccess={() => setFormOpen(false)} />
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <NewOrderForm onSuccess={() => setFormOpen(false)} />
+          </div>
         </DialogContent>
       </Dialog>
 
