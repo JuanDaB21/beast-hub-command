@@ -4,7 +4,11 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import { authRouter } from './auth';
+import { authRouter, requireAuth } from './auth';
+import { errorHandler } from './util';
+import { catalogsRouter } from './routes/catalogs';
+import { suppliersRouter } from './routes/suppliers';
+import { rawMaterialsRouter } from './routes/raw-materials';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -23,6 +27,9 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRouter);
+app.use('/api/catalogs', requireAuth, catalogsRouter);
+app.use('/api/suppliers', requireAuth, suppliersRouter);
+app.use('/api/raw-materials', requireAuth, rawMaterialsRouter);
 
 // Serve SPA build in production: dist/ is the Vite output at repo root.
 // When compiled server runs from dist/server/, static files live at ../
@@ -33,6 +40,8 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(staticDir, 'index.html'));
   });
 }
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server listening on :${PORT}`);
