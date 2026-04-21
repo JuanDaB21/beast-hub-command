@@ -25,6 +25,7 @@ const SECTIONS: { label: string | null; slugs: string[] }[] = [
     slugs: ["inventario", "ordenes", "logistica", "devoluciones", "cod"],
   },
   { label: "Lotes y producción", slugs: ["produccion", "solicitudes"] },
+  { label: "Finanzas", slugs: ["finanzas"] },
   { label: "General", slugs: ["sourcing", "config", "alertas"] },
 ];
 
