@@ -1,6 +1,9 @@
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ORDER_STATUSES, PAYMENT_METHOD_LABEL, type OrderWithItems, type OrderStatus } from "./api";
+import { useGlobalConfigs } from "@/features/production/configApi";
 import { STATUS_LABEL, statusTone } from "./status";
 
 const currency = (n: number) =>
@@ -22,6 +26,15 @@ interface Props {
 }
 
 export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: Props) {
+  const { data: configs } = useGlobalConfigs();
+  const shopifyPct = Number(configs?.shopify_fee_percent ?? 0);
+  const gatewayPct = Number(configs?.gateway_fee_percent ?? 0);
+  const gatewayFixed = Number(configs?.gateway_fee_fixed ?? 0);
+  const isShopify = order.source === "shopify";
+  const totalNum = Number(order.total);
+  const shopifyFee = isShopify ? totalNum * (shopifyPct / 100) : 0;
+  const gatewayFee = isShopify ? totalNum * (gatewayPct / 100) + gatewayFixed : 0;
+  const netReceived = totalNum - shopifyFee - gatewayFee;
   return (
     <div className="space-y-4 text-sm">
       <div className="flex flex-wrap items-center gap-2">
