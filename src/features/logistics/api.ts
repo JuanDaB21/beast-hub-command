@@ -7,6 +7,7 @@ export interface ShipmentOrder extends OrderWithItems {
   shipped_at: string | null;
   delay_reason: string | null;
   shipping_cost: number;
+  customer_pays_shipping: boolean;
 }
 
 const QK = ["logistics-orders"] as const;

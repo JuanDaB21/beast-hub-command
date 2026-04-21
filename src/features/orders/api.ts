@@ -39,6 +39,7 @@ export interface Order {
   payment_method: PaymentMethod | null;
   total: number;
   shipping_cost: number;
+  customer_pays_shipping: boolean;
   tracking_number: string | null;
   created_at: string;
   updated_at: string;
@@ -94,6 +95,7 @@ export interface NewOrderInput {
   customer_name: string;
   customer_phone: string;
   is_cod: boolean;
+  customer_pays_shipping: boolean;
   status: OrderStatus;
   payment_method: PaymentMethod;
   items: NewOrderItemInput[];
@@ -123,6 +125,7 @@ export function useCreateManualOrder() {
           is_cod: input.is_cod,
           cod_confirmed: false,
           payment_method: input.payment_method,
+          customer_pays_shipping: input.customer_pays_shipping,
         })
         .select()
         .single();
