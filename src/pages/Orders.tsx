@@ -27,11 +27,14 @@ import {
   useDeleteOrder,
   useOrders,
   useUpdateOrderStatus,
+  type OrderStatus,
   type OrderWithItems,
 } from "@/features/orders/api";
 import { NewOrderForm } from "@/features/orders/NewOrderForm";
 import { OrdersBoard } from "@/features/orders/OrdersBoard";
 import { OrderDetails } from "@/features/orders/OrderDetails";
+import { ShipDialog } from "@/features/logistics/ShipDialog";
+import type { ShipmentOrder } from "@/features/logistics/api";
 import { toast } from "@/hooks/use-toast";
 
 const currency = (n: number) =>
@@ -46,6 +49,19 @@ export default function Orders() {
   const [filter, setFilter] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<OrderWithItems | null>(null);
+  const [shipTarget, setShipTarget] = useState<{
+    order: OrderWithItems;
+    targetStatus: "shipped" | "delivered";
+  } | null>(null);
+
+  const handleChangeStatus = async (id: string, status: OrderStatus) => {
+    try {
+      await updateStatus.mutateAsync({ id, status });
+      toast({ title: "Estado actualizado" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
+  };
 
   const filtered = useMemo(() => {
     const v = filter.trim().toLowerCase();
