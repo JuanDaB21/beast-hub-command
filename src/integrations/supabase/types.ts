@@ -229,9 +229,12 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_parent: boolean
           name: string
+          parent_id: string | null
           price: number
           print_color: string | null
+          print_design: string | null
           print_height_cm: number
           product_url: string | null
           safety_stock: number
@@ -248,9 +251,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_parent?: boolean
           name: string
+          parent_id?: string | null
           price?: number
           print_color?: string | null
+          print_design?: string | null
           print_height_cm?: number
           product_url?: string | null
           safety_stock?: number
@@ -267,9 +273,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_parent?: boolean
           name?: string
+          parent_id?: string | null
           price?: number
           print_color?: string | null
+          print_design?: string | null
           print_height_cm?: number
           product_url?: string | null
           safety_stock?: number
