@@ -125,26 +125,32 @@ export function FinanceLedgerTable({
                   >
                     {isIncome ? "+" : "−"} {fmt(Number(t.amount))}
                   </TableCell>
-                  <TableCell>
-                    {isManual && (
+                  <TableCell className="text-right">
+                    {isManual ? (
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           size="icon"
                           variant="ghost"
+                          className="h-8 w-8"
                           onClick={() => setEditTarget(t)}
                           aria-label="Editar"
+                          title="Editar"
                         >
-                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
                           onClick={() => setTarget(t)}
                           aria-label="Eliminar"
+                          title="Eliminar"
                         >
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
                 </TableRow>
