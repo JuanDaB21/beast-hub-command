@@ -40,6 +40,7 @@ export function NewOrderForm({ onSuccess }: Props) {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [isCod, setIsCod] = useState(false);
+  const [customerPaysShipping, setCustomerPaysShipping] = useState(false);
   const [status] = useState<OrderStatus>("pending");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
   const [items, setItems] = useState<DraftItem[]>([]);
@@ -104,6 +105,7 @@ export function NewOrderForm({ onSuccess }: Props) {
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
         is_cod: isCod,
+        customer_pays_shipping: customerPaysShipping,
         status,
         payment_method: paymentMethod,
         items: items.map(({ uid, ...rest }) => rest),
@@ -112,6 +114,7 @@ export function NewOrderForm({ onSuccess }: Props) {
       setCustomerName("");
       setCustomerPhone("");
       setIsCod(false);
+      setCustomerPaysShipping(false);
       setPaymentMethod("");
       setItems([]);
       onSuccess?.();
@@ -146,6 +149,14 @@ export function NewOrderForm({ onSuccess }: Props) {
           <p className="text-xs text-muted-foreground">Marcará el pedido para confirmación posterior.</p>
         </div>
         <Switch id="o-cod" checked={isCod} onCheckedChange={setIsCod} />
+      </div>
+
+      <div className="flex items-center justify-between rounded-md border p-3">
+        <div>
+          <Label htmlFor="o-cps" className="text-sm">El cliente asume el costo de envío</Label>
+          <p className="text-xs text-muted-foreground">No se sumará como gasto al despachar.</p>
+        </div>
+        <Switch id="o-cps" checked={customerPaysShipping} onCheckedChange={setCustomerPaysShipping} />
       </div>
 
       <div className="space-y-1.5">

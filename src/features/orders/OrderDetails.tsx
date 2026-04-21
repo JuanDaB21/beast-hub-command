@@ -35,6 +35,9 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
         {order.payment_method && (
           <StatusBadge tone="neutral" label={`Pago: ${PAYMENT_METHOD_LABEL[order.payment_method]}`} />
         )}
+        {order.customer_pays_shipping && (
+          <StatusBadge tone="neutral" label="Envío a cargo del cliente" />
+        )}
         <span className="ml-auto rounded-md bg-secondary px-2 py-0.5 text-xs uppercase text-secondary-foreground">
           {order.source}
         </span>
@@ -100,25 +103,36 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
                   {currency(Number(order.total))}
                 </td>
               </tr>
-              {Number(order.shipping_cost) > 0 && (
-                <>
-                  <tr className="border-t bg-muted/10">
-                    <td colSpan={3} className="px-3 py-1.5 text-right text-xs uppercase text-muted-foreground">
-                      Costo de envío
-                    </td>
-                    <td className="px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
-                      -{currency(Number(order.shipping_cost))}
-                    </td>
-                  </tr>
-                  <tr className="border-t bg-muted/30">
-                    <td colSpan={3} className="px-3 py-2 text-right text-xs uppercase text-muted-foreground">
-                      Total - envío
-                    </td>
-                    <td className="px-3 py-2 text-right text-sm font-semibold tabular-nums">
-                      {currency(Number(order.total) - Number(order.shipping_cost))}
-                    </td>
-                  </tr>
-                </>
+              {order.customer_pays_shipping ? (
+                <tr className="border-t bg-muted/10">
+                  <td colSpan={3} className="px-3 py-1.5 text-right text-xs uppercase text-muted-foreground">
+                    Envío
+                  </td>
+                  <td className="px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
+                    Pagado por el cliente
+                  </td>
+                </tr>
+              ) : (
+                Number(order.shipping_cost) > 0 && (
+                  <>
+                    <tr className="border-t bg-muted/10">
+                      <td colSpan={3} className="px-3 py-1.5 text-right text-xs uppercase text-muted-foreground">
+                        Costo de envío
+                      </td>
+                      <td className="px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
+                        -{currency(Number(order.shipping_cost))}
+                      </td>
+                    </tr>
+                    <tr className="border-t bg-muted/30">
+                      <td colSpan={3} className="px-3 py-2 text-right text-xs uppercase text-muted-foreground">
+                        Total - envío
+                      </td>
+                      <td className="px-3 py-2 text-right text-sm font-semibold tabular-nums">
+                        {currency(Number(order.total) - Number(order.shipping_cost))}
+                      </td>
+                    </tr>
+                  </>
+                )
               )}
             </tfoot>
           </table>

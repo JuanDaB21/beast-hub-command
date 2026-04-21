@@ -46,11 +46,19 @@ export function useMarkShipped() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, tracking_number, shipping_cost, delay_reason, target_status }: ShipPayload) => {
+      // Defensa: si el cliente paga el envío, forzar shipping_cost = 0
+      const { data: existing } = await supabase
+        .from("orders")
+        .select("customer_pays_shipping")
+        .eq("id", id)
+        .maybeSingle();
+      const finalCost = existing?.customer_pays_shipping ? 0 : shipping_cost;
+
       const { error } = await supabase
         .from("orders")
         .update({
           tracking_number,
-          shipping_cost,
+          shipping_cost: finalCost,
           shipped_at: new Date().toISOString(),
           status: target_status ?? "shipped",
           delay_reason: delay_reason ?? null,
@@ -77,9 +85,18 @@ export function useUpdateTracking() {
       tracking_number: string;
       shipping_cost?: number;
     }) => {
+      let costToSave = shipping_cost;
+      if (typeof costToSave === "number") {
+        const { data: existing } = await supabase
+          .from("orders")
+          .select("customer_pays_shipping")
+          .eq("id", id)
+          .maybeSingle();
+        if (existing?.customer_pays_shipping) costToSave = 0;
+      }
       const { error } =
-        typeof shipping_cost === "number"
-          ? await supabase.from("orders").update({ tracking_number, shipping_cost }).eq("id", id)
+        typeof costToSave === "number"
+          ? await supabase.from("orders").update({ tracking_number, shipping_cost: costToSave }).eq("id", id)
           : await supabase.from("orders").update({ tracking_number }).eq("id", id);
       if (error) throw error;
     },
@@ -94,9 +111,15 @@ export function useUpdateShippingCost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, shipping_cost }: { id: string; shipping_cost: number }) => {
+      const { data: existing } = await supabase
+        .from("orders")
+        .select("customer_pays_shipping")
+        .eq("id", id)
+        .maybeSingle();
+      const finalCost = existing?.customer_pays_shipping ? 0 : shipping_cost;
       const { error } = await supabase
         .from("orders")
-        .update({ shipping_cost })
+        .update({ shipping_cost: finalCost })
         .eq("id", id);
       if (error) throw error;
     },

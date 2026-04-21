@@ -83,11 +83,18 @@ function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: () => v
         </div>
       )}
 
-      {Number(order.shipping_cost) > 0 && (
+      {order.customer_pays_shipping ? (
         <div className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1 text-xs">
-          <span className="text-muted-foreground">Costo de envío</span>
-          <span className="tabular-nums font-medium">{currency(Number(order.shipping_cost))}</span>
+          <span className="text-muted-foreground">Envío</span>
+          <span className="font-medium">Cliente paga envío</span>
         </div>
+      ) : (
+        Number(order.shipping_cost) > 0 && (
+          <div className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1 text-xs">
+            <span className="text-muted-foreground">Costo de envío</span>
+            <span className="tabular-nums font-medium">{currency(Number(order.shipping_cost))}</span>
+          </div>
+        )
       )}
 
       {sla.tone === "red" && order.delay_reason && (

@@ -47,11 +47,13 @@ export function ShipDialog({ order, open, onOpenChange, targetStatus = "shipped"
     }
   }, [order]);
 
+  const customerPays = !!order?.customer_pays_shipping;
+
   const tentativeMargin = useMemo(() => {
     if (!order) return 0;
-    const cost = Number(shippingCost) || 0;
+    const cost = customerPays ? 0 : Number(shippingCost) || 0;
     return Number(order.total) - cost;
-  }, [order, shippingCost]);
+  }, [order, shippingCost, customerPays]);
 
   if (!order) return null;
 
@@ -65,14 +67,19 @@ export function ShipDialog({ order, open, onOpenChange, targetStatus = "shipped"
       toast({ title: "Falta la guía", description: "Captura el tracking number.", variant: "destructive" });
       return;
     }
-    const costNum = Number(shippingCost);
-    if (shippingCost === "" || Number.isNaN(costNum) || costNum < 0) {
-      toast({
-        title: "Costo de envío inválido",
-        description: "Captura un costo de envío válido (≥ 0).",
-        variant: "destructive",
-      });
-      return;
+    let costNum = 0;
+    if (customerPays) {
+      costNum = 0;
+    } else {
+      costNum = Number(shippingCost);
+      if (shippingCost === "" || Number.isNaN(costNum) || costNum < 0) {
+        toast({
+          title: "Costo de envío inválido",
+          description: "Captura un costo de envío válido (≥ 0).",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     if (requiresReason && reason.trim().length < 5 && !isShipped) {
       toast({
@@ -147,22 +154,31 @@ export function ShipDialog({ order, open, onOpenChange, targetStatus = "shipped"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="shipping_cost">Costo de envío (COP) *</Label>
-            <Input
-              id="shipping_cost"
-              type="number"
-              min={0}
-              step="100"
-              inputMode="numeric"
-              value={shippingCost}
-              onChange={(e) => setShippingCost(e.target.value)}
-              placeholder="Ej. 12000"
-            />
-            <p className="text-xs text-muted-foreground">
-              Se restará del margen del pedido.
-            </p>
-          </div>
+          {customerPays ? (
+            <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs">
+              <div className="font-medium">Envío pagado por el cliente</div>
+              <p className="text-muted-foreground">
+                No se registrará costo de envío para este pedido.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="shipping_cost">Costo de envío (COP) *</Label>
+              <Input
+                id="shipping_cost"
+                type="number"
+                min={0}
+                step="100"
+                inputMode="numeric"
+                value={shippingCost}
+                onChange={(e) => setShippingCost(e.target.value)}
+                placeholder="Ej. 12000"
+              />
+              <p className="text-xs text-muted-foreground">
+                Se restará del margen del pedido.
+              </p>
+            </div>
+          )}
 
           <div className="rounded-md border bg-muted/30 p-2 text-xs">
             <div className="flex justify-between">
@@ -171,7 +187,9 @@ export function ShipDialog({ order, open, onOpenChange, targetStatus = "shipped"
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Costo de envío</span>
-              <span className="tabular-nums font-medium">-{currency(Number(shippingCost) || 0)}</span>
+              <span className="tabular-nums font-medium">
+                {customerPays ? "Pagado por el cliente" : `-${currency(Number(shippingCost) || 0)}`}
+              </span>
             </div>
             <div className="mt-1 flex justify-between border-t pt-1">
               <span className="text-muted-foreground">Total - envío</span>
