@@ -188,6 +188,15 @@ export function FinanceLedgerTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {editTarget && (
+        <TransactionDialog
+          mode={editTarget.transaction_type}
+          open={!!editTarget}
+          onOpenChange={(o) => !o && setEditTarget(null)}
+          transaction={editTarget}
+        />
+      )}
     </>
   );
 }
