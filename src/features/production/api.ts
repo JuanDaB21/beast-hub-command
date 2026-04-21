@@ -30,6 +30,7 @@ export interface WorkOrderItemRow {
   product_id: string;
   quantity_to_produce: number;
   is_dtf_added: boolean;
+  is_completed: boolean;
   product: { id: string; sku: string; name: string } | null;
 }
 
@@ -66,7 +67,7 @@ export function useWorkOrders() {
         .select(`
           *,
           items:work_order_items (
-            id, work_order_id, product_id, quantity_to_produce, is_dtf_added,
+            id, work_order_id, product_id, quantity_to_produce, is_dtf_added, is_completed,
             product:products ( id, sku, name )
           )
         `)
@@ -247,6 +248,20 @@ export function useToggleWorkOrderItemDtf() {
       const { error } = await supabase
         .from("work_order_items")
         .update({ is_dtf_added })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_WO }),
+  });
+}
+
+export function useToggleWorkOrderItemCompleted() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, is_completed }: { id: string; is_completed: boolean }) => {
+      const { error } = await supabase
+        .from("work_order_items")
+        .update({ is_completed })
         .eq("id", id);
       if (error) throw error;
     },
