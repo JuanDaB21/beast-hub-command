@@ -7,7 +7,11 @@ export interface CodOrder {
   customer_name: string;
   customer_phone: string;
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  source: "shopify" | "manual";
   is_cod: boolean;
+  order_confirmed: boolean;
+  order_confirmed_at: string | null;
+  confirmed_by_staff_id: string | null;
   cod_confirmed: boolean;
   total: number;
   carrier: string | null;
@@ -27,7 +31,7 @@ export function useCodOrders() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id, order_number, customer_name, customer_phone, status, is_cod, cod_confirmed, total, carrier, tracking_number, shipped_at, cod_received_at, received_by_staff_id, created_at"
+          "id, order_number, customer_name, customer_phone, status, source, is_cod, order_confirmed, order_confirmed_at, confirmed_by_staff_id, cod_confirmed, total, carrier, tracking_number, shipped_at, cod_received_at, received_by_staff_id, created_at"
         )
         .eq("is_cod", true)
         .order("created_at", { ascending: false });
@@ -37,10 +41,41 @@ export function useCodOrders() {
   });
 }
 
+export function useConfirmCodOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const staffId = userData?.user?.id ?? null;
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          order_confirmed: true,
+          order_confirmed_at: new Date().toISOString(),
+          confirmed_by_staff_id: staffId,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_COD }),
+  });
+}
+
 export function useConfirmCodReceipt() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      const { data: order, error: fetchErr } = await supabase
+        .from("orders")
+        .select("source, order_confirmed")
+        .eq("id", id)
+        .maybeSingle();
+      if (fetchErr) throw fetchErr;
+      if (!order) throw new Error("Pedido no encontrado");
+      if (order.source === "shopify" && !order.order_confirmed) {
+        throw new Error("Debes confirmar el pedido antes de registrar el recaudo");
+      }
+
       const { data: userData } = await supabase.auth.getUser();
       const staffId = userData?.user?.id ?? null;
       const { error } = await supabase
