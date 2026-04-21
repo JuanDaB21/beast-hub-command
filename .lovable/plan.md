@@ -1,67 +1,92 @@
 
 
-## Plan: Cliente asume costo de envío en pedidos manuales
+## Plan: Refactor de Configuración + FinOps (libro mayor, RMA financiero, COD, simulador fiscal)
 
-### Objetivo
-Permitir marcar al crear un pedido manual que **el cliente asume el costo de envío**. Esos pedidos no requieren capturar costo de envío al despachar y no descuentan margen en la lógica de ingresos.
+### Tarea 1 — Refactor del módulo de Configuración
 
-### Cambio de schema (migración)
+Convertir `/configuracion` (`src/pages/Config.tsx`) en un panel con `Tabs` (ShadCN). Cada tab usa `Card`s para agrupar secciones.
 
-Añadir a `orders`:
-- `customer_pays_shipping boolean NOT NULL DEFAULT false`.
+- **Tab 1 · Usuarios (Staff)** → mover el listado y diálogos actuales (`NewStaffDialog`, `EditStaffDialog`).
+- **Tab 2 · Costos de Producción** → renderiza `<PrintingConfigPanel />` (ya existente). En `src/pages/Production.tsx` se elimina la pestaña "Configuración de Estampado" (queda solo Lotes y Recetas).
+- **Tab 3 · Comisiones y Pasarelas** → inputs para `shopify_fee_percent`, `gateway_fee_percent`, `gateway_fee_fixed`, `cod_transport_fee_percent`. Cada label con `Tooltip` explicando la aplicación.
+- **Tab 4 · Proyección de Impuestos** → inputs para `estimated_iva_percent`, `estimated_retention_percent`. Encima de los inputs, **Card "Simulador Fiscal"** con: ingresos brutos del mes (suma de `orders.total` con `status != cancelled` del mes corriente), IVA estimado, retención estimada, y leyenda gris *"Estos valores son proyecciones informativas para futura formalización."*
 
-Backfill = `false` para pedidos existentes (mantiene comportamiento actual: el negocio asume el envío).
+**API extension** — `src/features/production/configApi.ts`:
+- Ampliar `GlobalConfigId` con: `printing_cost_per_meter | ironing_cost | shopify_fee_percent | gateway_fee_percent | gateway_fee_fixed | cod_transport_fee_percent | estimated_iva_percent | estimated_retention_percent`.
+- `useUpdateGlobalConfig` ya hace upsert genérico, sirve para todos.
+- Nuevo helper `useGrossRevenueCurrentMonth()` (select sum de `orders` del mes).
 
-### Cambios en API
+**Nueva carpeta** `src/features/config/` con componentes:
+- `StaffPanel.tsx` (extraído del actual Config).
+- `CommissionsPanel.tsx`.
+- `TaxesPanel.tsx` (incluye `FiscalSimulatorCard`).
 
-**`src/features/orders/api.ts`:**
-- Extender `Order` y `OrderWithItems` con `customer_pays_shipping: boolean`.
-- Extender `NewOrderInput` con `customer_pays_shipping: boolean`.
-- `useCreateManualOrder()` envía el flag al insertar.
+### Tarea 2 — RMA con impacto financiero
 
-**`src/features/logistics/api.ts`:**
-- Extender `ShipmentOrder` con `customer_pays_shipping: boolean`.
-- `useMarkShipped` / `useUpdateShippingCost`: si `customer_pays_shipping = true`, forzar `shipping_cost = 0` al guardar (defensa en profundidad).
+**Schema (migración):** ya añadido en migración previa (`returns.company_assumes_shipping`, `returns.return_shipping_cost`).
 
-**`src/features/bi/api.ts` — `useBiData`:**
-- Traer `customer_pays_shipping` en el select de orders.
-- Al acumular `shippingCost`, sumar 0 cuando `customer_pays_shipping = true`.
-- Mismo tratamiento en `monthlyClosure`.
+**`src/features/returns/api.ts`:**
+- Extender `ReturnRow` con `company_assumes_shipping: boolean`, `return_shipping_cost: number`.
+- Extender `product` select con `cost`.
+- Modificar `useResolveReturn`:
+  - Aceptar `company_assumes_shipping`, `return_shipping_cost`, `product_cost` en el input.
+  - Update de `returns` incluye `company_assumes_shipping` y `return_shipping_cost`.
+  - Tras resolver, insertar en `financial_transactions`:
+    - Si `resolution = 'scrapped'` y hay `product_cost > 0`:
+      `{ transaction_type: 'expense', amount: product_cost, category: 'Pérdida por Merma', reference_type: 'return', reference_id, description: 'Merma producto X · pedido Y' }`.
+    - Si `company_assumes_shipping = true` y `return_shipping_cost > 0`:
+      `{ transaction_type: 'expense', amount: return_shipping_cost, category: 'Logística RMA', reference_type: 'return', reference_id, description: 'Flete devolución pedido Y' }`.
 
-### Cambios en UI
+**`src/features/returns/ResolveReturnDialog.tsx`:**
+- Nuevo `Switch` *"¿Asumimos el costo de envío?"*. Si on, mostrar `Input` numérico para `return_shipping_cost`.
+- Pasar ambos al mutation; pasar también `product_cost = ret.product?.cost ?? 0`.
+- Toast informativo con resumen de impacto financiero (merma + flete asumido).
+
+### Tarea 3 — Lógica COD y Pasarelas
 
 **`src/features/orders/NewOrderForm.tsx`:**
-- Nuevo `Switch` debajo del de COD: *"El cliente asume el costo de envío"* con texto auxiliar *"No se sumará como gasto al despachar."*.
-- Estado `customerPaysShipping`. Pasarlo al mutation.
+- Cuando `isCod = true`, leer `cod_transport_fee_percent` (vía `useGlobalConfigs`) y mostrar nuevo bloque de resumen:
+  - Subtotal (suma items)
+  - Comisión transportadora COD (`subtotal × cod_transport_fee_percent / 100`) — con `Tooltip` *"Esta comisión la cobra la transportadora al cliente en envíos contra entrega"*.
+  - **Total a cobrar al cliente** = subtotal + comisión COD.
+- Esa comisión se inyecta como **una línea adicional virtual** en el insert: opción elegida → enviar `unit_price` de los items tal cual; el surcharge se suma directo sobre `orders.total` mediante un trigger lógico en cliente: insertar una línea `order_items` adicional con `product_id = null`, `quantity = 1`, `unit_price = comisión`, descripción a través de un campo? **Mejor opción**: dado que `recalc_order_total` recalcula `total = SUM(qty × unit_price)`, añadimos la línea con `product_id = null` y `unit_price = comisión` para que el total quede correcto sin tocar el trigger ni schema.
+  - Validación: solo cuando `is_cod = true` y comisión > 0.
+- En `OrderDetails.tsx`, las líneas con `product = null` se mostrarán como *"Comisión COD transportadora"*.
 
-**`src/features/logistics/ShipDialog.tsx`:**
-- Si `order.customer_pays_shipping === true`:
-  - Ocultar el input de costo de envío y mostrar leyenda *"El cliente asume el envío"*.
-  - No exigir el campo; enviar `shipping_cost = 0`.
-- En el resumen del diálogo, mostrar *"Envío pagado por el cliente"* en lugar del costo.
+**Órdenes Shopify (solo lectura) — `src/features/orders/OrderDetails.tsx`:**
+- Si `order.source === 'shopify'`, mostrar Card "Comisiones estimadas":
+  - Comisión Shopify = `total × shopify_fee_percent / 100`.
+  - Comisión Pasarela = `total × gateway_fee_percent / 100 + gateway_fee_fixed`.
+  - **Neto estimado a recibir** = `total − ambas comisiones`.
+- Cada concepto con `Tooltip` y leyenda *"Cálculo informativo basado en configuración general."*.
 
-**`src/features/orders/OrderDetails.tsx`:**
-- Cuando `customer_pays_shipping = true`: mostrar línea/badge *"Envío a cargo del cliente"* y omitir el descuento del envío en el margen visual.
+### Tarea 4 — Libro Mayor (financial_transactions)
 
-**`src/features/logistics/FulfillmentBoard.tsx`:**
-- En la tarjeta, mostrar etiqueta *"Cliente paga envío"* cuando aplique; no mostrar costo de envío.
+**Nuevo módulo** `src/features/finance/api.ts`:
+- `useCreateTransaction()` — insert genérico en `financial_transactions`.
+- Tipo `FinancialTransactionInput`.
 
-**Dashboard (`src/pages/Index.tsx`) y `MonthlyClosureTable.tsx`:**
-- Sin cambios visuales; los KPIs de "Costos de envío" y margen reflejan el cambio automáticamente vía `useBiData`.
+Usado por `useResolveReturn` (Tarea 2). Preparado para consumirse desde otros flujos a futuro.
 
 ### Archivos
 
-**Migración nueva:** añade `customer_pays_shipping boolean NOT NULL DEFAULT false` a `orders`.
+**Nuevos:**
+- `src/features/finance/api.ts`
+- `src/features/config/StaffPanel.tsx`
+- `src/features/config/CommissionsPanel.tsx`
+- `src/features/config/TaxesPanel.tsx`
+- `src/features/config/FiscalSimulatorCard.tsx`
 
 **Modificados:**
-- `src/features/orders/api.ts`
-- `src/features/orders/NewOrderForm.tsx`
-- `src/features/orders/OrderDetails.tsx`
-- `src/features/logistics/api.ts`
-- `src/features/logistics/ShipDialog.tsx`
-- `src/features/logistics/FulfillmentBoard.tsx`
-- `src/features/bi/api.ts`
+- `src/pages/Config.tsx` — Tabs container.
+- `src/pages/Production.tsx` — quitar tab "Configuración de Estampado".
+- `src/features/production/configApi.ts` — ampliar tipos + helper de ingresos del mes.
+- `src/features/returns/api.ts` — campos financieros + creación de transacciones.
+- `src/features/returns/ResolveReturnDialog.tsx` — switch + input flete.
+- `src/features/orders/NewOrderForm.tsx` — cálculo COD + línea de comisión.
+- `src/features/orders/OrderDetails.tsx` — Card de comisiones para Shopify; mostrar línea de comisión COD.
 
 ### Resultado
-Al crear un pedido manual, el operador puede marcar que el cliente asume el envío. Esos pedidos saltan la captura del costo de envío al despachar y no se contabilizan como gasto en el dashboard ni en el cierre mensual. Pedidos sin el flag mantienen el flujo actual.
+
+Configuración pasa a ser un panel unificado con cuatro pestañas. El FinOps queda activo: cada merma y cada flete asumido en RMA se asienta en el libro mayor; los pedidos COD muestran y cobran la comisión de la transportadora; los pedidos de Shopify revelan el neto real estimado; y un simulador fiscal proyecta IVA y retención del mes corriente.
 
