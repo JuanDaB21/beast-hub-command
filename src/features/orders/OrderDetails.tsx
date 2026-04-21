@@ -90,21 +90,26 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
                   </td>
                 </tr>
               ) : (
-                order.items.map((it) => (
-                  <tr key={it.id} className="border-t">
-                    <td className="px-3 py-2">
-                      <div className="font-medium">{it.product?.name ?? "Producto eliminado"}</div>
-                      {it.product?.sku && (
-                        <div className="font-mono text-xs text-muted-foreground">{it.product.sku}</div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {currency(it.quantity * Number(it.unit_price))}
-                    </td>
-                  </tr>
-                ))
+                order.items.map((it) => {
+                  const isCodFee = !it.product_id && !it.product;
+                  return (
+                    <tr key={it.id} className="border-t">
+                      <td className="px-3 py-2">
+                        <div className="font-medium">
+                          {isCodFee ? "Comisión COD transportadora" : it.product?.name ?? "Producto eliminado"}
+                        </div>
+                        {it.product?.sku && (
+                          <div className="font-mono text-xs text-muted-foreground">{it.product.sku}</div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {currency(it.quantity * Number(it.unit_price))}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
             <tfoot>
