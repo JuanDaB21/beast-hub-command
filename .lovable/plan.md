@@ -1,72 +1,64 @@
 
 
-## Plan: Costo de envío por pedido + impacto en rentabilidad
+## Plan: Drag & drop de órdenes en el board + flujo de despacho integrado
 
 ### Objetivo
-Capturar el **costo de envío** al despachar un pedido y restarlo de la rentabilidad de la orden (margen = total − COGS − costo de envío).
+Permitir mover tarjetas de pedido entre columnas del board de Órdenes con drag & drop. Al mover a **Enviado** o **Entregado** desde un estado anterior, se abre el modal de **Despachar pedido** (guía + costo de envío) y solo si se completa se aplica el cambio de estado.
 
-### Cambio de schema (migración)
+### Comportamiento
 
-Añadir a `orders`:
-- `shipping_cost numeric NOT NULL DEFAULT 0` — costo de envío asociado a la orden (lo paga el negocio, reduce el margen).
+- **Transiciones libres** entre `pending`, `in_production`, `ready_to_ship` (todas vía `useUpdateOrderStatus`).
+- **Transición a `shipped` o `delivered`** desde un estado donde el pedido aún no tiene `tracking_number`:
+  - Abre `ShipDialog` precargado con la orden.
+  - Si la orden ya tiene `tracking_number` (re-envío), aplica el cambio directo (no re-pide guía).
+  - Si el usuario cancela el diálogo, la tarjeta vuelve a su columna original (no se aplica el cambio).
+  - Al confirmar el `ShipDialog` con guía + costo de envío, además del `shipped_at`/`tracking_number`/`shipping_cost` que ya guarda, se actualiza `status` al destino (`shipped` o `delivered`).
+- **Transición desde `shipped`/`delivered` hacia atrás**: permitida, solo cambia status.
+- **Cancelled**: drop permitido desde cualquier columna; sale por update simple.
 
-Sin trigger adicional: el campo es numérico simple, no requiere validación de dominio. Backfill = 0 para pedidos existentes.
+### Cambios técnicos
 
-### Cambios en API
+**Librería:** usar `@dnd-kit/core` + `@dnd-kit/sortable` (ligero, accesible, ya común en stack React). Si no está instalado, se añade.
 
-**`src/features/logistics/api.ts`:**
-- Extender `ShipmentOrder` con `shipping_cost: number`.
-- Extender `ShipPayload` con `shipping_cost: number`.
-- `useMarkShipped()` envía `shipping_cost` en el `update`.
-- Nuevo hook `useUpdateShippingCost()` para editar el costo después (cuando ya está enviado).
-
-**`src/features/orders/api.ts`:**
-- Extender `Order` y `OrderWithItems` con `shipping_cost: number`.
-
-**`src/features/bi/api.ts`:**
-- En `useBiData`, traer `shipping_cost` en el select de orders.
-- Nuevo acumulador `shippingCost` durante el loop de `validOrders`.
-- `margin = revenue − cogs − shippingCost`.
-- `marginPct` recalculado con el nuevo margen.
-- En `monthlyClosure`, añadir `shipping` al bucket y restarlo del `margin` mensual.
-- Exponer `shippingCost` en `BiData` para mostrarlo como KPI opcional.
-
-### Cambios en UI
+**`src/features/logistics/api.ts` — `useMarkShipped`:**
+- Aceptar `target_status?: 'shipped' | 'delivered'` opcional (default `shipped`) para que el mismo flujo sirva al despachar desde el board de órdenes hacia "Entregado" directo.
+- Update incluye `status = target_status`.
 
 **`src/features/logistics/ShipDialog.tsx`:**
-- Nuevo `Input type="number"` *"Costo de envío (COP)"* requerido (≥ 0). Estado `shippingCost`.
-- Validación: número válido, no negativo. Pre-llenar con valor actual si ya existe.
-- Pasar `shipping_cost` al `useMarkShipped` / `useUpdateShippingCost` según corresponda.
-- Mostrar en el resumen del diálogo: total pedido, COGS estimado (si disponible) y margen tentativo (informativo, no bloqueante).
+- Aceptar prop opcional `targetStatus?: 'shipped' | 'delivered'` y `onCancel?: () => void` (para revertir el optimistic en el board).
+- Pasar `target_status` al mutation.
 
-**`src/features/logistics/FulfillmentBoard.tsx`:**
-- En `ShipmentCard`, mostrar el `shipping_cost` cuando exista.
+**`src/features/orders/OrdersBoard.tsx`:**
+- Envolver con `DndContext` (sensors: pointer + keyboard).
+- Cada columna = `Droppable` (id = status). Cada `OrderCard` = `Draggable` (id = order.id).
+- Mantener `EntityDetailCard` clickeable: drag se activa con `activationConstraint: { distance: 6 }` para no chocar con el click que abre el detalle.
+- Estilos: card semi-transparente al arrastrar, columna destino con highlight (`ring-2 ring-primary/40`).
+- `onDragEnd`:
+  - Si `over.id === active.data.status` → no-op.
+  - Si destino ∈ {`shipped`,`delivered`} y la orden no tiene `tracking_number` → notificar al padre (`onRequestShip(order, targetStatus)`).
+  - En otro caso → `onChangeStatus(order.id, targetStatus)`.
+- Nuevas props: `onChangeStatus(id, status)` y `onRequestShip(order, status)`. (El `renderDetails` actual queda igual.)
 
-**`src/features/orders/OrderDetails.tsx`:**
-- Línea informativa: *Costo de envío: $X* (cuando > 0).
-- Línea de margen: *Rentabilidad: total − COGS − envío*.
+**`src/pages/Orders.tsx`:**
+- Estado nuevo `shipTarget: { order, targetStatus } | null`.
+- `OrdersBoard` recibe:
+  - `onChangeStatus`: llama a `updateStatus.mutateAsync({ id, status })` con toast.
+  - `onRequestShip`: setea `shipTarget`.
+- Renderizar `ShipDialog` (importado de logistics) controlado por `shipTarget`, pasando `order`, `targetStatus`, `open`, `onOpenChange`. Al cerrar sin éxito, simplemente se descarta (no hubo update, no hay nada que revertir).
 
-**`src/pages/Index.tsx` (dashboard):**
-- KPI nuevo *"Costos de envío"* junto a COGS.
-- Margen ya reflejará el nuevo cálculo automáticamente vía `useBiData`.
-
-**`src/features/bi/MonthlyClosureTable.tsx`:**
-- Nueva columna *"Envíos"* entre COGS y Margen.
+**Móvil:**
+- DnD funciona con touch (PointerSensor cubre touch). En pantallas pequeñas el board ya hace scroll horizontal; mantener.
 
 ### Archivos
 
-**Migración nueva:** `ALTER TABLE orders ADD COLUMN shipping_cost numeric NOT NULL DEFAULT 0`.
-
 **Modificados:**
-- `src/features/logistics/api.ts` — tipos + `shipping_cost` en mutaciones + hook de update.
-- `src/features/logistics/ShipDialog.tsx` — input requerido de costo de envío.
-- `src/features/logistics/FulfillmentBoard.tsx` — mostrar costo en tarjeta.
-- `src/features/orders/api.ts` — tipo extendido.
-- `src/features/orders/OrderDetails.tsx` — mostrar envío y margen por orden.
-- `src/features/bi/api.ts` — incluir `shipping_cost` en agregaciones, restar del margen.
-- `src/features/bi/MonthlyClosureTable.tsx` — columna de envíos.
-- `src/pages/Index.tsx` — KPI de costos de envío.
+- `src/features/orders/OrdersBoard.tsx` — DnD context, droppables, draggables, callbacks.
+- `src/pages/Orders.tsx` — manejar `onChangeStatus`, `onRequestShip`, montar `ShipDialog`.
+- `src/features/logistics/ShipDialog.tsx` — aceptar `targetStatus` y propagarlo.
+- `src/features/logistics/api.ts` — `useMarkShipped` acepta `target_status` opcional.
+
+**Dependencia nueva (si no existe):** `@dnd-kit/core`.
 
 ### Resultado
-Al despachar un pedido el operador captura el costo de envío junto con la guía. Ese valor se guarda en la orden, se muestra en el detalle, y reduce el margen tanto a nivel de orden como en los KPIs y cierre mensual del dashboard. La fórmula de rentabilidad pasa a ser **total − COGS − envío**, manteniendo toda la lógica consistente entre `orders`, `order_items`, `product_materials` y `raw_materials`.
+En `/pedidos` el usuario arrastra tarjetas entre columnas para cambiar el estado. Mover a **Enviado** o **Entregado** sin guía abre el modal de despacho; sin guía + costo de envío no se aplica el cambio. Cualquier otra transición se aplica al instante con toast de confirmación.
 
