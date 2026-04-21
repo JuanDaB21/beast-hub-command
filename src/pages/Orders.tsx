@@ -168,7 +168,7 @@ export default function Orders() {
       />
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-3xl flex-col overflow-hidden p-0 sm:w-full">
           <DialogHeader>
             <DialogTitle>Nuevo pedido manual</DialogTitle>
             <DialogDescription>
