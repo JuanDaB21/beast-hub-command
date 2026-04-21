@@ -157,6 +157,40 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
         </div>
       </div>
 
+      {isShopify && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-1.5">
+              Comisiones estimadas
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  Cálculo informativo basado en configuración general.
+                </TooltipContent>
+              </Tooltip>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1.5 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Comisión Shopify ({shopifyPct}%)</span>
+              <span className="tabular-nums">-{currency(shopifyFee)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                Comisión pasarela ({gatewayPct}% + {currency(gatewayFixed)})
+              </span>
+              <span className="tabular-nums">-{currency(gatewayFee)}</span>
+            </div>
+            <div className="flex items-center justify-between border-t pt-1.5 font-medium">
+              <span>Neto estimado a recibir</span>
+              <span className="tabular-nums">{currency(netReceived)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
           <div className="text-xs uppercase text-muted-foreground">Cambiar estado</div>
