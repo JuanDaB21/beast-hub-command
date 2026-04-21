@@ -75,9 +75,10 @@ export function useUpdateTracking() {
       tracking_number: string;
       shipping_cost?: number;
     }) => {
-      const update: Record<string, unknown> = { tracking_number };
-      if (typeof shipping_cost === "number") update.shipping_cost = shipping_cost;
-      const { error } = await supabase.from("orders").update(update).eq("id", id);
+      const { error } =
+        typeof shipping_cost === "number"
+          ? await supabase.from("orders").update({ tracking_number, shipping_cost }).eq("id", id)
+          : await supabase.from("orders").update({ tracking_number }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
