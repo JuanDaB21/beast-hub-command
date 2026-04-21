@@ -254,9 +254,31 @@ export function NewOrderForm({ onSuccess }: Props) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-md bg-muted/40 p-3">
-        <span className="text-sm text-muted-foreground">Total estimado</span>
-        <span className="text-lg font-semibold tabular-nums">{currency(total)}</span>
+      <div className="space-y-1 rounded-md bg-muted/40 p-3">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Subtotal productos</span>
+          <span className="tabular-nums">{currency(subtotal)}</span>
+        </div>
+        {isCod && codSurcharge > 0 && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              Comisión transportadora COD ({codFeePct}%)
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  Esta comisión la cobra la transportadora al cliente en envíos contra entrega.
+                </TooltipContent>
+              </Tooltip>
+            </span>
+            <span className="tabular-nums">{currency(codSurcharge)}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between border-t pt-2">
+          <span className="text-sm font-medium">{isCod ? "Total a cobrar al cliente" : "Total estimado"}</span>
+          <span className="text-lg font-semibold tabular-nums">{currency(total)}</span>
+        </div>
       </div>
 
       <Button type="submit" disabled={create.isPending} className="w-full sm:w-auto">
