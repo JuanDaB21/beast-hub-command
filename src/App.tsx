@@ -18,6 +18,7 @@ import SupplierPortal from "./pages/SupplierPortal.tsx";
 import ModulePlaceholder from "./pages/ModulePlaceholder.tsx";
 import Cod from "./pages/Cod.tsx";
 import Config from "./pages/Config.tsx";
+import Finance from "./pages/Finance.tsx";
 import Auth from "./pages/Auth.tsx";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/almacen" element={protect(<ModulePlaceholder slug="almacen" />)} />
             <Route path="/alertas" element={protect(<ModulePlaceholder slug="alertas" />)} />
             <Route path="/cod" element={protect(<Cod />)} />
+            <Route path="/finanzas" element={protect(<Finance />)} />
             <Route path="/analitica" element={protect(<Index />)} />
             <Route path="/config" element={protect(<Config />)} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

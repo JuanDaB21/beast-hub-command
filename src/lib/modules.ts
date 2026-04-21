@@ -12,6 +12,7 @@ import {
   Truck as TruckIcon,
   Undo2,
   Users,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,5 +37,6 @@ export const MODULES: ModuleDef[] = [
   { id: 6, slug: "solicitudes", path: "/solicitudes", title: "Solicitudes a Proveedor", short: "Solicitudes", icon: Send },
   { id: 7, slug: "alertas", path: "/alertas", title: "Módulo 7 · Alertas", short: "Alertas", icon: AlertTriangle },
   { id: 8, slug: "cod", path: "/cod", title: "Gestión COD · Recaudo", short: "COD", icon: PhoneCall },
+  { id: 13, slug: "finanzas", path: "/finanzas", title: "Libro Mayor · Finanzas", short: "Finanzas", icon: BookOpen },
   { id: 10, slug: "config", path: "/config", title: "Configuración · Staff", short: "Configuración", icon: Users },
 ];
