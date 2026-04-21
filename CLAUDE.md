@@ -53,6 +53,7 @@ Crear archivos en `server/routes/`:
 - [ ] `cod.ts` — confirmación COD
 - [ ] `staff.ts` — gestión de staff/profiles
 - [ ] `bi.ts` — queries de analytics/business intelligence
+- [ ] `finance.ts` — transacciones financieras (`financial_transactions`)
 - [ ] `supplier-portal.ts` — endpoint público por token (reemplaza Edge Function de Supabase)
 - [ ] `config.ts` — `global_configs` CRUD
 - [ ] `catalogs.ts` — categories, subcategories, colors, sizes
@@ -91,14 +92,17 @@ Configurar en Railway las siguientes variables:
   - Agrega `Authorization` header desde localStorage (JWT)
   - Maneja errores uniformemente
 
-### Tarea 3.2: Reemplazar AuthProvider
+### Tarea 3.2: Reemplazar AuthProvider y página Auth
 - [ ] Modificar `src/features/auth/AuthProvider.tsx`:
   - Eliminar imports de `@supabase/supabase-js`
   - Login via `POST /api/auth/login`
   - Persistir JWT en `localStorage`
   - `getSession` via `GET /api/auth/me` al cargar
+- [ ] Modificar `src/pages/Auth.tsx`:
+  - Eliminar llamada directa a `supabase.auth.signInWithPassword()`
+  - Delegar al `AuthProvider` (ya migrado)
 
-### Tarea 3.3: Migrar api.ts de cada módulo (×11)
+### Tarea 3.3: Migrar api.ts de cada módulo (×12)
 Para cada `src/features/*/api.ts`:
 - [ ] Eliminar `import { supabase }`
 - [ ] Reemplazar `supabase.from().select()` con `apiClient.get()`
@@ -107,7 +111,12 @@ Para cada `src/features/*/api.ts`:
 - [ ] Reemplazar `supabase.from().delete()` con `apiClient.delete()`
 - [ ] Preservar la firma de `useQuery`/`useMutation` (no cambia el contrato con los componentes UI)
 
-Módulos a migrar: `inventory`, `orders`, `production`, `sourcing`, `supply-requests`, `logistics`, `returns`, `cod`, `staff`, `bi`, `supplier-portal`
+Módulos a migrar: `inventory`, `orders`, `production` (`api.ts` + `configApi.ts`), `sourcing`, `supply-requests`, `logistics`, `returns`, `cod`, `staff`, `bi`, `finance`, `supplier-portal`
+
+### Tarea 3.3b: Limpiar código muerto post-migración
+- [ ] Eliminar `src/integrations/supabase/client.ts` (reemplazado por `src/integrations/api/client.ts`)
+- [ ] Evaluar `src/integrations/supabase/types.ts` — mantener como referencia de tipos de dominio o reemplazar con interfaces propias
+- [ ] Eliminar `src/pages/SupplierPortal.tsx` llamada a `supabase.functions.invoke()` (cubierto por nueva ruta Express)
 
 ### Tarea 3.4: Actualizar variables de entorno del frontend
 - [ ] Eliminar: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`
@@ -188,6 +197,53 @@ npm install -D @types/express @types/pg @types/jsonwebtoken @types/bcryptjs tsx
 # Eliminar (una vez que no queden referencias)
 npm uninstall @supabase/supabase-js
 ```
+
+---
+
+## Workflow de Equipo: Lovable (Front) + Railway (Back) en paralelo
+
+### Estrategia de ramas
+
+```
+main               ← encargado de front trabaja aquí via Lovable (Supabase intacto)
+  └── railway/backend  ← tú trabajas aquí (migración en curso)
+```
+
+El front sigue usando Supabase en `main` mientras el backend se construye en la rama de migración. Cuando el front suba cambios de UI a `main`, se cherry-pickean solo los archivos seguros hacia `railway/backend`.
+
+### Archivos que SÍ se pueden mergear de `main` → `railway/backend`
+
+- `src/components/**` — componentes nuevos o modificados
+- `src/pages/**` — nuevas páginas o layouts (**excepto** `Auth.tsx`)
+- `src/features/*/components/**` — UI de cada módulo
+- `src/features/*/hooks/**` — hooks que no importen `supabase` directamente
+- Estilos, constantes, tipos de dominio sin dependencia de Supabase
+
+### Archivos que NUNCA se mergean automáticamente
+
+| Archivo | Razón |
+|---|---|
+| `src/features/*/api.ts` | Ya migrados al nuevo cliente, Lovable los sobreescribiría con Supabase |
+| `src/features/production/configApi.ts` | Ídem |
+| `src/features/auth/AuthProvider.tsx` | Migrado a JWT |
+| `src/pages/Auth.tsx` | Migrada sin Supabase Auth |
+| `src/integrations/supabase/*` | Eliminado en rama de migración |
+| `.env` | Variables distintas en cada contexto |
+
+### Punto de coordinación obligatorio
+
+Si el encargado de front necesita una **feature nueva con datos** (no solo UI):
+
+1. Front diseña la pantalla en Lovable con datos fake o Supabase temporalmente
+2. Avisa: *"agregué pantalla X que necesita tal endpoint"*
+3. Tú creas la ruta Express + migras el `api.ts` correspondiente
+4. Cherry-pick de los componentes UI únicamente
+
+Este es el único momento que requiere coordinación activa. Los cambios de diseño, layout y flujo visual no necesitan coordinación.
+
+### Lovable post-migración
+
+`lovable-tagger` puede mantenerse en `vite.config.ts` sin problema — solo agrega metadatos a los componentes. Lo que Lovable **no puede** hacer en la rama migrada es generar features nuevas con datos: su IA generará código Supabase que ya no funcionará. Para esos casos, definir la UI en Lovable y dejar la capa de datos al backend.
 
 ---
 
