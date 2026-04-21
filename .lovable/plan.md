@@ -1,72 +1,48 @@
 
-## Plan: Corregir de raíz el scroll del combobox “Seleccionar producto”
+
+## Plan: Editar y eliminar transacciones manuales en Finanzas
 
 ### Objetivo
-Hacer que el combobox compartido funcione correctamente con listas largas dentro del modal de “Nuevo pedido manual”, especialmente el scroll con mouse, trackpad y touch, sin romper los otros formularios que usan `StandardCombobox`.
+Permitir al usuario **editar** y **eliminar** ingresos/gastos creados manualmente desde el Libro Mayor. Las transacciones automáticas (origen RMA, pedido, devolución) seguirán siendo de solo lectura, ya que se gestionan desde su módulo origen.
 
-### Diagnóstico
-El problema no es solo una clase de `max-height`. El componente actual combina:
+### Cambios
 
-- `Popover` de Radix renderizado en portal.
-- `cmdk` (`Command`, `CommandList`) como lista interna.
-- Un `DialogContent` padre con scroll propio.
+**1. `src/features/finance/api.ts`**
+- Agregar hook `useUpdateTransaction()` que actualiza `amount`, `category` y `description` de una transacción manual. Validará que `reference_type` sea `null` o `"manual"` antes de permitir el update (mismo guard que `useDeleteTransaction`).
+- Invalida queries `financial_transactions` y `bi` al éxito.
 
-Dentro del modal, esa combinación puede hacer que los eventos de rueda/touch se capturen por el diálogo o por las capas portaled/focus-trapped, por eso agregar `overflow-y-auto` no resuelve el problema de forma confiable.
+**2. `src/features/finance/TransactionDialog.tsx`**
+- Aceptar nueva prop opcional `transaction?: FinancialTransaction` para modo edición.
+- Si se recibe `transaction`, precargar `amount`, `category`, `description` y cambiar el título a "Editar Ingreso/Gasto".
+- En `handleSubmit`, decidir entre `useCreateTransaction` o `useUpdateTransaction` según el modo.
+- Al guardar edición, mostrar toast "Transacción actualizada".
 
-### Cambio principal
+**3. `src/features/finance/FinanceLedgerTable.tsx`**
+- Agregar botón de editar (ícono `Pencil`) junto al de eliminar, visible solo en transacciones manuales (`isManual`).
+- Reorganizar la celda de acciones para alojar ambos botones en un `flex` compacto.
+- Estado local nuevo: `editTarget: FinancialTransaction | null` que dispara el `TransactionDialog` en modo edición.
 
-Modificar `src/components/shared/StandardCombobox.tsx` para eliminar la dependencia de `Command/CommandList` dentro de este combobox y reemplazarla por una implementación nativa, controlada y robusta:
-
-- Mantener la misma API pública:
-  - `options`
-  - `value`
-  - `onChange`
-  - `placeholder`
-  - `searchPlaceholder`
-  - `emptyText`
-  - `disabled`
-  - `className`
-  - `allowClear`
-- Mantener `Popover`, `PopoverTrigger` y `PopoverContent`.
-- Dentro del popover:
-  - Usar un `Input` normal para búsqueda.
-  - Filtrar opciones localmente por `label`.
-  - Renderizar la lista en un contenedor `div` con:
-    - altura fija/máxima real (`max-h-72` o equivalente)
-    - `overflow-y-auto`
-    - `overscroll-contain`
-    - soporte touch (`touch-pan-y`)
-  - Usar botones/list items nativos para selección.
-  - Evitar que eventos de rueda/touch se propaguen al modal padre cuando el cursor está sobre la lista.
-- Mantener el ancho del dropdown igual al trigger:
-  - `w-[--radix-popover-trigger-width]`
-- Resetear el texto de búsqueda al cerrar o seleccionar.
+**4. `src/pages/Finance.tsx`**
+- Adaptar el render del `TransactionDialog` para soportar también el modo edición disparado desde la tabla (subir el estado `editTarget` o instanciar un segundo dialog controlado desde la tabla — preferiblemente lo segundo para mantener el `Finance.tsx` simple).
 
 ### UX esperada
 
-En “Órdenes” → “Nuevo pedido” → “Agregar línea” → “Seleccionar producto”:
+- En cada fila manual del Libro Mayor aparecen dos íconos: **editar** (lápiz) y **eliminar** (basura).
+- Click en editar → abre el mismo modal usado para crear, pero precargado con los valores actuales y el título cambia a "Editar Ingreso" / "Editar Gasto".
+- Guardar → actualiza la fila, refresca KPIs y resumen por categoría.
+- Las transacciones automáticas siguen sin íconos de acción (igual que hoy).
+- Eliminar conserva el `AlertDialog` de confirmación actual.
 
-- El dropdown abre correctamente.
-- El buscador sigue funcionando.
-- La lista tiene altura limitada.
-- Se puede hacer scroll real dentro del dropdown.
-- El scroll no mueve ni bloquea el modal padre.
-- Seleccionar un producto sigue llenando el precio unitario.
-- La opción de limpiar selección sigue funcionando donde `allowClear` esté activo.
+### Restricciones
+
+- Solo se editan: `amount`, `category`, `description`. **No** se permite cambiar `transaction_type` ni `created_at` (mantiene la trazabilidad histórica).
+- No se editan transacciones cuyo `reference_type` sea distinto de `"manual"` o `null`.
+- No se requieren cambios de schema ni nuevas migraciones.
 
 ### Archivos a modificar
 
-- `src/components/shared/StandardCombobox.tsx`
+- `src/features/finance/api.ts`
+- `src/features/finance/TransactionDialog.tsx`
+- `src/features/finance/FinanceLedgerTable.tsx`
+- `src/pages/Finance.tsx`
 
-### Validaciones posteriores
-
-Después de implementar:
-
-- Revisar que el formulario de “Nuevo pedido manual” siga creando líneas correctamente.
-- Revisar que `StandardCombobox` conserve compatibilidad en:
-  - producción
-  - compras/sourcing
-  - inventario
-  - devoluciones
-  - solicitudes de suministro
-- Verificar visualmente que listas largas puedan desplazarse dentro del dropdown.
