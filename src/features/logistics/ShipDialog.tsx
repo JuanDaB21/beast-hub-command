@@ -25,12 +25,13 @@ interface Props {
   order: ShipmentOrder | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  targetStatus?: "shipped" | "delivered";
 }
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n);
 
-export function ShipDialog({ order, open, onOpenChange }: Props) {
+export function ShipDialog({ order, open, onOpenChange, targetStatus = "shipped" }: Props) {
   const ship = useMarkShipped();
   const updateTracking = useUpdateTracking();
 
@@ -96,8 +97,12 @@ export function ShipDialog({ order, open, onOpenChange }: Props) {
           tracking_number: tn,
           shipping_cost: costNum,
           delay_reason: requiresReason ? reason.trim() : null,
+          target_status: targetStatus,
         });
-        toast({ title: "Pedido despachado", description: `Guía ${tn} registrada.` });
+        toast({
+          title: targetStatus === "delivered" ? "Pedido entregado" : "Pedido despachado",
+          description: `Guía ${tn} registrada.`,
+        });
       }
       onOpenChange(false);
     } catch (e: any) {

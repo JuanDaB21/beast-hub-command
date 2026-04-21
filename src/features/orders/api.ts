@@ -39,6 +39,7 @@ export interface Order {
   payment_method: PaymentMethod | null;
   total: number;
   shipping_cost: number;
+  tracking_number: string | null;
   created_at: string;
   updated_at: string;
 }
