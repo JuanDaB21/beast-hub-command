@@ -127,14 +127,24 @@ export function FinanceLedgerTable({
                   </TableCell>
                   <TableCell>
                     {isManual && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setTarget(t)}
-                        aria-label="Eliminar"
-                      >
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setEditTarget(t)}
+                          aria-label="Editar"
+                        >
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setTarget(t)}
+                          aria-label="Eliminar"
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
