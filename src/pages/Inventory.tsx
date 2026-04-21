@@ -108,74 +108,95 @@ export default function Inventory() {
       description="Productos padre con variantes (color × talla × estampado)."
       actions={headerActions}
     >
-      {/* KPIs */}
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <KPI label="Productos padre" value={stats.totalParents} />
-        <KPI label="Variantes" value={stats.totalVariants} />
-        <KPI label="Agotadas" value={stats.outOfStock} tone="red" />
-        <KPI label="Stock crítico" value={stats.critical} tone="yellow" />
-        <KPI label="En aging" value={stats.aging} tone="yellow" />
-      </div>
+      <Tabs defaultValue="productos" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="productos">Productos</TabsTrigger>
+          <TabsTrigger value="disponibles">Disponibles</TabsTrigger>
+        </TabsList>
 
-      {/* Toolbar */}
-      <div className="mb-3 flex items-center gap-2">
-        <div className="relative flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Filtrar por SKU o nombre..."
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-      </div>
+        <TabsContent value="productos" className="space-y-3">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <KPI label="Productos padre" value={stats.totalParents} />
+            <KPI label="Variantes" value={stats.totalVariants} />
+            <KPI label="Agotadas" value={stats.outOfStock} tone="red" />
+            <KPI label="Stock crítico" value={stats.critical} tone="yellow" />
+            <KPI label="En aging" value={stats.aging} tone="yellow" />
+          </div>
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
-      ) : (
-        <>
-          <div className="lg:hidden">
-            <ProductsMobileList
-              parents={parents.filter(
-                (p) =>
-                  !filter ||
-                  p.name.toLowerCase().includes(filter.toLowerCase()) ||
-                  p.sku.toLowerCase().includes(filter.toLowerCase()) ||
-                  p.children.some(
-                    (c) =>
-                      c.name.toLowerCase().includes(filter.toLowerCase()) ||
-                      c.sku.toLowerCase().includes(filter.toLowerCase()),
-                  ),
-              )}
-              orphans={orphans.filter(
-                (p) =>
-                  !filter ||
-                  p.name.toLowerCase().includes(filter.toLowerCase()) ||
-                  p.sku.toLowerCase().includes(filter.toLowerCase()),
-              )}
-              onEditParent={setEditingParent}
-              onDeleteParent={setConfirmDeleteTree}
-              onEditVariant={setEditingVariant}
-              onDeleteVariant={setConfirmDeleteVariant}
-            />
+          {/* Toolbar */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Filtrar por SKU o nombre..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="pl-8"
+              />
+            </div>
           </div>
-          <div className="hidden lg:block">
-            <ProductsTable
-              parents={parents}
-              orphans={orphans}
-              globalFilter={filter}
-              onEditParent={setEditingParent}
-              onDeleteParent={setConfirmDeleteTree}
-              onEditVariant={setEditingVariant}
-              onDeleteVariant={setConfirmDeleteVariant}
-            />
-          </div>
-        </>
-      )}
+
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="lg:hidden">
+                <ProductsMobileList
+                  parents={parents.filter(
+                    (p) =>
+                      !filter ||
+                      p.name.toLowerCase().includes(filter.toLowerCase()) ||
+                      p.sku.toLowerCase().includes(filter.toLowerCase()) ||
+                      p.children.some(
+                        (c) =>
+                          c.name.toLowerCase().includes(filter.toLowerCase()) ||
+                          c.sku.toLowerCase().includes(filter.toLowerCase()),
+                      ),
+                  )}
+                  orphans={orphans.filter(
+                    (p) =>
+                      !filter ||
+                      p.name.toLowerCase().includes(filter.toLowerCase()) ||
+                      p.sku.toLowerCase().includes(filter.toLowerCase()),
+                  )}
+                  onEditParent={setEditingParent}
+                  onDeleteParent={setConfirmDeleteTree}
+                  onEditVariant={setEditingVariant}
+                  onDeleteVariant={setConfirmDeleteVariant}
+                />
+              </div>
+              <div className="hidden lg:block">
+                <ProductsTable
+                  parents={parents}
+                  orphans={orphans}
+                  globalFilter={filter}
+                  onEditParent={setEditingParent}
+                  onDeleteParent={setConfirmDeleteTree}
+                  onEditVariant={setEditingVariant}
+                  onDeleteVariant={setConfirmDeleteVariant}
+                />
+              </div>
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="disponibles">
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (
+            <AvailableVariantsList parents={parents} orphans={orphans} />
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Crear producto padre + variantes */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
