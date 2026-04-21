@@ -118,12 +118,15 @@ export type Database = {
           carrier: string | null
           cod_confirmed: boolean
           cod_received_at: string | null
+          confirmed_by_staff_id: string | null
           created_at: string
           customer_name: string
           customer_phone: string
           delay_reason: string | null
           id: string
           is_cod: boolean
+          order_confirmed: boolean
+          order_confirmed_at: string | null
           order_number: string
           received_by_staff_id: string | null
           shipped_at: string | null
@@ -137,12 +140,15 @@ export type Database = {
           carrier?: string | null
           cod_confirmed?: boolean
           cod_received_at?: string | null
+          confirmed_by_staff_id?: string | null
           created_at?: string
           customer_name: string
           customer_phone: string
           delay_reason?: string | null
           id?: string
           is_cod?: boolean
+          order_confirmed?: boolean
+          order_confirmed_at?: string | null
           order_number: string
           received_by_staff_id?: string | null
           shipped_at?: string | null
@@ -156,12 +162,15 @@ export type Database = {
           carrier?: string | null
           cod_confirmed?: boolean
           cod_received_at?: string | null
+          confirmed_by_staff_id?: string | null
           created_at?: string
           customer_name?: string
           customer_phone?: string
           delay_reason?: string | null
           id?: string
           is_cod?: boolean
+          order_confirmed?: boolean
+          order_confirmed_at?: string | null
           order_number?: string
           received_by_staff_id?: string | null
           shipped_at?: string | null
@@ -172,6 +181,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_confirmed_by_staff_id_fkey"
+            columns: ["confirmed_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_received_by_staff_id_fkey"
             columns: ["received_by_staff_id"]
