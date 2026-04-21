@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ORDER_STATUSES, type OrderWithItems, type OrderStatus } from "./api";
+import { ORDER_STATUSES, PAYMENT_METHOD_LABEL, type OrderWithItems, type OrderStatus } from "./api";
 import { STATUS_LABEL, statusTone } from "./status";
 
 const currency = (n: number) =>
@@ -31,6 +31,9 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
             tone={order.cod_confirmed ? "green" : "red"}
             label={order.cod_confirmed ? "COD confirmado" : "COD pendiente"}
           />
+        )}
+        {order.payment_method && (
+          <StatusBadge tone="default" label={`Pago: ${PAYMENT_METHOD_LABEL[order.payment_method]}`} />
         )}
         <span className="ml-auto rounded-md bg-secondary px-2 py-0.5 text-xs uppercase text-secondary-foreground">
           {order.source}
