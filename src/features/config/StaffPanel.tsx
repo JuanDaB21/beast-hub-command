@@ -112,14 +112,17 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
       toast.error(parsed.error.errors[0]?.message ?? "Datos inválidos");
       return;
     }
-    create.mutate(parsed.data, {
+    create.mutate(
+      { full_name: parsed.data.full_name, email: parsed.data.email, password: parsed.data.password },
+      {
       onSuccess: () => {
         toast.success("Trabajador creado. Debe verificar su email.");
         reset();
         onOpenChange(false);
       },
       onError: (e: any) => toast.error(e?.message ?? "Error al crear trabajador"),
-    });
+      },
+    );
   };
 
   return (
