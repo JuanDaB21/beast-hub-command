@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
-import { Trash2, Plus } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Trash2, Plus, Info } from "lucide-react";
 import {
   useCreateManualOrder,
   useProductsForOrder,
@@ -20,6 +21,7 @@ import {
   type OrderStatus,
   type PaymentMethod,
 } from "./api";
+import { useGlobalConfigs } from "@/features/production/configApi";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
@@ -36,6 +38,8 @@ const currency = (n: number) =>
 export function NewOrderForm({ onSuccess }: Props) {
   const { data: products = [], isLoading: loadingProducts } = useProductsForOrder();
   const create = useCreateManualOrder();
+  const { data: configs } = useGlobalConfigs();
+  const codFeePct = Number(configs?.cod_transport_fee_percent ?? 0);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -79,7 +83,9 @@ export function NewOrderForm({ onSuccess }: Props) {
     });
   };
 
-  const total = items.reduce((acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.unit_price) || 0), 0);
+  const subtotal = items.reduce((acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.unit_price) || 0), 0);
+  const codSurcharge = isCod && codFeePct > 0 ? Math.round(subtotal * (codFeePct / 100)) : 0;
+  const total = subtotal + codSurcharge;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +107,11 @@ export function NewOrderForm({ onSuccess }: Props) {
     }
 
     try {
+      const itemsPayload: NewOrderItemInput[] = items.map(({ uid, ...rest }) => rest);
+      // Inyecta línea virtual de comisión COD para que recalc_order_total la considere
+      if (isCod && codSurcharge > 0) {
+        itemsPayload.push({ product_id: "", quantity: 1, unit_price: codSurcharge });
+      }
       await create.mutateAsync({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
@@ -108,7 +119,7 @@ export function NewOrderForm({ onSuccess }: Props) {
         customer_pays_shipping: customerPaysShipping,
         status,
         payment_method: paymentMethod,
-        items: items.map(({ uid, ...rest }) => rest),
+        items: itemsPayload,
       });
       toast({ title: "Pedido creado" });
       setCustomerName("");
