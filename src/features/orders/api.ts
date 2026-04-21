@@ -133,7 +133,7 @@ export function useCreateManualOrder() {
 
       const itemsPayload = input.items.map((it) => ({
         order_id: order.id,
-        product_id: it.product_id,
+        product_id: it.product_id ? it.product_id : null,
         quantity: it.quantity,
         unit_price: it.unit_price,
       }));
