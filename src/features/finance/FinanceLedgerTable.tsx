@@ -82,7 +82,7 @@ export function FinanceLedgerTable({
               <TableHead>Descripción</TableHead>
               <TableHead>Origen</TableHead>
               <TableHead className="text-right">Monto</TableHead>
-              <TableHead className="w-[60px]" />
+              <TableHead className="w-[100px] text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
