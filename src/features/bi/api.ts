@@ -1,5 +1,59 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/features/orders/api";
+
+export interface RevenueByChannel {
+  key: string;
+  label: string;
+  total: number;
+  count: number;
+}
+
+export function useRevenueByPaymentMethod(range: { from: Date | null; to: Date | null; key: string }) {
+  return useQuery({
+    queryKey: ["bi-revenue-by-channel", range.key, range.from?.toISOString(), range.to?.toISOString()],
+    queryFn: async (): Promise<RevenueByChannel[]> => {
+      let q = supabase
+        .from("orders")
+        .select("source, payment_method, total, status, created_at")
+        .neq("status", "cancelled")
+        .limit(5000);
+      if (range.from) q = q.gte("created_at", range.from.toISOString());
+      if (range.to) q = q.lte("created_at", range.to.toISOString());
+      const { data, error } = await q;
+      if (error) throw error;
+
+      const buckets = new Map<string, RevenueByChannel>();
+      const ensure = (key: string, label: string) => {
+        if (!buckets.has(key)) buckets.set(key, { key, label, total: 0, count: 0 });
+        return buckets.get(key)!;
+      };
+      // seed all payment methods so they always appear
+      (["fisico", "nequi", "daviplata", "bancolombia"] as PaymentMethod[]).forEach((m) =>
+        ensure(m, PAYMENT_METHOD_LABEL[m]),
+      );
+      ensure("shopify", "Shopify / Online");
+
+      for (const row of (data ?? []) as any[]) {
+        const total = Number(row.total) || 0;
+        if (row.source === "shopify" || !row.payment_method) {
+          const b = ensure("shopify", "Shopify / Online");
+          b.total += total;
+          b.count += 1;
+        } else {
+          const pm = row.payment_method as PaymentMethod;
+          const b = ensure(pm, PAYMENT_METHOD_LABEL[pm] ?? pm);
+          b.total += total;
+          b.count += 1;
+        }
+      }
+
+      return Array.from(buckets.values()).sort((a, b) => b.total - a.total);
+    },
+    staleTime: 60_000,
+  });
+}
+
 
 export type RangeKey = "today" | "7d" | "30d" | "month" | "all";
 
