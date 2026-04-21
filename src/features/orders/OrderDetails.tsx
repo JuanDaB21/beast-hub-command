@@ -33,7 +33,7 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
           />
         )}
         {order.payment_method && (
-          <StatusBadge tone="default" label={`Pago: ${PAYMENT_METHOD_LABEL[order.payment_method]}`} />
+          <StatusBadge tone="neutral" label={`Pago: ${PAYMENT_METHOD_LABEL[order.payment_method]}`} />
         )}
         <span className="ml-auto rounded-md bg-secondary px-2 py-0.5 text-xs uppercase text-secondary-foreground">
           {order.source}
