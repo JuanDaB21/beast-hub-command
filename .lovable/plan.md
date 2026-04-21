@@ -1,82 +1,80 @@
 
 
-## Plan: Módulo Finanzas · Libro Mayor con UI completa
+## Plan: Calculadora de Cotización Rápida (efímera, WhatsApp)
 
 ### Objetivo
-Crear una sección **Finanzas** en el menú con una UI tipo libro mayor: tabla filtrable de todas las transacciones (`financial_transactions`), KPIs de ingresos/gastos/balance, y formularios para registrar manualmente ingresos y gastos. Centraliza tanto los movimientos automáticos (RMA, futuros pagos) como los manuales.
+Herramienta táctica para el equipo de ventas: un panel lateral con calculadora que combina productos, envío y recargo COD, y genera un mensaje listo para copiar a WhatsApp. **No persiste nada** en la base de datos.
 
-### Tarea 1 — Nueva ruta y entrada en el menú
+### Tarea 1 — Punto de entrada global (Navbar)
 
-- **`src/lib/modules.ts`**: añadir módulo `finanzas` → path `/finanzas`, título *"Libro Mayor · Finanzas"*, icono `BookOpen` (lucide).
-- **`src/components/layout/AppSidebar.tsx`**: añadir nueva sección *"Finanzas"* con el slug `finanzas` (entre "Lotes y producción" y "General"), o agregarlo a "General". Preferimos sección propia para resaltarlo.
-- **`src/App.tsx`**: registrar `<Route path="/finanzas" element={protect(<Finance />)} />`.
-- **Nueva página** `src/pages/Finance.tsx` (usa `AppShell`).
+Inyectar el botón en el header global para que esté disponible desde cualquier módulo (no solo Órdenes).
 
-### Tarea 2 — API extendida `src/features/finance/api.ts`
+- **`src/components/layout/AppShell.tsx`**: añadir un botón con icono `Calculator` (lucide) junto al `SidebarTrigger` en la barra superior. Tooltip *"Calculadora de cotización"*. Abre el `Sheet` de la calculadora.
+- Estado local del shell `[quoteOpen, setQuoteOpen]` controla el Sheet.
 
-Añadir:
-- `FinancialTransaction` (tipo Row).
-- `useFinancialTransactions(filters)` → `useQuery` con filtros por `transaction_type`, `category`, rango de fechas (`from` / `to`), búsqueda libre en `description`. Ordena por `created_at desc`.
-- `useFinancialSummary(filters)` → calcula `totalIncome`, `totalExpense`, `balance`, `byCategory[]` con los mismos filtros (puede derivarse en cliente del query anterior, o una segunda query agregada).
-- `useDeleteTransaction()` → para corregir errores de captura (solo manuales). Bloquear DELETE si `reference_type !== 'manual'` (validación cliente).
-- Mantener `useCreateTransaction` (ya existe).
+### Tarea 2 — Componente `QuoteCalculatorSheet`
 
-### Tarea 3 — UI del Libro Mayor (`src/pages/Finance.tsx`)
+**Nuevo archivo**: `src/features/sales/QuoteCalculatorSheet.tsx`
 
-Layout en `AppShell` con título *"Libro Mayor"*:
+Estructura (`Sheet side="right"`, ancho `sm:max-w-lg`):
 
-**(a) Fila de KPIs (Card grid 4 columnas):**
-- Ingresos del periodo (verde).
-- Gastos del periodo (rojo).
-- Balance neto (color dinámico).
-- # de movimientos.
+**(a) Header**: título *"Calculadora de cotización"*, descripción *"Cálculos efímeros · no se guarda en la base de datos"*.
 
-**(b) Barra de filtros (Card):**
-- `Select` Tipo: Todos / Ingreso / Gasto.
-- `Select` Categoría: opciones distintas existentes en BD + categorías predefinidas (Pérdida por Merma, Logística RMA, Pago manual, Ingreso manual, Reembolso, Otro).
-- `DateRangePicker` (usar `Calendar` + `Popover` patrón ShadCN) para rango. Por defecto: mes corriente.
-- `Input` búsqueda por descripción.
-- Botón *"Limpiar filtros"*.
-- Dos botones primarios al extremo derecho: **"+ Registrar Ingreso"** y **"+ Registrar Gasto"** (variant destructive).
+**(b) Lista de productos (dinámica)**: array local `items: { id, mode: 'catalog'|'manual', productId?, name, price, qty }`.
+- Por línea:
+  - `Tabs` (catálogo / manual) o un toggle simple.
+  - **Catálogo**: `StandardCombobox` con productos activos vía `useProductsForOrder()` (ya existe en `src/features/orders/api.ts`). Al seleccionar, autorrellena `name` y `price`.
+  - **Manual**: `Input` para nombre y `Input` numérico para precio.
+  - `Input` cantidad (mínimo 1).
+  - Subtotal de línea (currency, derecha).
+  - Botón eliminar (`X`).
+- Botón *"+ Agregar producto"*.
 
-**(c) Tabla principal (`Table` ShadCN):**
-Columnas: Fecha · Tipo (badge income/expense) · Categoría · Descripción · Origen (`reference_type`: manual/return/order, badge) · Monto (alineado derecha, color por tipo) · Acciones (eliminar solo si `reference_type='manual'`, con `AlertDialog` de confirmación).
+**(c) Envío**: `Switch` *"¿Aplica envío?"* → `Input` numérico costo (si on).
 
-Pie de tabla con totales del filtro aplicado.
+**(d) COD**: `Switch` *"¿Es Pago Contra Entrega (COD)?"* → `Input` numérico porcentaje (default = `useGlobalConfigs()['cod_transport_fee_percent'] ?? 5`).
 
-**(d) Card "Resumen por categoría":** lista compacta `categoría → total ingreso / gasto` con barras de progreso relativas.
+**(e) Resumen (Card)**:
+- Subtotal = `Σ(precio × cantidad)`.
+- Envío.
+- Comisión COD = `(subtotal + envío) × (% / 100)`.
+- **Total final** (resaltado).
 
-### Tarea 4 — Diálogo de registro (`src/features/finance/TransactionDialog.tsx`)
+**(f) Mensaje WhatsApp (Card readonly)**:
+```
+¡Hola! 🐺 Aquí está el resumen de tu pedido en Beast Club:
 
-Componente reusable controlado por prop `mode: 'income' | 'expense'`:
-- `Input` Monto (numérico, requerido > 0).
-- `Combobox`/`Input` Categoría (sugerencias preestablecidas según modo: 
-  - Ingreso: *Pago Shopify*, *Pago COD*, *Ingreso manual*, *Reembolso recibido*, *Otro*. 
-  - Gasto: *Pago a proveedor*, *Nómina*, *Servicios*, *Logística*, *Marketing*, *Pérdida por Merma*, *Logística RMA*, *Otro*).
-- `Textarea` Descripción.
-- Marca `reference_type = 'manual'`.
-- Botón Guardar → `useCreateTransaction`.
-- Toast con resumen.
+• 2x Camiseta Blanca - $80.000
+• 1x Hoodie Negro - $120.000
 
-### Tarea 5 — Integración con dashboard existente
+Subtotal: $200.000
+Envío: $15.000
+Comisión COD: $10.750
+Total a pagar: $225.750
+```
+Renderizado como `<pre>` o `Textarea` readonly.
 
-Sin cambios visuales en `Index.tsx`/`MonthlyClosureTable`. El libro mayor es la fuente de verdad financiera; los KPIs actuales seguirán derivando de `orders` (no se duplican). Aclaración visual al pie del libro mayor: *"Los movimientos automáticos (RMA, mermas) se registran al resolverse en cada módulo. Los pagos a proveedores e ingresos extra-orden se capturan aquí."*
+**(g) Acciones (footer sticky)**:
+- Botón grande *"Copiar para WhatsApp"* (`navigator.clipboard.writeText` + toast confirmación).
+- Botón secundario *"Limpiar"* (resetea estado).
+
+### Tarea 3 — Hook helper de formato
+
+Reutilizar el patrón `currency` ya presente en `Orders.tsx`. Inline o un util compartido en `src/lib/utils.ts` (`formatCurrency`).
 
 ### Archivos
 
 **Nuevos:**
-- `src/pages/Finance.tsx`
-- `src/features/finance/TransactionDialog.tsx`
-- `src/features/finance/FinanceLedgerTable.tsx`
-- `src/features/finance/FinanceFilters.tsx`
-- `src/features/finance/FinanceKpis.tsx`
+- `src/features/sales/QuoteCalculatorSheet.tsx`
 
 **Modificados:**
-- `src/features/finance/api.ts` — añadir queries, summary, delete.
-- `src/lib/modules.ts` — entrada `finanzas`.
-- `src/components/layout/AppSidebar.tsx` — sección/slug nuevo.
-- `src/App.tsx` — ruta `/finanzas`.
+- `src/components/layout/AppShell.tsx` — botón Calculator + Sheet montado.
+
+### Restricciones cumplidas
+- Cero escrituras a DB (no se llama `useCreateManualOrder` ni mutaciones).
+- Solo lecturas: productos activos y configuración global.
+- El estado vive en el componente y se resetea al limpiar/cerrar.
 
 ### Resultado
-Aparece la sección **Finanzas → Libro Mayor** en el sidebar. La página muestra KPIs de ingresos/gastos/balance, una tabla filtrable por tipo, categoría, fecha y texto, y permite registrar ingresos y gastos manuales. Los asientos automáticos (mermas, fletes RMA) se ven junto a los manuales con su origen claramente marcado, dando trazabilidad completa de la operación financiera.
+Desde cualquier módulo (incluyendo Órdenes), el vendedor abre la calculadora con un clic en el ícono superior. Arma la cotización mezclando productos del catálogo con líneas manuales, ajusta envío y COD, y copia un mensaje formateado listo para WhatsApp — sin tocar la operación real.
 
