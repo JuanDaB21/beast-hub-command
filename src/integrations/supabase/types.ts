@@ -128,6 +128,7 @@ export type Database = {
           order_confirmed: boolean
           order_confirmed_at: string | null
           order_number: string
+          payment_method: string | null
           received_by_staff_id: string | null
           shipped_at: string | null
           source: Database["public"]["Enums"]["order_source"]
@@ -150,6 +151,7 @@ export type Database = {
           order_confirmed?: boolean
           order_confirmed_at?: string | null
           order_number: string
+          payment_method?: string | null
           received_by_staff_id?: string | null
           shipped_at?: string | null
           source?: Database["public"]["Enums"]["order_source"]
@@ -172,6 +174,7 @@ export type Database = {
           order_confirmed?: boolean
           order_confirmed_at?: string | null
           order_number?: string
+          payment_method?: string | null
           received_by_staff_id?: string | null
           shipped_at?: string | null
           source?: Database["public"]["Enums"]["order_source"]
