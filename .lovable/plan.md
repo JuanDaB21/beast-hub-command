@@ -1,61 +1,57 @@
 
 
-## Plan: Estado "Pedido confirmado" previo en gestión COD
+## Plan: Método de pago en pedidos manuales + desglose de ingresos por canal
 
 ### Objetivo
-Añadir un paso previo de confirmación de pedido en el flujo COD para órdenes provenientes de Shopify. Las órdenes manuales saltan este paso.
+Permitir registrar el **método de pago** al crear pedidos manuales y mostrar en el dashboard el **desglose de ingresos por canal**.
 
-### Flujo nuevo
-
-**Manual (COD):** `Pendiente recaudo` → `Recaudo confirmado` (ingresa al dinero recaudado).
-
-**Shopify (COD):** `Pendiente confirmación` → `Pedido confirmado` → `Recaudo confirmado` (ingresa al dinero recaudado).
-
-Solo cuando `cod_confirmed = true` (recaudo) el pedido suma al "dinero ingresado".
+### Métodos de pago
+`Fisico`, `Nequi`, `Daviplata`, `Bancolombia`.
 
 ### Cambio de schema (migración)
 
 Añadir a `orders`:
-- `order_confirmed boolean NOT NULL DEFAULT false` — marca si el pedido fue confirmado por el cliente (paso previo al recaudo).
-- `order_confirmed_at timestamptz NULL` — fecha de confirmación del pedido.
-- `confirmed_by_staff_id uuid NULL` — quién confirmó.
+- `payment_method text NULL` — uno de `'fisico' | 'nequi' | 'daviplata' | 'bancolombia'` para pedidos manuales. NULL para pedidos Shopify (ya tienen su propio flujo de pago).
 
-Backfill: las órdenes existentes con `source = 'manual'` se marcan `order_confirmed = true` (saltan el paso). Las de `source = 'shopify'` quedan en `false` salvo que ya estén `cod_confirmed`, en cuyo caso también `true`.
+Validación vía trigger (no CHECK constraint) que valide el dominio de valores cuando no es NULL.
 
-### Cambios en API (`src/features/cod/api.ts`)
+### Cambios en API
 
-- Extender `CodOrder` con `source`, `order_confirmed`, `order_confirmed_at`, `confirmed_by_staff_id`.
-- Nuevo hook `useConfirmCodOrder()` — marca `order_confirmed = true`, setea `order_confirmed_at` y `confirmed_by_staff_id`.
-- `useConfirmCodReceipt()` (existente) — sigue marcando `cod_confirmed = true` y `cod_received_at`. Validación: solo permite si `order_confirmed = true` o `source = 'manual'`.
+**`src/features/orders/api.ts`:**
+- Extender `Order` y `NewOrderInput` con `payment_method?: 'fisico' | 'nequi' | 'daviplata' | 'bancolombia' | null`.
+- `useCreateManualOrder()` envía `payment_method` al insertar.
+- Exportar constante `PAYMENT_METHODS` con labels en español para reutilizar en UI.
 
-### Cambios en `src/pages/Cod.tsx`
+**`src/features/bi/api.ts`:**
+- Añadir hook `useRevenueByPaymentMethod()` que devuelve `{ method, label, total, count }[]` agrupando `orders` donde `payment_method IS NOT NULL` (manuales) sumando `total`. Considerar también un bucket separado para Shopify (`payment_method IS NULL`) etiquetado como "Shopify / Online".
 
-**Tabs nuevos** (reemplazan los actuales):
-1. **Por confirmar** — `source = 'shopify'` AND `order_confirmed = false` AND `cod_confirmed = false`. Botón **"Confirmar pedido"**.
-2. **Por recaudar** — (`order_confirmed = true` OR `source = 'manual'`) AND `cod_confirmed = false`. Botón **"Confirmar recaudo"**.
-3. **Recaudados** — `cod_confirmed = true`. Solo lectura.
-4. **Todos** — vista completa con badges del estado actual.
+### Cambios en UI
 
-**KPIs ajustados:**
-- *Pendientes de confirmación* (Shopify por confirmar) — count + monto.
-- *Pendientes de recaudo* — count + monto.
-- *Dinero recaudado* — suma de `total` donde `cod_confirmed = true` (esto es el "dinero ingresado").
-- *Total COD* — count general.
+**`src/features/orders/NewOrderForm.tsx`:**
+- Nuevo `Select` debajo del switch COD: *"Método de pago"*, opciones: Físico, Nequi, Daviplata, Bancolombia.
+- Estado `paymentMethod`, validación: requerido al crear.
+- Pasar `payment_method` al mutation.
 
-**Tarjeta de pedido:**
-- Badge de estado: `Pendiente confirmación` (rojo) / `Pedido confirmado` (amarillo) / `Recaudo confirmado` (verde).
-- Para Shopify sin confirmar: botón primario "Confirmar pedido".
-- Para confirmados (o manuales) sin recaudar: botón primario "Confirmar recaudo".
-- Para recaudados: muestra fecha de confirmación de pedido (si aplica) + fecha de recaudo + staff.
+**`src/features/orders/OrderDetails.tsx`:**
+- Mostrar el método de pago como badge/línea informativa cuando exista.
+
+**`src/pages/Index.tsx` (dashboard):**
+- Nueva sección **"Ingresos por canal de pago"** con:
+  - Tarjetas por método (Físico, Nequi, Daviplata, Bancolombia, Shopify/Online) mostrando monto + count.
+  - Mini gráfico de barras horizontal (reutilizando `Charts.tsx` / Recharts ya presente).
+- Colocada junto a los KPIs existentes.
 
 ### Archivos
 
-**Migración:** nueva — añade `order_confirmed`, `order_confirmed_at`, `confirmed_by_staff_id` + backfill.
+**Migración nueva:** añade `payment_method` + trigger de validación.
 
 **Modificados:**
-- `src/features/cod/api.ts` — tipos extendidos + `useConfirmCodOrder`.
-- `src/pages/Cod.tsx` — nuevos tabs, KPIs, badges y botones por estado.
+- `src/features/orders/api.ts` — tipo + constante `PAYMENT_METHODS` + insert con método.
+- `src/features/orders/NewOrderForm.tsx` — Select de método de pago.
+- `src/features/orders/OrderDetails.tsx` — mostrar método de pago.
+- `src/features/bi/api.ts` — hook `useRevenueByPaymentMethod`.
+- `src/pages/Index.tsx` — sección de ingresos por canal.
 
 ### Resultado
-Pedidos COD desde Shopify pasan por dos clics: primero "Confirmar pedido" (cliente confirmó por WhatsApp/llamada), luego "Confirmar recaudo" cuando llega el dinero. Los manuales saltan directo al recaudo. El KPI "Dinero recaudado" solo cuenta pedidos con `cod_confirmed = true`.
+Al crear un pedido manual el usuario elige el método de pago (Físico/Nequi/Daviplata/Bancolombia) y queda guardado en la orden. En el dashboard aparece un desglose de ingresos por canal con monto y cantidad por método, más un bucket separado para órdenes de Shopify.
 
