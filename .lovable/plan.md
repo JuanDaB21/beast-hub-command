@@ -1,64 +1,67 @@
 
 
-## Plan: Drag & drop de órdenes en el board + flujo de despacho integrado
+## Plan: Cliente asume costo de envío en pedidos manuales
 
 ### Objetivo
-Permitir mover tarjetas de pedido entre columnas del board de Órdenes con drag & drop. Al mover a **Enviado** o **Entregado** desde un estado anterior, se abre el modal de **Despachar pedido** (guía + costo de envío) y solo si se completa se aplica el cambio de estado.
+Permitir marcar al crear un pedido manual que **el cliente asume el costo de envío**. Esos pedidos no requieren capturar costo de envío al despachar y no descuentan margen en la lógica de ingresos.
 
-### Comportamiento
+### Cambio de schema (migración)
 
-- **Transiciones libres** entre `pending`, `in_production`, `ready_to_ship` (todas vía `useUpdateOrderStatus`).
-- **Transición a `shipped` o `delivered`** desde un estado donde el pedido aún no tiene `tracking_number`:
-  - Abre `ShipDialog` precargado con la orden.
-  - Si la orden ya tiene `tracking_number` (re-envío), aplica el cambio directo (no re-pide guía).
-  - Si el usuario cancela el diálogo, la tarjeta vuelve a su columna original (no se aplica el cambio).
-  - Al confirmar el `ShipDialog` con guía + costo de envío, además del `shipped_at`/`tracking_number`/`shipping_cost` que ya guarda, se actualiza `status` al destino (`shipped` o `delivered`).
-- **Transición desde `shipped`/`delivered` hacia atrás**: permitida, solo cambia status.
-- **Cancelled**: drop permitido desde cualquier columna; sale por update simple.
+Añadir a `orders`:
+- `customer_pays_shipping boolean NOT NULL DEFAULT false`.
 
-### Cambios técnicos
+Backfill = `false` para pedidos existentes (mantiene comportamiento actual: el negocio asume el envío).
 
-**Librería:** usar `@dnd-kit/core` + `@dnd-kit/sortable` (ligero, accesible, ya común en stack React). Si no está instalado, se añade.
+### Cambios en API
 
-**`src/features/logistics/api.ts` — `useMarkShipped`:**
-- Aceptar `target_status?: 'shipped' | 'delivered'` opcional (default `shipped`) para que el mismo flujo sirva al despachar desde el board de órdenes hacia "Entregado" directo.
-- Update incluye `status = target_status`.
+**`src/features/orders/api.ts`:**
+- Extender `Order` y `OrderWithItems` con `customer_pays_shipping: boolean`.
+- Extender `NewOrderInput` con `customer_pays_shipping: boolean`.
+- `useCreateManualOrder()` envía el flag al insertar.
+
+**`src/features/logistics/api.ts`:**
+- Extender `ShipmentOrder` con `customer_pays_shipping: boolean`.
+- `useMarkShipped` / `useUpdateShippingCost`: si `customer_pays_shipping = true`, forzar `shipping_cost = 0` al guardar (defensa en profundidad).
+
+**`src/features/bi/api.ts` — `useBiData`:**
+- Traer `customer_pays_shipping` en el select de orders.
+- Al acumular `shippingCost`, sumar 0 cuando `customer_pays_shipping = true`.
+- Mismo tratamiento en `monthlyClosure`.
+
+### Cambios en UI
+
+**`src/features/orders/NewOrderForm.tsx`:**
+- Nuevo `Switch` debajo del de COD: *"El cliente asume el costo de envío"* con texto auxiliar *"No se sumará como gasto al despachar."*.
+- Estado `customerPaysShipping`. Pasarlo al mutation.
 
 **`src/features/logistics/ShipDialog.tsx`:**
-- Aceptar prop opcional `targetStatus?: 'shipped' | 'delivered'` y `onCancel?: () => void` (para revertir el optimistic en el board).
-- Pasar `target_status` al mutation.
+- Si `order.customer_pays_shipping === true`:
+  - Ocultar el input de costo de envío y mostrar leyenda *"El cliente asume el envío"*.
+  - No exigir el campo; enviar `shipping_cost = 0`.
+- En el resumen del diálogo, mostrar *"Envío pagado por el cliente"* en lugar del costo.
 
-**`src/features/orders/OrdersBoard.tsx`:**
-- Envolver con `DndContext` (sensors: pointer + keyboard).
-- Cada columna = `Droppable` (id = status). Cada `OrderCard` = `Draggable` (id = order.id).
-- Mantener `EntityDetailCard` clickeable: drag se activa con `activationConstraint: { distance: 6 }` para no chocar con el click que abre el detalle.
-- Estilos: card semi-transparente al arrastrar, columna destino con highlight (`ring-2 ring-primary/40`).
-- `onDragEnd`:
-  - Si `over.id === active.data.status` → no-op.
-  - Si destino ∈ {`shipped`,`delivered`} y la orden no tiene `tracking_number` → notificar al padre (`onRequestShip(order, targetStatus)`).
-  - En otro caso → `onChangeStatus(order.id, targetStatus)`.
-- Nuevas props: `onChangeStatus(id, status)` y `onRequestShip(order, status)`. (El `renderDetails` actual queda igual.)
+**`src/features/orders/OrderDetails.tsx`:**
+- Cuando `customer_pays_shipping = true`: mostrar línea/badge *"Envío a cargo del cliente"* y omitir el descuento del envío en el margen visual.
 
-**`src/pages/Orders.tsx`:**
-- Estado nuevo `shipTarget: { order, targetStatus } | null`.
-- `OrdersBoard` recibe:
-  - `onChangeStatus`: llama a `updateStatus.mutateAsync({ id, status })` con toast.
-  - `onRequestShip`: setea `shipTarget`.
-- Renderizar `ShipDialog` (importado de logistics) controlado por `shipTarget`, pasando `order`, `targetStatus`, `open`, `onOpenChange`. Al cerrar sin éxito, simplemente se descarta (no hubo update, no hay nada que revertir).
+**`src/features/logistics/FulfillmentBoard.tsx`:**
+- En la tarjeta, mostrar etiqueta *"Cliente paga envío"* cuando aplique; no mostrar costo de envío.
 
-**Móvil:**
-- DnD funciona con touch (PointerSensor cubre touch). En pantallas pequeñas el board ya hace scroll horizontal; mantener.
+**Dashboard (`src/pages/Index.tsx`) y `MonthlyClosureTable.tsx`:**
+- Sin cambios visuales; los KPIs de "Costos de envío" y margen reflejan el cambio automáticamente vía `useBiData`.
 
 ### Archivos
 
-**Modificados:**
-- `src/features/orders/OrdersBoard.tsx` — DnD context, droppables, draggables, callbacks.
-- `src/pages/Orders.tsx` — manejar `onChangeStatus`, `onRequestShip`, montar `ShipDialog`.
-- `src/features/logistics/ShipDialog.tsx` — aceptar `targetStatus` y propagarlo.
-- `src/features/logistics/api.ts` — `useMarkShipped` acepta `target_status` opcional.
+**Migración nueva:** añade `customer_pays_shipping boolean NOT NULL DEFAULT false` a `orders`.
 
-**Dependencia nueva (si no existe):** `@dnd-kit/core`.
+**Modificados:**
+- `src/features/orders/api.ts`
+- `src/features/orders/NewOrderForm.tsx`
+- `src/features/orders/OrderDetails.tsx`
+- `src/features/logistics/api.ts`
+- `src/features/logistics/ShipDialog.tsx`
+- `src/features/logistics/FulfillmentBoard.tsx`
+- `src/features/bi/api.ts`
 
 ### Resultado
-En `/pedidos` el usuario arrastra tarjetas entre columnas para cambiar el estado. Mover a **Enviado** o **Entregado** sin guía abre el modal de despacho; sin guía + costo de envío no se aplica el cambio. Cualquier otra transición se aplica al instante con toast de confirmación.
+Al crear un pedido manual, el operador puede marcar que el cliente asume el envío. Esos pedidos saltan la captura del costo de envío al despachar y no se contabilizan como gasto en el dashboard ni en el cierre mensual. Pedidos sin el flag mantienen el flujo actual.
 
