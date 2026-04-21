@@ -38,19 +38,20 @@ export interface ShipPayload {
   tracking_number: string;
   shipping_cost: number;
   delay_reason?: string | null;
+  target_status?: "shipped" | "delivered";
 }
 
 export function useMarkShipped() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, tracking_number, shipping_cost, delay_reason }: ShipPayload) => {
+    mutationFn: async ({ id, tracking_number, shipping_cost, delay_reason, target_status }: ShipPayload) => {
       const { error } = await supabase
         .from("orders")
         .update({
           tracking_number,
           shipping_cost,
           shipped_at: new Date().toISOString(),
-          status: "shipped",
+          status: target_status ?? "shipped",
           delay_reason: delay_reason ?? null,
         })
         .eq("id", id);
