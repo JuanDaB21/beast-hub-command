@@ -4,6 +4,17 @@ import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton
 import { ORDER_STATUSES, type OrderStatus, type OrderWithItems } from "./api";
 import { STATUS_LABEL, statusTone } from "./status";
 import { ReactNode } from "react";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { cn } from "@/lib/utils";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
@@ -11,39 +22,116 @@ const currency = (n: number) =>
 interface Props {
   orders: OrderWithItems[];
   renderDetails: (order: OrderWithItems) => ReactNode;
+  onChangeStatus?: (id: string, status: OrderStatus) => void;
+  onRequestShip?: (order: OrderWithItems, targetStatus: "shipped" | "delivered") => void;
 }
 
-/** Board Kanban agrupado por status. */
-export function OrdersBoard({ orders, renderDetails }: Props) {
+/** Board Kanban agrupado por status, con drag & drop entre columnas. */
+export function OrdersBoard({ orders, renderDetails, onChangeStatus, onRequestShip }: Props) {
   const groups = ORDER_STATUSES.map((s) => ({
     status: s.value,
     label: s.label,
     items: orders.filter((o) => o.status === s.value),
   }));
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    const order = active.data.current?.order as OrderWithItems | undefined;
+    const target = over.id as OrderStatus;
+    if (!order || order.status === target) return;
+
+    if ((target === "shipped" || target === "delivered") && !order.tracking_number) {
+      onRequestShip?.(order, target);
+      return;
+    }
+    onChangeStatus?.(order.id, target);
+  };
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      {groups.map((g) => (
-        <div key={g.status} className="flex min-h-[120px] flex-col rounded-md bg-muted/30 p-2">
-          <div className="mb-2 flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <StatusBadge tone={statusTone(g.status)} label={g.label} />
-            </div>
-            <span className="text-xs text-muted-foreground tabular-nums">{g.items.length}</span>
-          </div>
-          <div className="space-y-2">
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {groups.map((g) => (
+          <DroppableColumn key={g.status} status={g.status} label={g.label} count={g.items.length}>
             {g.items.length === 0 ? (
               <div className="rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
                 Sin pedidos
               </div>
             ) : (
               g.items.map((o) => (
-                <OrderCard key={o.id} order={o} renderDetails={renderDetails} />
+                <DraggableOrderCard key={o.id} order={o} renderDetails={renderDetails} />
               ))
             )}
-          </div>
+          </DroppableColumn>
+        ))}
+      </div>
+    </DndContext>
+  );
+}
+
+function DroppableColumn({
+  status,
+  label,
+  count,
+  children,
+}: {
+  status: OrderStatus;
+  label: string;
+  count: number;
+  children: ReactNode;
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: status });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex min-h-[120px] flex-col rounded-md bg-muted/30 p-2 transition-shadow",
+        isOver && "ring-2 ring-primary/40",
+      )}
+    >
+      <div className="mb-2 flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <StatusBadge tone={statusTone(status)} label={label} />
         </div>
-      ))}
+        <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function DraggableOrderCard({
+  order,
+  renderDetails,
+}: {
+  order: OrderWithItems;
+  renderDetails: (order: OrderWithItems) => ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
+    id: order.id,
+    data: { order },
+  });
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={cn("touch-none", isDragging && "opacity-50")}
+    >
+      <OrderCard order={order} renderDetails={renderDetails} />
     </div>
   );
 }
@@ -79,7 +167,7 @@ function OrderCard({
               {currency(Number(order.total))}
             </span>
           </div>
-          <div onClick={(e) => e.stopPropagation()}>
+          <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
             <WhatsAppContactButton
               phone={order.customer_phone}
               message={`Hola ${order.customer_name}, te contacto sobre tu pedido ${order.order_number}.`}
