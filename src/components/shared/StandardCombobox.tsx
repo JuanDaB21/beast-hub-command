@@ -1,14 +1,7 @@
-import { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +22,10 @@ interface StandardComboboxProps {
   allowClear?: boolean;
 }
 
-/** Wrapper de ShadCN Combobox para selección controlada (categorías, proveedores, etc.). */
+/**
+ * Combobox controlado con búsqueda y scroll nativo.
+ * Implementación sin cmdk para evitar conflictos de scroll dentro de modales.
+ */
 export function StandardCombobox({
   options,
   value,
@@ -42,7 +38,30 @@ export function StandardCombobox({
   allowClear = true,
 }: StandardComboboxProps) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const selected = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      return;
+    }
+    // Enfocar el buscador al abrir
+    const t = window.setTimeout(() => inputRef.current?.focus(), 30);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((o) => o.label.toLowerCase().includes(q));
+  }, [options, query]);
+
+  const handleSelect = (optValue: string) => {
+    onChange(optValue === value ? null : optValue);
+    setOpen(false);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -53,51 +72,87 @@ export function StandardCombobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className={cn("w-full justify-between font-normal", !selected && "text-muted-foreground", className)}
+          className={cn(
+            "w-full justify-between font-normal",
+            !selected && "text-muted-foreground",
+            className,
+          )}
         >
-          {selected ? selected.label : placeholder}
+          <span className="truncate">{selected ? selected.label : placeholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[--radix-popover-trigger-width] max-h-[var(--radix-popover-content-available-height)] overflow-hidden p-0"
+        className="w-[--radix-popover-trigger-width] p-0"
         align="start"
+        onOpenAutoFocus={(e) => {
+          // Evitamos el autofocus por defecto para enfocar manualmente nuestro input
+          e.preventDefault();
+        }}
+        onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
       >
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList className="max-h-[min(300px,var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain">
-            <CommandEmpty>{emptyText}</CommandEmpty>
-            <CommandGroup>
-              {allowClear && value && (
-                <CommandItem
-                  value="__clear__"
-                  onSelect={() => {
-                    onChange(null);
-                    setOpen(false);
-                  }}
-                  className="text-muted-foreground"
-                >
-                  Limpiar selección
-                </CommandItem>
-              )}
-              {options.map((opt) => (
-                <CommandItem
+        <div className="border-b p-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="h-9 pl-8"
+            />
+          </div>
+        </div>
+        <div
+          className="max-h-72 touch-pan-y overflow-y-auto overscroll-contain p-1"
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+          role="listbox"
+        >
+          {allowClear && value && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange(null);
+                setOpen(false);
+              }}
+              className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              Limpiar selección
+            </button>
+          )}
+          {filtered.length === 0 ? (
+            <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+              {emptyText}
+            </div>
+          ) : (
+            filtered.map((opt) => {
+              const isSelected = value === opt.value;
+              return (
+                <button
+                  type="button"
                   key={opt.value}
-                  value={opt.label}
-                  onSelect={() => {
-                    onChange(opt.value === value ? null : opt.value);
-                    setOpen(false);
-                  }}
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => handleSelect(opt.value)}
+                  className={cn(
+                    "flex w-full items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                    isSelected && "bg-accent/50",
+                  )}
                 >
                   <Check
-                    className={cn("mr-2 h-4 w-4", value === opt.value ? "opacity-100" : "opacity-0")}
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      isSelected ? "opacity-100" : "opacity-0",
+                    )}
                   />
-                  {opt.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+                  <span className="truncate">{opt.label}</span>
+                </button>
+              );
+            })
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
