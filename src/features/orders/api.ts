@@ -3,6 +3,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
 export type OrderSource = "manual" | "shopify";
+export type PaymentMethod = "fisico" | "nequi" | "daviplata" | "bancolombia";
+
+export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
+  { value: "fisico", label: "Físico" },
+  { value: "nequi", label: "Nequi" },
+  { value: "daviplata", label: "Daviplata" },
+  { value: "bancolombia", label: "Bancolombia" },
+];
+
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  fisico: "Físico",
+  nequi: "Nequi",
+  daviplata: "Daviplata",
+  bancolombia: "Bancolombia",
+};
 
 export const ORDER_STATUSES: { value: OrderStatus; label: string }[] = [
   { value: "pending", label: "Pendiente" },
@@ -21,6 +36,7 @@ export interface Order {
   status: OrderStatus;
   is_cod: boolean;
   cod_confirmed: boolean;
+  payment_method: PaymentMethod | null;
   total: number;
   created_at: string;
   updated_at: string;
@@ -77,6 +93,7 @@ export interface NewOrderInput {
   customer_phone: string;
   is_cod: boolean;
   status: OrderStatus;
+  payment_method: PaymentMethod;
   items: NewOrderItemInput[];
 }
 
@@ -103,6 +120,7 @@ export function useCreateManualOrder() {
           status: input.status,
           is_cod: input.is_cod,
           cod_confirmed: false,
+          payment_method: input.payment_method,
         })
         .select()
         .single();

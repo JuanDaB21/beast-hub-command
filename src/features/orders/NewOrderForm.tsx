@@ -3,13 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
 import { Trash2, Plus } from "lucide-react";
 import {
   useCreateManualOrder,
   useProductsForOrder,
+  PAYMENT_METHODS,
   type NewOrderItemInput,
   type OrderStatus,
+  type PaymentMethod,
 } from "./api";
 import { toast } from "@/hooks/use-toast";
 
@@ -32,6 +41,7 @@ export function NewOrderForm({ onSuccess }: Props) {
   const [customerPhone, setCustomerPhone] = useState("");
   const [isCod, setIsCod] = useState(false);
   const [status] = useState<OrderStatus>("pending");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
   const [items, setItems] = useState<DraftItem[]>([]);
 
   const productOptions = useMemo(
@@ -84,6 +94,10 @@ export function NewOrderForm({ onSuccess }: Props) {
       toast({ title: "Líneas inválidas", description: "Cada línea requiere producto y cantidad > 0.", variant: "destructive" });
       return;
     }
+    if (!paymentMethod) {
+      toast({ title: "Método de pago", description: "Selecciona un método de pago.", variant: "destructive" });
+      return;
+    }
 
     try {
       await create.mutateAsync({
@@ -91,12 +105,14 @@ export function NewOrderForm({ onSuccess }: Props) {
         customer_phone: customerPhone.trim(),
         is_cod: isCod,
         status,
+        payment_method: paymentMethod,
         items: items.map(({ uid, ...rest }) => rest),
       });
       toast({ title: "Pedido creado" });
       setCustomerName("");
       setCustomerPhone("");
       setIsCod(false);
+      setPaymentMethod("");
       setItems([]);
       onSuccess?.();
     } catch (err: any) {
@@ -130,6 +146,22 @@ export function NewOrderForm({ onSuccess }: Props) {
           <p className="text-xs text-muted-foreground">Marcará el pedido para confirmación posterior.</p>
         </div>
         <Switch id="o-cod" checked={isCod} onCheckedChange={setIsCod} />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="o-pm">Método de pago *</Label>
+        <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+          <SelectTrigger id="o-pm">
+            <SelectValue placeholder="Selecciona método de pago" />
+          </SelectTrigger>
+          <SelectContent>
+            {PAYMENT_METHODS.map((pm) => (
+              <SelectItem key={pm.value} value={pm.value}>
+                {pm.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
