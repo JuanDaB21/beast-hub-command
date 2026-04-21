@@ -9,6 +9,8 @@ import { errorHandler } from './util';
 import { catalogsRouter } from './routes/catalogs';
 import { suppliersRouter } from './routes/suppliers';
 import { rawMaterialsRouter } from './routes/raw-materials';
+import { productsRouter } from './routes/products';
+import { productMaterialsRouter } from './routes/product-materials';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -30,6 +32,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/catalogs', requireAuth, catalogsRouter);
 app.use('/api/suppliers', requireAuth, suppliersRouter);
 app.use('/api/raw-materials', requireAuth, rawMaterialsRouter);
+app.use('/api/products', requireAuth, productsRouter);
+app.use('/api/product-materials', requireAuth, productMaterialsRouter);
 
 // Serve SPA build in production: dist/ is the Vite output at repo root.
 // When compiled server runs from dist/server/, static files live at ../
