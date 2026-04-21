@@ -137,6 +137,8 @@ export default function Orders() {
       ) : (
         <OrdersBoard
           orders={filtered}
+          onChangeStatus={handleChangeStatus}
+          onRequestShip={(order, targetStatus) => setShipTarget({ order, targetStatus })}
           renderDetails={(o) => (
             <OrderDetails
               order={o}
@@ -157,6 +159,13 @@ export default function Orders() {
           )}
         />
       )}
+
+      <ShipDialog
+        order={shipTarget ? (shipTarget.order as unknown as ShipmentOrder) : null}
+        open={!!shipTarget}
+        onOpenChange={(o) => !o && setShipTarget(null)}
+        targetStatus={shipTarget?.targetStatus}
+      />
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
