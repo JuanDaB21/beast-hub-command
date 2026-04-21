@@ -20,6 +20,7 @@ interface Row {
   shopify: number;
   manual: number;
   cogs: number;
+  shipping: number;
   margin: number;
 }
 
@@ -43,7 +44,7 @@ export function MonthlyClosureTable({ rows }: { rows: Row[] }) {
       <div className="border-b p-4">
         <h3 className="text-sm font-semibold">Cierre Mensual Analítico</h3>
         <p className="text-xs text-muted-foreground">
-          Últimos 6 meses · ingresos por canal vs. costo de bases
+          Últimos 6 meses · ingresos por canal vs. costo de bases y envíos
         </p>
       </div>
       <div className="overflow-x-auto">
@@ -55,6 +56,7 @@ export function MonthlyClosureTable({ rows }: { rows: Row[] }) {
               <TableHead className="text-right">WhatsApp</TableHead>
               <TableHead className="text-right">Total ingresos</TableHead>
               <TableHead className="text-right">Costo bases</TableHead>
+              <TableHead className="text-right">Envíos</TableHead>
               <TableHead className="text-right">Margen</TableHead>
               <TableHead className="text-right">%</TableHead>
             </TableRow>
@@ -74,6 +76,9 @@ export function MonthlyClosureTable({ rows }: { rows: Row[] }) {
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-muted-foreground">
                     -{currency(r.cogs)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">
+                    -{currency(r.shipping)}
                   </TableCell>
                   <TableCell
                     className={`text-right font-semibold tabular-nums ${

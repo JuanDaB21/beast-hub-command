@@ -9,6 +9,7 @@ import {
   Undo2,
   ShoppingCart,
   AlertCircle,
+  Truck,
 } from "lucide-react";
 import {
   RANGE_OPTIONS,
@@ -105,7 +106,7 @@ export default function Index() {
           </div>
 
           {/* Secondary KPIs */}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <KpiCard
               label="Ingresos WhatsApp"
               value={currency(data.revenueManual)}
@@ -116,6 +117,13 @@ export default function Index() {
               label="Ingresos Shopify"
               value={currency(data.revenueShopify)}
               icon={ShoppingCart}
+              tone="default"
+            />
+            <KpiCard
+              label="Costos de envío"
+              value={currency(data.shippingCost)}
+              hint="Restado del margen neto"
+              icon={Truck}
               tone="default"
             />
           </div>

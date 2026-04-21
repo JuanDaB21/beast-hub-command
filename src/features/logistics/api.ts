@@ -6,6 +6,7 @@ export interface ShipmentOrder extends OrderWithItems {
   tracking_number: string | null;
   shipped_at: string | null;
   delay_reason: string | null;
+  shipping_cost: number;
 }
 
 const QK = ["logistics-orders"] as const;
@@ -35,17 +36,19 @@ export function useShipmentOrders() {
 export interface ShipPayload {
   id: string;
   tracking_number: string;
+  shipping_cost: number;
   delay_reason?: string | null;
 }
 
 export function useMarkShipped() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, tracking_number, delay_reason }: ShipPayload) => {
+    mutationFn: async ({ id, tracking_number, shipping_cost, delay_reason }: ShipPayload) => {
       const { error } = await supabase
         .from("orders")
         .update({
           tracking_number,
+          shipping_cost,
           shipped_at: new Date().toISOString(),
           status: "shipped",
           delay_reason: delay_reason ?? null,
@@ -63,10 +66,35 @@ export function useMarkShipped() {
 export function useUpdateTracking() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, tracking_number }: { id: string; tracking_number: string }) => {
+    mutationFn: async ({
+      id,
+      tracking_number,
+      shipping_cost,
+    }: {
+      id: string;
+      tracking_number: string;
+      shipping_cost?: number;
+    }) => {
+      const { error } =
+        typeof shipping_cost === "number"
+          ? await supabase.from("orders").update({ tracking_number, shipping_cost }).eq("id", id)
+          : await supabase.from("orders").update({ tracking_number }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+}
+
+export function useUpdateShippingCost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, shipping_cost }: { id: string; shipping_cost: number }) => {
       const { error } = await supabase
         .from("orders")
-        .update({ tracking_number })
+        .update({ shipping_cost })
         .eq("id", id);
       if (error) throw error;
     },
