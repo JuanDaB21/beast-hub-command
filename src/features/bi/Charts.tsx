@@ -188,3 +188,46 @@ export function ReturnsPieChart({
     </ChartCard>
   );
 }
+
+export function RevenueByChannelChart({
+  data,
+}: {
+  data: { key: string; label: string; total: number; count: number }[];
+}) {
+  const filtered = data.filter((d) => d.total > 0 || d.count > 0);
+  if (filtered.length === 0) {
+    return (
+      <ChartCard title="Ingresos por canal de pago" subtitle="Sin ingresos en el rango">
+        <div />
+      </ChartCard>
+    );
+  }
+  return (
+    <ChartCard title="Ingresos por canal de pago" subtitle="Monto recibido por método">
+      <BarChart data={filtered} layout="vertical" margin={{ top: 5, right: 8, left: 8, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+        <XAxis type="number" fontSize={11} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => currency(Number(v))} />
+        <YAxis type="category" dataKey="label" fontSize={11} stroke="hsl(var(--muted-foreground))" width={120} />
+        <Tooltip
+          contentStyle={{
+            background: "hsl(var(--popover))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 8,
+            fontSize: 12,
+          }}
+          formatter={(value: number, name: string, ctx: any) => {
+            if (name === "total") return [currency(value), "Ingresos"];
+            if (name === "count") return [value, "Pedidos"];
+            return [value, name];
+          }}
+        />
+        <Bar dataKey="total" radius={[0, 4, 4, 0]}>
+          {filtered.map((_, i) => (
+            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ChartCard>
+  );
+}
+

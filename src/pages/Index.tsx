@@ -14,15 +14,18 @@ import {
   RANGE_OPTIONS,
   rangeFromKey,
   useBiData,
+  useRevenueByPaymentMethod,
   type RangeKey,
 } from "@/features/bi/api";
 import { KpiCard } from "@/features/bi/KpiCard";
 import {
   ReturnsPieChart,
+  RevenueByChannelChart,
   SalesLineChart,
   TopProductsBarChart,
 } from "@/features/bi/Charts";
 import { MonthlyClosureTable } from "@/features/bi/MonthlyClosureTable";
+import { Card } from "@/components/ui/card";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", {
@@ -35,6 +38,7 @@ export default function Index() {
   const [rangeKey, setRangeKey] = useState<RangeKey>("30d");
   const range = useMemo(() => rangeFromKey(rangeKey), [rangeKey]);
   const { data, isLoading } = useBiData(range);
+  const { data: channels } = useRevenueByPaymentMethod(range);
 
   return (
     <AppShell
