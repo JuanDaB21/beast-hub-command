@@ -1,80 +1,40 @@
 
-
-## Plan: Calculadora de Cotización Rápida (efímera, WhatsApp)
+## Plan: Corregir scroll del combobox en “Nuevo pedido manual”
 
 ### Objetivo
-Herramienta táctica para el equipo de ventas: un panel lateral con calculadora que combina productos, envío y recargo COD, y genera un mensaje listo para copiar a WhatsApp. **No persiste nada** en la base de datos.
+Ajustar el componente compartido `StandardCombobox` para que la lista de productos con buscador pueda desplazarse correctamente dentro del modal de creación de pedido manual.
 
-### Tarea 1 — Punto de entrada global (Navbar)
+### Cambio principal
 
-Inyectar el botón en el header global para que esté disponible desde cualquier módulo (no solo Órdenes).
+Modificar `src/components/shared/StandardCombobox.tsx` para que el scroll sea controlado por el contenido del popover, no por el modal padre.
 
-- **`src/components/layout/AppShell.tsx`**: añadir un botón con icono `Calculator` (lucide) junto al `SidebarTrigger` en la barra superior. Tooltip *"Calculadora de cotización"*. Abre el `Sheet` de la calculadora.
-- Estado local del shell `[quoteOpen, setQuoteOpen]` controla el Sheet.
+Se aplicará:
 
-### Tarea 2 — Componente `QuoteCalculatorSheet`
+- `PopoverContent` con altura máxima basada en el espacio disponible en pantalla:
+  - `max-h-[var(--radix-popover-content-available-height)]`
+  - `overflow-hidden`
+- `CommandList` con altura máxima real y scroll interno:
+  - `max-h-[min(300px,var(--radix-popover-content-available-height))]`
+  - `overflow-y-auto`
+  - `overscroll-contain`
+- Mantener el ancho actual:
+  - `w-[--radix-popover-trigger-width]`
+- Mantener el comportamiento actual de búsqueda, selección, limpieza y cierre del popover.
 
-**Nuevo archivo**: `src/features/sales/QuoteCalculatorSheet.tsx`
+### Ajuste específico para el caso del modal
 
-Estructura (`Sheet side="right"`, ancho `sm:max-w-lg`):
+Como el combobox se usa dentro de `DialogContent` en `src/pages/Orders.tsx`, el ajuste evitará que la rueda/scroll del mouse se “pierda” en el scroll del diálogo y permitirá navegar listas largas de productos desde el propio dropdown.
 
-**(a) Header**: título *"Calculadora de cotización"*, descripción *"Cálculos efímeros · no se guarda en la base de datos"*.
+### Archivos a modificar
 
-**(b) Lista de productos (dinámica)**: array local `items: { id, mode: 'catalog'|'manual', productId?, name, price, qty }`.
-- Por línea:
-  - `Tabs` (catálogo / manual) o un toggle simple.
-  - **Catálogo**: `StandardCombobox` con productos activos vía `useProductsForOrder()` (ya existe en `src/features/orders/api.ts`). Al seleccionar, autorrellena `name` y `price`.
-  - **Manual**: `Input` para nombre y `Input` numérico para precio.
-  - `Input` cantidad (mínimo 1).
-  - Subtotal de línea (currency, derecha).
-  - Botón eliminar (`X`).
-- Botón *"+ Agregar producto"*.
+- `src/components/shared/StandardCombobox.tsx`
 
-**(c) Envío**: `Switch` *"¿Aplica envío?"* → `Input` numérico costo (si on).
+### Resultado esperado
 
-**(d) COD**: `Switch` *"¿Es Pago Contra Entrega (COD)?"* → `Input` numérico porcentaje (default = `useGlobalConfigs()['cod_transport_fee_percent'] ?? 5`).
+En “Órdenes” → “Nuevo pedido” → selector de producto:
 
-**(e) Resumen (Card)**:
-- Subtotal = `Σ(precio × cantidad)`.
-- Envío.
-- Comisión COD = `(subtotal + envío) × (% / 100)`.
-- **Total final** (resaltado).
-
-**(f) Mensaje WhatsApp (Card readonly)**:
-```
-¡Hola! 🐺 Aquí está el resumen de tu pedido en Beast Club:
-
-• 2x Camiseta Blanca - $80.000
-• 1x Hoodie Negro - $120.000
-
-Subtotal: $200.000
-Envío: $15.000
-Comisión COD: $10.750
-Total a pagar: $225.750
-```
-Renderizado como `<pre>` o `Textarea` readonly.
-
-**(g) Acciones (footer sticky)**:
-- Botón grande *"Copiar para WhatsApp"* (`navigator.clipboard.writeText` + toast confirmación).
-- Botón secundario *"Limpiar"* (resetea estado).
-
-### Tarea 3 — Hook helper de formato
-
-Reutilizar el patrón `currency` ya presente en `Orders.tsx`. Inline o un util compartido en `src/lib/utils.ts` (`formatCurrency`).
-
-### Archivos
-
-**Nuevos:**
-- `src/features/sales/QuoteCalculatorSheet.tsx`
-
-**Modificados:**
-- `src/components/layout/AppShell.tsx` — botón Calculator + Sheet montado.
-
-### Restricciones cumplidas
-- Cero escrituras a DB (no se llama `useCreateManualOrder` ni mutaciones).
-- Solo lecturas: productos activos y configuración global.
-- El estado vive en el componente y se resetea al limpiar/cerrar.
-
-### Resultado
-Desde cualquier módulo (incluyendo Órdenes), el vendedor abre la calculadora con un clic en el ícono superior. Arma la cotización mezclando productos del catálogo con líneas manuales, ajusta envío y COD, y copia un mensaje formateado listo para WhatsApp — sin tocar la operación real.
-
+- El dropdown abre normalmente.
+- El buscador sigue funcionando.
+- La lista de productos muestra una altura limitada.
+- Se puede hacer scroll con mouse/touchpad dentro del select.
+- El cambio beneficia también otros formularios que usan `StandardCombobox`, sin alterar su API ni la lógica de pedidos.
