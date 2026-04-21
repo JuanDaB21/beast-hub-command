@@ -121,6 +121,7 @@ export type Database = {
           confirmed_by_staff_id: string | null
           created_at: string
           customer_name: string
+          customer_pays_shipping: boolean
           customer_phone: string
           delay_reason: string | null
           id: string
@@ -145,6 +146,7 @@ export type Database = {
           confirmed_by_staff_id?: string | null
           created_at?: string
           customer_name: string
+          customer_pays_shipping?: boolean
           customer_phone: string
           delay_reason?: string | null
           id?: string
@@ -169,6 +171,7 @@ export type Database = {
           confirmed_by_staff_id?: string | null
           created_at?: string
           customer_name?: string
+          customer_pays_shipping?: boolean
           customer_phone?: string
           delay_reason?: string | null
           id?: string

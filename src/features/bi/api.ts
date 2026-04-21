@@ -105,6 +105,7 @@ interface OrderRow {
   status: string;
   total: number;
   shipping_cost: number;
+  customer_pays_shipping: boolean;
   created_at: string;
   items: {
     quantity: number;
@@ -170,7 +171,7 @@ export function useBiData(range: DateRange) {
       let q = supabase
         .from("orders")
         .select(`
-          id, order_number, source, status, total, shipping_cost, created_at,
+          id, order_number, source, status, total, shipping_cost, customer_pays_shipping, created_at,
           items:order_items (
             quantity, unit_price,
             product:products ( id, name, sku )
@@ -233,7 +234,8 @@ export function useBiData(range: DateRange) {
       for (const o of validOrders) {
         const total = Number(o.total);
         revenue += total;
-        shippingCost += Number(o.shipping_cost) || 0;
+        const orderShipping = o.customer_pays_shipping ? 0 : Number(o.shipping_cost) || 0;
+        shippingCost += orderShipping;
         if (o.source === "shopify") revenueShopify += total;
         else revenueManual += total;
 
@@ -299,7 +301,7 @@ export function useBiData(range: DateRange) {
         const total = Number(o.total);
         if (o.source === "shopify") cur.shopify += total;
         else cur.manual += total;
-        cur.shipping += Number(o.shipping_cost) || 0;
+        cur.shipping += o.customer_pays_shipping ? 0 : Number(o.shipping_cost) || 0;
         for (const it of o.items) {
           if (!it.product) continue;
           cur.cogs += (costMap.get(it.product.id) ?? 0) * Number(it.quantity);
