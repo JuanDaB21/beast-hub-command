@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
-import { Trash2, Plus } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Trash2, Plus, Info } from "lucide-react";
 import {
   useCreateManualOrder,
   useProductsForOrder,
@@ -20,6 +21,7 @@ import {
   type OrderStatus,
   type PaymentMethod,
 } from "./api";
+import { useGlobalConfigs } from "@/features/production/configApi";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
@@ -36,6 +38,8 @@ const currency = (n: number) =>
 export function NewOrderForm({ onSuccess }: Props) {
   const { data: products = [], isLoading: loadingProducts } = useProductsForOrder();
   const create = useCreateManualOrder();
+  const { data: configs } = useGlobalConfigs();
+  const codFeePct = Number(configs?.cod_transport_fee_percent ?? 0);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -79,7 +83,9 @@ export function NewOrderForm({ onSuccess }: Props) {
     });
   };
 
-  const total = items.reduce((acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.unit_price) || 0), 0);
+  const subtotal = items.reduce((acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.unit_price) || 0), 0);
+  const codSurcharge = isCod && codFeePct > 0 ? Math.round(subtotal * (codFeePct / 100)) : 0;
+  const total = subtotal + codSurcharge;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +107,11 @@ export function NewOrderForm({ onSuccess }: Props) {
     }
 
     try {
+      const itemsPayload: NewOrderItemInput[] = items.map(({ uid, ...rest }) => rest);
+      // Inyecta línea virtual de comisión COD para que recalc_order_total la considere
+      if (isCod && codSurcharge > 0) {
+        itemsPayload.push({ product_id: "", quantity: 1, unit_price: codSurcharge });
+      }
       await create.mutateAsync({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
@@ -108,7 +119,7 @@ export function NewOrderForm({ onSuccess }: Props) {
         customer_pays_shipping: customerPaysShipping,
         status,
         payment_method: paymentMethod,
-        items: items.map(({ uid, ...rest }) => rest),
+        items: itemsPayload,
       });
       toast({ title: "Pedido creado" });
       setCustomerName("");
@@ -243,9 +254,31 @@ export function NewOrderForm({ onSuccess }: Props) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-md bg-muted/40 p-3">
-        <span className="text-sm text-muted-foreground">Total estimado</span>
-        <span className="text-lg font-semibold tabular-nums">{currency(total)}</span>
+      <div className="space-y-1 rounded-md bg-muted/40 p-3">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Subtotal productos</span>
+          <span className="tabular-nums">{currency(subtotal)}</span>
+        </div>
+        {isCod && codSurcharge > 0 && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              Comisión transportadora COD ({codFeePct}%)
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  Esta comisión la cobra la transportadora al cliente en envíos contra entrega.
+                </TooltipContent>
+              </Tooltip>
+            </span>
+            <span className="tabular-nums">{currency(codSurcharge)}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between border-t pt-2">
+          <span className="text-sm font-medium">{isCod ? "Total a cobrar al cliente" : "Total estimado"}</span>
+          <span className="text-lg font-semibold tabular-nums">{currency(total)}</span>
+        </div>
       </div>
 
       <Button type="submit" disabled={create.isPending} className="w-full sm:w-auto">

@@ -1,6 +1,9 @@
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ORDER_STATUSES, PAYMENT_METHOD_LABEL, type OrderWithItems, type OrderStatus } from "./api";
+import { useGlobalConfigs } from "@/features/production/configApi";
 import { STATUS_LABEL, statusTone } from "./status";
 
 const currency = (n: number) =>
@@ -22,6 +26,15 @@ interface Props {
 }
 
 export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: Props) {
+  const { data: configs } = useGlobalConfigs();
+  const shopifyPct = Number(configs?.shopify_fee_percent ?? 0);
+  const gatewayPct = Number(configs?.gateway_fee_percent ?? 0);
+  const gatewayFixed = Number(configs?.gateway_fee_fixed ?? 0);
+  const isShopify = order.source === "shopify";
+  const totalNum = Number(order.total);
+  const shopifyFee = isShopify ? totalNum * (shopifyPct / 100) : 0;
+  const gatewayFee = isShopify ? totalNum * (gatewayPct / 100) + gatewayFixed : 0;
+  const netReceived = totalNum - shopifyFee - gatewayFee;
   return (
     <div className="space-y-4 text-sm">
       <div className="flex flex-wrap items-center gap-2">
@@ -77,21 +90,26 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
                   </td>
                 </tr>
               ) : (
-                order.items.map((it) => (
-                  <tr key={it.id} className="border-t">
-                    <td className="px-3 py-2">
-                      <div className="font-medium">{it.product?.name ?? "Producto eliminado"}</div>
-                      {it.product?.sku && (
-                        <div className="font-mono text-xs text-muted-foreground">{it.product.sku}</div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {currency(it.quantity * Number(it.unit_price))}
-                    </td>
-                  </tr>
-                ))
+                order.items.map((it) => {
+                  const isCodFee = !it.product_id && !it.product;
+                  return (
+                    <tr key={it.id} className="border-t">
+                      <td className="px-3 py-2">
+                        <div className="font-medium">
+                          {isCodFee ? "Comisión COD transportadora" : it.product?.name ?? "Producto eliminado"}
+                        </div>
+                        {it.product?.sku && (
+                          <div className="font-mono text-xs text-muted-foreground">{it.product.sku}</div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {currency(it.quantity * Number(it.unit_price))}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
             <tfoot>
@@ -138,6 +156,40 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
           </table>
         </div>
       </div>
+
+      {isShopify && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-1.5">
+              Comisiones estimadas
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  Cálculo informativo basado en configuración general.
+                </TooltipContent>
+              </Tooltip>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1.5 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Comisión Shopify ({shopifyPct}%)</span>
+              <span className="tabular-nums">-{currency(shopifyFee)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                Comisión pasarela ({gatewayPct}% + {currency(gatewayFixed)})
+              </span>
+              <span className="tabular-nums">-{currency(gatewayFee)}</span>
+            </div>
+            <div className="flex items-center justify-between border-t pt-1.5 font-medium">
+              <span>Neto estimado a recibir</span>
+              <span className="tabular-nums">{currency(netReceived)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">

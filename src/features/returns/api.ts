@@ -14,10 +14,12 @@ export interface ReturnRow {
   notes: string | null;
   resolution_status: ReturnStatus;
   resolved_at: string | null;
+  company_assumes_shipping: boolean;
+  return_shipping_cost: number;
   created_at: string;
   updated_at: string;
   order: { id: string; order_number: string; customer_name: string } | null;
-  product: { id: string; sku: string; name: string; stock: number } | null;
+  product: { id: string; sku: string; name: string; stock: number; cost: number } | null;
 }
 
 const QK = ["returns"] as const;
@@ -31,7 +33,7 @@ export function useReturns() {
         .select(`
           *,
           order:orders ( id, order_number, customer_name ),
-          product:products ( id, sku, name, stock )
+          product:products ( id, sku, name, stock, cost )
         `)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -92,19 +94,37 @@ export interface ResolveInput {
   current_stock: number | null;
   resolution: "restocked" | "scrapped";
   notes: string;
+  company_assumes_shipping: boolean;
+  return_shipping_cost: number;
+  product_cost: number;
+  order_number?: string | null;
+  product_name?: string | null;
 }
 
-/** Resuelve la devolución. Si es 'restocked', suma +1 al stock del producto. */
+/** Resuelve la devolución. Si es 'restocked', suma +1 al stock. Si es 'scrapped', registra merma en el libro mayor. Si la empresa asume el envío, registra ese gasto. */
 export function useResolveReturn() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, product_id, current_stock, resolution, notes }: ResolveInput) => {
+    mutationFn: async ({
+      id,
+      product_id,
+      current_stock,
+      resolution,
+      notes,
+      company_assumes_shipping,
+      return_shipping_cost,
+      product_cost,
+      order_number,
+      product_name,
+    }: ResolveInput) => {
       const { error: updErr } = await supabase
         .from("returns")
         .update({
           resolution_status: resolution,
           notes,
           resolved_at: new Date().toISOString(),
+          company_assumes_shipping,
+          return_shipping_cost,
         })
         .eq("id", id);
       if (updErr) throw updErr;
@@ -117,10 +137,38 @@ export function useResolveReturn() {
           .eq("id", product_id);
         if (stockErr) throw stockErr;
       }
+
+      // Libro mayor: merma
+      if (resolution === "scrapped" && product_cost > 0) {
+        const { error: txErr } = await supabase.from("financial_transactions").insert({
+          transaction_type: "expense",
+          amount: product_cost,
+          category: "Pérdida por Merma",
+          reference_type: "return",
+          reference_id: id,
+          description: `Merma ${product_name ?? "producto"} · pedido ${order_number ?? "—"}`,
+        });
+        if (txErr) throw txErr;
+      }
+
+      // Libro mayor: flete asumido
+      if (company_assumes_shipping && return_shipping_cost > 0) {
+        const { error: txErr } = await supabase.from("financial_transactions").insert({
+          transaction_type: "expense",
+          amount: return_shipping_cost,
+          category: "Logística RMA",
+          reference_type: "return",
+          reference_id: id,
+          description: `Flete devolución pedido ${order_number ?? "—"}`,
+        });
+        if (txErr) throw txErr;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK });
       qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["financial_transactions"] });
+      qc.invalidateQueries({ queryKey: ["bi"] });
     },
   });
 }
