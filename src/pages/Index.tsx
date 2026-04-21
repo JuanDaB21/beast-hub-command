@@ -120,6 +120,30 @@ export default function Index() {
             />
           </div>
 
+          {/* Ingresos por canal de pago */}
+          {channels && channels.length > 0 && (
+            <div className="grid gap-3 lg:grid-cols-[1fr_2fr]">
+              <Card className="p-4">
+                <div className="mb-3 text-sm font-semibold">Canales de pago</div>
+                <div className="space-y-2">
+                  {channels.map((c) => (
+                    <div
+                      key={c.key}
+                      className="flex items-center justify-between rounded-md border bg-card px-3 py-2"
+                    >
+                      <div>
+                        <div className="text-sm font-medium">{c.label}</div>
+                        <div className="text-xs text-muted-foreground">{c.count} pedidos</div>
+                      </div>
+                      <div className="text-sm font-semibold tabular-nums">{currency(c.total)}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <RevenueByChannelChart data={channels} />
+            </div>
+          )}
+
           {/* Charts */}
           <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
             <div className="xl:col-span-2">
