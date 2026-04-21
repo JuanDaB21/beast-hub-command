@@ -99,6 +99,40 @@ export function useCreateTransaction() {
   });
 }
 
+export interface UpdateTransactionInput {
+  id: string;
+  reference_type: string | null;
+  amount: number;
+  category: string;
+  description?: string | null;
+}
+
+export function useUpdateTransaction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: UpdateTransactionInput) => {
+      if (input.reference_type && input.reference_type !== "manual") {
+        throw new Error(
+          "Solo se pueden editar transacciones manuales. Las automáticas se gestionan desde su módulo de origen.",
+        );
+      }
+      const { error } = await supabase
+        .from("financial_transactions")
+        .update({
+          amount: input.amount,
+          category: input.category,
+          description: input.description ?? null,
+        })
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["financial_transactions"] });
+      qc.invalidateQueries({ queryKey: ["bi"] });
+    },
+  });
+}
+
 export function useDeleteTransaction() {
   const qc = useQueryClient();
   return useMutation({

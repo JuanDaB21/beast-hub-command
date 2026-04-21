@@ -10,6 +10,8 @@ import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
   useCreateTransaction,
+  useUpdateTransaction,
+  type FinancialTransaction,
   type FinancialTransactionType,
 } from "./api";
 
@@ -17,12 +19,15 @@ interface Props {
   mode: FinancialTransactionType;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  transaction?: FinancialTransaction | null;
 }
 
-export function TransactionDialog({ mode, open, onOpenChange }: Props) {
+export function TransactionDialog({ mode, open, onOpenChange, transaction }: Props) {
+  const isEdit = !!transaction;
   const isIncome = mode === "income";
   const categories = isIncome ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   const create = useCreateTransaction();
+  const update = useUpdateTransaction();
 
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState(categories[0]);
@@ -30,11 +35,20 @@ export function TransactionDialog({ mode, open, onOpenChange }: Props) {
 
   useEffect(() => {
     if (open) {
-      setAmount("");
-      setCategory(categories[0]);
-      setDescription("");
+      if (transaction) {
+        setAmount(String(transaction.amount));
+        // If existing category isn't in the list, still set it (Select will show as-is)
+        setCategory(transaction.category);
+        setDescription(transaction.description ?? "");
+      } else {
+        setAmount("");
+        setCategory(categories[0]);
+        setDescription("");
+      }
     }
-  }, [open, mode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, mode, transaction]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const pending = create.isPending || update.isPending;
 
   const handleSubmit = async () => {
     const amt = Number(amount);
@@ -47,33 +61,50 @@ export function TransactionDialog({ mode, open, onOpenChange }: Props) {
       return;
     }
     try {
-      await create.mutateAsync({
-        transaction_type: mode,
-        amount: amt,
-        category,
-        description: description.trim() || null,
-        reference_type: "manual",
-      });
-      toast.success(
-        `${isIncome ? "Ingreso" : "Gasto"} registrado por ${amt.toLocaleString("es-CO", {
-          style: "currency",
-          currency: "COP",
-          maximumFractionDigits: 0,
-        })}`,
-      );
+      if (isEdit && transaction) {
+        await update.mutateAsync({
+          id: transaction.id,
+          reference_type: transaction.reference_type,
+          amount: amt,
+          category,
+          description: description.trim() || null,
+        });
+        toast.success("Transacción actualizada");
+      } else {
+        await create.mutateAsync({
+          transaction_type: mode,
+          amount: amt,
+          category,
+          description: description.trim() || null,
+          reference_type: "manual",
+        });
+        toast.success(
+          `${isIncome ? "Ingreso" : "Gasto"} registrado por ${amt.toLocaleString("es-CO", {
+            style: "currency",
+            currency: "COP",
+            maximumFractionDigits: 0,
+          })}`,
+        );
+      }
       onOpenChange(false);
     } catch (e: any) {
       toast.error(e?.message ?? "No se pudo guardar la transacción.");
     }
   };
 
+  const title = isEdit
+    ? isIncome
+      ? "Editar Ingreso"
+      : "Editar Gasto"
+    : isIncome
+      ? "Registrar Ingreso"
+      : "Registrar Gasto";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {isIncome ? "Registrar Ingreso" : "Registrar Gasto"}
-          </DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -94,7 +125,7 @@ export function TransactionDialog({ mode, open, onOpenChange }: Props) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((c) => (
+                {(categories.includes(category) ? categories : [category, ...categories]).map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
                   </SelectItem>
@@ -118,10 +149,10 @@ export function TransactionDialog({ mode, open, onOpenChange }: Props) {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={create.isPending}
+            disabled={pending}
             variant={isIncome ? "default" : "destructive"}
           >
-            {create.isPending ? "Guardando..." : "Guardar"}
+            {pending ? "Guardando..." : "Guardar"}
           </Button>
         </DialogFooter>
       </DialogContent>
