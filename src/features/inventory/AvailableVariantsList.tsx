@@ -152,11 +152,11 @@ export function AvailableVariantsList({ parents, orphans }: Props) {
                         {r.stock}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge tone={stock.tone}>{stock.label}</StatusBadge>
+                        <StatusBadge tone={stock.tone} label={stock.label} />
                       </TableCell>
                       <TableCell>
                         {aging ? (
-                          <StatusBadge tone="yellow">{r.aging_days}d</StatusBadge>
+                          <StatusBadge tone="yellow" label={`${r.aging_days}d`} />
                         ) : (
                           <span className="text-xs text-muted-foreground tabular-nums">
                             {r.aging_days}d
