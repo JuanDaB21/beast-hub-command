@@ -49,6 +49,7 @@ export function FinanceLedgerTable({
   transactions: FinancialTransaction[];
 }) {
   const [target, setTarget] = useState<FinancialTransaction | null>(null);
+  const [editTarget, setEditTarget] = useState<FinancialTransaction | null>(null);
   const del = useDeleteTransaction();
 
   const totalIncome = transactions
