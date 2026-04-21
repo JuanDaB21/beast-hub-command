@@ -1,92 +1,82 @@
 
 
-## Plan: Refactor de Configuración + FinOps (libro mayor, RMA financiero, COD, simulador fiscal)
+## Plan: Módulo Finanzas · Libro Mayor con UI completa
 
-### Tarea 1 — Refactor del módulo de Configuración
+### Objetivo
+Crear una sección **Finanzas** en el menú con una UI tipo libro mayor: tabla filtrable de todas las transacciones (`financial_transactions`), KPIs de ingresos/gastos/balance, y formularios para registrar manualmente ingresos y gastos. Centraliza tanto los movimientos automáticos (RMA, futuros pagos) como los manuales.
 
-Convertir `/configuracion` (`src/pages/Config.tsx`) en un panel con `Tabs` (ShadCN). Cada tab usa `Card`s para agrupar secciones.
+### Tarea 1 — Nueva ruta y entrada en el menú
 
-- **Tab 1 · Usuarios (Staff)** → mover el listado y diálogos actuales (`NewStaffDialog`, `EditStaffDialog`).
-- **Tab 2 · Costos de Producción** → renderiza `<PrintingConfigPanel />` (ya existente). En `src/pages/Production.tsx` se elimina la pestaña "Configuración de Estampado" (queda solo Lotes y Recetas).
-- **Tab 3 · Comisiones y Pasarelas** → inputs para `shopify_fee_percent`, `gateway_fee_percent`, `gateway_fee_fixed`, `cod_transport_fee_percent`. Cada label con `Tooltip` explicando la aplicación.
-- **Tab 4 · Proyección de Impuestos** → inputs para `estimated_iva_percent`, `estimated_retention_percent`. Encima de los inputs, **Card "Simulador Fiscal"** con: ingresos brutos del mes (suma de `orders.total` con `status != cancelled` del mes corriente), IVA estimado, retención estimada, y leyenda gris *"Estos valores son proyecciones informativas para futura formalización."*
+- **`src/lib/modules.ts`**: añadir módulo `finanzas` → path `/finanzas`, título *"Libro Mayor · Finanzas"*, icono `BookOpen` (lucide).
+- **`src/components/layout/AppSidebar.tsx`**: añadir nueva sección *"Finanzas"* con el slug `finanzas` (entre "Lotes y producción" y "General"), o agregarlo a "General". Preferimos sección propia para resaltarlo.
+- **`src/App.tsx`**: registrar `<Route path="/finanzas" element={protect(<Finance />)} />`.
+- **Nueva página** `src/pages/Finance.tsx` (usa `AppShell`).
 
-**API extension** — `src/features/production/configApi.ts`:
-- Ampliar `GlobalConfigId` con: `printing_cost_per_meter | ironing_cost | shopify_fee_percent | gateway_fee_percent | gateway_fee_fixed | cod_transport_fee_percent | estimated_iva_percent | estimated_retention_percent`.
-- `useUpdateGlobalConfig` ya hace upsert genérico, sirve para todos.
-- Nuevo helper `useGrossRevenueCurrentMonth()` (select sum de `orders` del mes).
+### Tarea 2 — API extendida `src/features/finance/api.ts`
 
-**Nueva carpeta** `src/features/config/` con componentes:
-- `StaffPanel.tsx` (extraído del actual Config).
-- `CommissionsPanel.tsx`.
-- `TaxesPanel.tsx` (incluye `FiscalSimulatorCard`).
+Añadir:
+- `FinancialTransaction` (tipo Row).
+- `useFinancialTransactions(filters)` → `useQuery` con filtros por `transaction_type`, `category`, rango de fechas (`from` / `to`), búsqueda libre en `description`. Ordena por `created_at desc`.
+- `useFinancialSummary(filters)` → calcula `totalIncome`, `totalExpense`, `balance`, `byCategory[]` con los mismos filtros (puede derivarse en cliente del query anterior, o una segunda query agregada).
+- `useDeleteTransaction()` → para corregir errores de captura (solo manuales). Bloquear DELETE si `reference_type !== 'manual'` (validación cliente).
+- Mantener `useCreateTransaction` (ya existe).
 
-### Tarea 2 — RMA con impacto financiero
+### Tarea 3 — UI del Libro Mayor (`src/pages/Finance.tsx`)
 
-**Schema (migración):** ya añadido en migración previa (`returns.company_assumes_shipping`, `returns.return_shipping_cost`).
+Layout en `AppShell` con título *"Libro Mayor"*:
 
-**`src/features/returns/api.ts`:**
-- Extender `ReturnRow` con `company_assumes_shipping: boolean`, `return_shipping_cost: number`.
-- Extender `product` select con `cost`.
-- Modificar `useResolveReturn`:
-  - Aceptar `company_assumes_shipping`, `return_shipping_cost`, `product_cost` en el input.
-  - Update de `returns` incluye `company_assumes_shipping` y `return_shipping_cost`.
-  - Tras resolver, insertar en `financial_transactions`:
-    - Si `resolution = 'scrapped'` y hay `product_cost > 0`:
-      `{ transaction_type: 'expense', amount: product_cost, category: 'Pérdida por Merma', reference_type: 'return', reference_id, description: 'Merma producto X · pedido Y' }`.
-    - Si `company_assumes_shipping = true` y `return_shipping_cost > 0`:
-      `{ transaction_type: 'expense', amount: return_shipping_cost, category: 'Logística RMA', reference_type: 'return', reference_id, description: 'Flete devolución pedido Y' }`.
+**(a) Fila de KPIs (Card grid 4 columnas):**
+- Ingresos del periodo (verde).
+- Gastos del periodo (rojo).
+- Balance neto (color dinámico).
+- # de movimientos.
 
-**`src/features/returns/ResolveReturnDialog.tsx`:**
-- Nuevo `Switch` *"¿Asumimos el costo de envío?"*. Si on, mostrar `Input` numérico para `return_shipping_cost`.
-- Pasar ambos al mutation; pasar también `product_cost = ret.product?.cost ?? 0`.
-- Toast informativo con resumen de impacto financiero (merma + flete asumido).
+**(b) Barra de filtros (Card):**
+- `Select` Tipo: Todos / Ingreso / Gasto.
+- `Select` Categoría: opciones distintas existentes en BD + categorías predefinidas (Pérdida por Merma, Logística RMA, Pago manual, Ingreso manual, Reembolso, Otro).
+- `DateRangePicker` (usar `Calendar` + `Popover` patrón ShadCN) para rango. Por defecto: mes corriente.
+- `Input` búsqueda por descripción.
+- Botón *"Limpiar filtros"*.
+- Dos botones primarios al extremo derecho: **"+ Registrar Ingreso"** y **"+ Registrar Gasto"** (variant destructive).
 
-### Tarea 3 — Lógica COD y Pasarelas
+**(c) Tabla principal (`Table` ShadCN):**
+Columnas: Fecha · Tipo (badge income/expense) · Categoría · Descripción · Origen (`reference_type`: manual/return/order, badge) · Monto (alineado derecha, color por tipo) · Acciones (eliminar solo si `reference_type='manual'`, con `AlertDialog` de confirmación).
 
-**`src/features/orders/NewOrderForm.tsx`:**
-- Cuando `isCod = true`, leer `cod_transport_fee_percent` (vía `useGlobalConfigs`) y mostrar nuevo bloque de resumen:
-  - Subtotal (suma items)
-  - Comisión transportadora COD (`subtotal × cod_transport_fee_percent / 100`) — con `Tooltip` *"Esta comisión la cobra la transportadora al cliente en envíos contra entrega"*.
-  - **Total a cobrar al cliente** = subtotal + comisión COD.
-- Esa comisión se inyecta como **una línea adicional virtual** en el insert: opción elegida → enviar `unit_price` de los items tal cual; el surcharge se suma directo sobre `orders.total` mediante un trigger lógico en cliente: insertar una línea `order_items` adicional con `product_id = null`, `quantity = 1`, `unit_price = comisión`, descripción a través de un campo? **Mejor opción**: dado que `recalc_order_total` recalcula `total = SUM(qty × unit_price)`, añadimos la línea con `product_id = null` y `unit_price = comisión` para que el total quede correcto sin tocar el trigger ni schema.
-  - Validación: solo cuando `is_cod = true` y comisión > 0.
-- En `OrderDetails.tsx`, las líneas con `product = null` se mostrarán como *"Comisión COD transportadora"*.
+Pie de tabla con totales del filtro aplicado.
 
-**Órdenes Shopify (solo lectura) — `src/features/orders/OrderDetails.tsx`:**
-- Si `order.source === 'shopify'`, mostrar Card "Comisiones estimadas":
-  - Comisión Shopify = `total × shopify_fee_percent / 100`.
-  - Comisión Pasarela = `total × gateway_fee_percent / 100 + gateway_fee_fixed`.
-  - **Neto estimado a recibir** = `total − ambas comisiones`.
-- Cada concepto con `Tooltip` y leyenda *"Cálculo informativo basado en configuración general."*.
+**(d) Card "Resumen por categoría":** lista compacta `categoría → total ingreso / gasto` con barras de progreso relativas.
 
-### Tarea 4 — Libro Mayor (financial_transactions)
+### Tarea 4 — Diálogo de registro (`src/features/finance/TransactionDialog.tsx`)
 
-**Nuevo módulo** `src/features/finance/api.ts`:
-- `useCreateTransaction()` — insert genérico en `financial_transactions`.
-- Tipo `FinancialTransactionInput`.
+Componente reusable controlado por prop `mode: 'income' | 'expense'`:
+- `Input` Monto (numérico, requerido > 0).
+- `Combobox`/`Input` Categoría (sugerencias preestablecidas según modo: 
+  - Ingreso: *Pago Shopify*, *Pago COD*, *Ingreso manual*, *Reembolso recibido*, *Otro*. 
+  - Gasto: *Pago a proveedor*, *Nómina*, *Servicios*, *Logística*, *Marketing*, *Pérdida por Merma*, *Logística RMA*, *Otro*).
+- `Textarea` Descripción.
+- Marca `reference_type = 'manual'`.
+- Botón Guardar → `useCreateTransaction`.
+- Toast con resumen.
 
-Usado por `useResolveReturn` (Tarea 2). Preparado para consumirse desde otros flujos a futuro.
+### Tarea 5 — Integración con dashboard existente
+
+Sin cambios visuales en `Index.tsx`/`MonthlyClosureTable`. El libro mayor es la fuente de verdad financiera; los KPIs actuales seguirán derivando de `orders` (no se duplican). Aclaración visual al pie del libro mayor: *"Los movimientos automáticos (RMA, mermas) se registran al resolverse en cada módulo. Los pagos a proveedores e ingresos extra-orden se capturan aquí."*
 
 ### Archivos
 
 **Nuevos:**
-- `src/features/finance/api.ts`
-- `src/features/config/StaffPanel.tsx`
-- `src/features/config/CommissionsPanel.tsx`
-- `src/features/config/TaxesPanel.tsx`
-- `src/features/config/FiscalSimulatorCard.tsx`
+- `src/pages/Finance.tsx`
+- `src/features/finance/TransactionDialog.tsx`
+- `src/features/finance/FinanceLedgerTable.tsx`
+- `src/features/finance/FinanceFilters.tsx`
+- `src/features/finance/FinanceKpis.tsx`
 
 **Modificados:**
-- `src/pages/Config.tsx` — Tabs container.
-- `src/pages/Production.tsx` — quitar tab "Configuración de Estampado".
-- `src/features/production/configApi.ts` — ampliar tipos + helper de ingresos del mes.
-- `src/features/returns/api.ts` — campos financieros + creación de transacciones.
-- `src/features/returns/ResolveReturnDialog.tsx` — switch + input flete.
-- `src/features/orders/NewOrderForm.tsx` — cálculo COD + línea de comisión.
-- `src/features/orders/OrderDetails.tsx` — Card de comisiones para Shopify; mostrar línea de comisión COD.
+- `src/features/finance/api.ts` — añadir queries, summary, delete.
+- `src/lib/modules.ts` — entrada `finanzas`.
+- `src/components/layout/AppSidebar.tsx` — sección/slug nuevo.
+- `src/App.tsx` — ruta `/finanzas`.
 
 ### Resultado
-
-Configuración pasa a ser un panel unificado con cuatro pestañas. El FinOps queda activo: cada merma y cada flete asumido en RMA se asienta en el libro mayor; los pedidos COD muestran y cobran la comisión de la transportadora; los pedidos de Shopify revelan el neto real estimado; y un simulador fiscal proyecta IVA y retención del mes corriente.
+Aparece la sección **Finanzas → Libro Mayor** en el sidebar. La página muestra KPIs de ingresos/gastos/balance, una tabla filtrable por tipo, categoría, fecha y texto, y permite registrar ingresos y gastos manuales. Los asientos automáticos (mermas, fletes RMA) se ven junto a los manuales con su origen claramente marcado, dando trazabilidad completa de la operación financiera.
 
