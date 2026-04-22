@@ -17,6 +17,10 @@ import { codRouter } from './routes/cod';
 import { logisticsRouter } from './routes/logistics';
 import { workOrdersRouter } from './routes/work-orders';
 import { supplyRequestsRouter } from './routes/supply-requests';
+import { returnsRouter } from './routes/returns';
+import { financeRouter } from './routes/finance';
+import { staffRouter } from './routes/staff';
+import { configRouter } from './routes/config';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -46,6 +50,10 @@ app.use('/api/cod', requireAuth, codRouter);
 app.use('/api/logistics', requireAuth, logisticsRouter);
 app.use('/api/work-orders', requireAuth, workOrdersRouter);
 app.use('/api/supply-requests', requireAuth, supplyRequestsRouter);
+app.use('/api/returns', requireAuth, returnsRouter);
+app.use('/api/finance', requireAuth, financeRouter);
+app.use('/api/staff', requireAuth, staffRouter);
+app.use('/api/config', requireAuth, configRouter);
 
 // Serve SPA build in production: dist/ is the Vite output at repo root.
 // When compiled server runs from dist/server/, static files live at ../
