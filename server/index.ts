@@ -6,6 +6,9 @@ import cors from 'cors';
 import path from 'path';
 import { authRouter, requireAuth } from './auth';
 import { errorHandler } from './util';
+import { runMigrations } from './migrate';
+import { seedAdmin } from './seed-admin';
+import { pool } from './db';
 import { catalogsRouter } from './routes/catalogs';
 import { suppliersRouter } from './routes/suppliers';
 import { rawMaterialsRouter } from './routes/raw-materials';
@@ -70,6 +73,22 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server listening on :${PORT}`);
+async function bootstrap() {
+  console.log('[bootstrap] running migrations…');
+  await runMigrations();
+  console.log('[bootstrap] seeding admin…');
+  await seedAdmin();
+  app.listen(PORT, () => {
+    console.log(`Server listening on :${PORT}`);
+  });
+}
+
+bootstrap().catch(async (err) => {
+  console.error('[bootstrap] failed:', err);
+  try {
+    await pool.end();
+  } catch {
+    // ignore
+  }
+  process.exit(1);
 });
