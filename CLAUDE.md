@@ -1,71 +1,55 @@
-# Beast Hub Command — Migración Supabase → Railway
+# Beast Hub Command — Migración Supabase → Railway (completada)
 
-SPA React/Vite/TS. Se migra a Railway PostgreSQL + backend Node/Express propio (un solo servicio sirve API y SPA). JWT en lugar de Supabase auth. Sin RLS; el middleware `requireAuth` protege todas las rutas salvo públicas (supplier portal).
+SPA React/Vite/TS sobre Railway PostgreSQL + backend Node/Express propio. Un solo servicio sirve API y SPA. JWT sustituye Supabase auth; sin RLS — `requireAuth` protege todas las rutas salvo `/api/auth/*` y `/api/supplier-portal` (público, valida `secure_token`).
 
-Rama de trabajo: `claude/railway-prod-RbRe3`.
+Rama: `claude/railway-prod-RbRe3`.
 
 ## Estado
 
-### FASE 1 — Backend ✅ parcial
-- [x] 1.1 `server/tsconfig.json` + deps (express, pg, jsonwebtoken, bcryptjs, cors, dotenv, tsx, types).
-- [x] 1.2 `server/db.ts` — Pool pg con SSL condicional y helper `query<T extends QueryResultRow>`.
-- [x] 1.3 `server/auth.ts` — login/me/logout + middleware `requireAuth` (Bearer JWT).
-- [x] 1.4 Rutas (Chunk A) — `catalogs`, `suppliers`, `raw-materials`.
-- [x] 1.4 Rutas (Chunk B) — `products`, `product-materials`.
-- [x] 1.4 Rutas (Chunk C) — `orders`, `order-items`, `cod`, `logistics`.
-- [x] 1.4 Rutas (Chunk D) — `work-orders` (+RPC `complete_work_order`), `supply-requests` (+RPC `complete_supply_request`, +`auto-supply`).
-- [x] 1.4 Rutas (Chunk E) — `returns` (+`/resolve` transaccional con merma/flete), `finance` (guard manual-only edit/delete), `staff` (bcrypt + profile), `config` (`global_configs` map + `gross-revenue-current-month`). BI sin ruta propia; el frontend agrega sobre `/api/orders`, `/api/product-materials`, `/api/returns`.
-- [x] 1.4 Rutas (Chunk F) — `supplier-portal` (público, sin `requireAuth`, valida `secure_token`).
-- [x] 1.5 `server/index.ts` — CORS, JSON, health, mounts, SPA static, errorHandler.
-
-### FASE 2 — DB ✅
-- [x] 2.1 Migraciones consolidadas en `server/migrations/001..005.sql` + `server/migrate.ts` con `schema_migrations`. RLS eliminado, triggers/funciones preservados.
-- [ ] 2.2 Variables de entorno definitivas en Railway (DATABASE_URL, JWT_SECRET, JWT_EXPIRES_IN, PORT, NODE_ENV, CORS_ORIGIN) — se configuran al desplegar.
-
-### FASE 3 — Frontend ⏳ en curso
-- [x] 3.1 `src/integrations/api/client.ts` — fetch wrapper con `Authorization: Bearer` desde localStorage (`setAuthToken`/`getAuthToken`).
-- [x] 3.2 `AuthProvider.tsx` (signIn/signOut/user), `Auth.tsx`, `ProtectedRoute.tsx` a JWT.
-- [ ] 3.3 Migrar 12 `api.ts`: inventory, orders, production (api+configApi), sourcing, supply-requests, logistics, returns, cod, staff, bi, finance, supplier-portal.
-- [ ] 3.3b Eliminar `src/integrations/supabase/`, `supabase/`, uninstall `@supabase/supabase-js`.
-- [ ] 3.4 Env: eliminar `VITE_SUPABASE_*`, agregar `VITE_API_URL`.
-- [ ] 3.5 `vite.config.ts` → proxy `/api` → `http://localhost:3000`.
-
-### FASE 4 — Railway ⏳ pendiente
-- [ ] 4.1 `railway.toml` (NIXPACKS, buildCommand, startCommand, healthcheck `/api/health`).
-- [ ] 4.2 Scripts: `build:server`, `start`, `migrate`, `dev:server`.
-- [ ] 4.3 `.env.example`.
-
-### FASE 5 — Verificación ⏳ pendiente
-- [ ] Build local, login, CRUD productos, total orden (trigger), complete_work_order, supplier portal.
+- [x] FASE 1 — Backend: `server/db.ts`, `server/auth.ts` (login/me/logout + `requireAuth`), 14 routers montados en `server/index.ts` (`catalogs`, `suppliers`, `raw-materials`, `products`, `product-materials`, `orders`, `order-items`, `cod`, `logistics`, `work-orders`, `supply-requests`, `returns`, `finance`, `staff`, `config`, `supplier-portal`), `util.ts` (asyncHandler, pickBody, buildInsert/Update, errorHandler).
+- [x] FASE 2 — DB: 5 migraciones consolidadas en `server/migrations/001..005.sql` + `server/migrate.ts` con `schema_migrations`. RLS removido; triggers/funciones preservados (`set_updated_at`, `recalc_order_total`, `complete_work_order`, `complete_supply_request`, `handle_new_user`, `validate_return`, `validate_order_payment_method`).
+- [x] FASE 3 — Frontend: `src/integrations/api/client.ts` (fetch + Bearer), `AuthProvider`/`Auth`/`ProtectedRoute` a JWT, 12 `api.ts` + `SupplierPortal.tsx` migrados. `src/integrations/supabase/` y directorio `supabase/` eliminados. `@supabase/supabase-js` desinstalado.
+- [x] FASE 3.4/3.5 — `.env` sólo con `VITE_API_URL=/api`, `vite.config.ts` con proxy `/api → http://localhost:3000`.
+- [x] FASE 4 — `railway.toml` (NIXPACKS, build + start + healthcheck), scripts `build:server`, `start`, `migrate`, `dev:server` ya presentes, `.env.example` documentado.
+- [x] FASE 5 — `npm run build` + `npm run build:server` pasan. Verificación funcional en Railway pendiente al desplegar.
 
 ## Convenciones clave
 
-- **Rutas CRUD**: usar `pickBody`/`buildInsert`/`buildUpdate` de `server/util.ts` con `COLS` whitelist. Siempre `String(req.params.id)` (Express 5 tipa `string | string[]`).
-- **Relaciones anidadas**: replicar shape Supabase con `json_build_object` + LEFT JOIN (1:1) o `json_agg` subquery (1:N). Ver `orders.ts` → `ITEMS_SUBQUERY`.
-- **Bulk ops**: POST acepta array → transacción con `client.query('BEGIN'/'COMMIT'/'ROLLBACK')`. PATCH bulk usa `{ids, patch}`. DELETE bulk usa `{ids}` o `?product_ids=csv`.
+- **CRUD**: `pickBody`/`buildInsert`/`buildUpdate` con `COLS` whitelist. Siempre `String(req.params.id)` (Express 5 tipa `string | string[]`).
+- **Relaciones anidadas**: `json_build_object` + LEFT JOIN (1:1) o `json_agg` subquery (1:N). Ver `orders.ts::ITEMS_SUBQUERY`.
+- **Bulk**: POST acepta array → transacción; PATCH bulk `{ids, patch}`; DELETE bulk `{ids}` en body (cliente: `api.delete(path, { body })`).
 - **Reglas de negocio en server**:
-  - `orders.patch`: si `customer_pays_shipping=true` se fuerza `shipping_cost=0`.
+  - `orders.patch`: `customer_pays_shipping=true` fuerza `shipping_cost=0`.
   - `cod/receipt`: si `source='shopify'` requiere `order_confirmed` previo.
-  - `cod/*` y futuras mutaciones staff-tracked escriben `req.user.id` (no aceptar del cliente).
-- **Build dual module**: raíz tiene `"type":"module"`, server compila a CJS; build script deja `dist/server/package.json` con `{"type":"commonjs"}`.
+  - `cod/*`: escribe `req.user.id` en `confirmed_by_staff_id`/`received_by_staff_id` (no aceptar del cliente).
+  - `returns/:id/resolve`: transaccional — update return + stock + inserts en `financial_transactions` (merma / flete).
+  - `finance`: PATCH/DELETE solo permite `reference_type='manual'`.
+- **Build dual module**: raíz `"type":"module"`, server compila a CJS; post-build drop `dist/server/package.json` con `{"type":"commonjs"}`.
 
-## Coordinación con Lovable (front en `main`)
+## Variables de entorno Railway
 
-- Mergear solo a `railway/backend`: `src/components/**`, `src/pages/**` (excepto `Auth.tsx`), `src/features/*/components/**`, `src/features/*/hooks/**` sin supabase.
-- NUNCA mergear automáticamente: `src/features/*/api.ts`, `configApi.ts`, `AuthProvider.tsx`, `Auth.tsx`, `src/integrations/supabase/*`, `.env`.
+| Var | Valor |
+|---|---|
+| `DATABASE_URL` | Inyectada por plugin PostgreSQL |
+| `JWT_SECRET` | String aleatorio largo |
+| `JWT_EXPIRES_IN` | `7d` |
+| `PORT` | Inyectado por Railway |
+| `NODE_ENV` | `production` |
+| `CORS_ORIGIN` | Dominio Railway (ej. `https://beast-hub.up.railway.app`) |
+
+## Pasos para desplegar
+
+1. Crear proyecto Railway + plugin PostgreSQL.
+2. Conectar repo, branch `claude/railway-prod-RbRe3`.
+3. Configurar vars de entorno (arriba).
+4. Ejecutar migración manual tras primer deploy: `railway run npm run migrate` (o añadir step al deploy).
+5. Crear primer usuario admin en DB (bcrypt del password) o añadir endpoint de seed.
 
 ---
 
 # CLAUDE.md — Behavioral guidelines
 
-## 1. Think Before Coding
-- State assumptions. If uncertain, ask. Present alternatives, don't pick silently.
-
-## 2. Simplicity First
-- Mínimo código que resuelve el problema. Sin abstracciones especulativas. Sin error handling para casos imposibles.
-
-## 3. Surgical Changes
-- Tocar solo lo necesario. No refactorizar adyacente. Remover imports/vars huérfanos que tus cambios dejaron sin uso; no borrar dead code preexistente.
-
-## 4. Goal-Driven Execution
-- Criterio de éxito verificable antes de implementar. Plan breve para tareas multi-paso.
+- **Think before coding**: declarar supuestos; preguntar si hay ambigüedad.
+- **Simplicity first**: mínimo código, sin abstracciones especulativas ni error handling imposible.
+- **Surgical changes**: tocar solo lo pedido; limpiar huérfanos propios, no dead code ajeno.
+- **Goal-driven**: criterio de éxito verificable antes de implementar.
