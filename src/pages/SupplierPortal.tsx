@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/integrations/api/client";
 import { toast } from "sonner";
 
 interface PortalItem {
@@ -60,13 +60,9 @@ export default function SupplierPortal() {
       setLoading(true);
       setError(null);
       try {
-        const { data, error: fnError } = await supabase.functions.invoke(
-          `supplier-portal?token=${encodeURIComponent(token)}`,
-          { method: "GET" },
-        );
-        if (fnError) throw new Error(fnError.message);
+        const data = await api.get<{ request: PortalRequest }>("/supplier-portal", { token });
         if (cancelled) return;
-        const req = (data as { request: PortalRequest })?.request;
+        const req = data?.request;
         if (!req) throw new Error("Solicitud no encontrada");
         setRequest(req);
         setNotes(req.notes ?? "");
@@ -121,15 +117,14 @@ export default function SupplierPortal() {
         quantity_confirmed: d.available ? Math.max(0, Number(d.qty) || 0) : 0,
         is_available: d.available,
       }));
-      const { data, error: fnError } = await supabase.functions.invoke("supplier-portal", {
-        method: "POST",
-        body: { token, items, notes },
-      });
-      if (fnError) throw new Error(fnError.message);
+      const data = await api.post<{ ok: true; status?: PortalRequest["status"] }>(
+        "/supplier-portal",
+        { token, items, notes },
+      );
       toast.success("Confirmación enviada", {
         description: "Beast Club ya recibió tu respuesta. ¡Gracias!",
       });
-      const newStatus = (data as { status?: PortalRequest["status"] })?.status;
+      const newStatus = data?.status;
       if (newStatus) {
         setRequest((prev) => (prev ? { ...prev, status: newStatus } : prev));
       }

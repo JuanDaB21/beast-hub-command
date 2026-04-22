@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/integrations/api/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { OrderWithItems } from "@/features/orders/api";
 
@@ -16,21 +16,7 @@ const QK = ["logistics-orders"] as const;
 export function useShipmentOrders() {
   return useQuery({
     queryKey: QK,
-    queryFn: async (): Promise<ShipmentOrder[]> => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select(`
-          *,
-          items:order_items (
-            id, order_id, product_id, quantity, unit_price,
-            product:products ( id, sku, name )
-          )
-        `)
-        .in("status", ["pending", "processing", "shipped"])
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as unknown as ShipmentOrder[];
-    },
+    queryFn: () => api.get<ShipmentOrder[]>("/logistics/orders"),
   });
 }
 
@@ -45,27 +31,14 @@ export interface ShipPayload {
 export function useMarkShipped() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, tracking_number, shipping_cost, delay_reason, target_status }: ShipPayload) => {
-      // Defensa: si el cliente paga el envío, forzar shipping_cost = 0
-      const { data: existing } = await supabase
-        .from("orders")
-        .select("customer_pays_shipping")
-        .eq("id", id)
-        .maybeSingle();
-      const finalCost = existing?.customer_pays_shipping ? 0 : shipping_cost;
-
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          tracking_number,
-          shipping_cost: finalCost,
-          shipped_at: new Date().toISOString(),
-          status: target_status ?? "shipped",
-          delay_reason: delay_reason ?? null,
-        })
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, tracking_number, shipping_cost, delay_reason, target_status }: ShipPayload) =>
+      api.patch(`/orders/${id}`, {
+        tracking_number,
+        shipping_cost,
+        shipped_at: new Date().toISOString(),
+        status: target_status ?? "shipped",
+        delay_reason: delay_reason ?? null,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK });
       qc.invalidateQueries({ queryKey: ["orders"] });
@@ -76,7 +49,7 @@ export function useMarkShipped() {
 export function useUpdateTracking() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       id,
       tracking_number,
       shipping_cost,
@@ -84,22 +57,12 @@ export function useUpdateTracking() {
       id: string;
       tracking_number: string;
       shipping_cost?: number;
-    }) => {
-      let costToSave = shipping_cost;
-      if (typeof costToSave === "number") {
-        const { data: existing } = await supabase
-          .from("orders")
-          .select("customer_pays_shipping")
-          .eq("id", id)
-          .maybeSingle();
-        if (existing?.customer_pays_shipping) costToSave = 0;
-      }
-      const { error } =
-        typeof costToSave === "number"
-          ? await supabase.from("orders").update({ tracking_number, shipping_cost: costToSave }).eq("id", id)
-          : await supabase.from("orders").update({ tracking_number }).eq("id", id);
-      if (error) throw error;
-    },
+    }) =>
+      api.patch(`/orders/${id}`,
+        typeof shipping_cost === "number"
+          ? { tracking_number, shipping_cost }
+          : { tracking_number },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK });
       qc.invalidateQueries({ queryKey: ["orders"] });
@@ -110,19 +73,8 @@ export function useUpdateTracking() {
 export function useUpdateShippingCost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, shipping_cost }: { id: string; shipping_cost: number }) => {
-      const { data: existing } = await supabase
-        .from("orders")
-        .select("customer_pays_shipping")
-        .eq("id", id)
-        .maybeSingle();
-      const finalCost = existing?.customer_pays_shipping ? 0 : shipping_cost;
-      const { error } = await supabase
-        .from("orders")
-        .update({ shipping_cost: finalCost })
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, shipping_cost }: { id: string; shipping_cost: number }) =>
+      api.patch(`/orders/${id}`, { shipping_cost }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK });
       qc.invalidateQueries({ queryKey: ["orders"] });

@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/integrations/api/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface Product {
@@ -53,20 +53,10 @@ const QK = ["products"] as const;
 export function useProducts() {
   return useQuery({
     queryKey: QK,
-    queryFn: async (): Promise<Product[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as Product[];
-    },
+    queryFn: () => api.get<Product[]>("/products"),
   });
 }
 
-/** Devuelve productos agrupados como árbol padre→hijos.
- *  - parents: productos con is_parent=true (con sus children)
- *  - orphans: productos legacy sin padre y que no son padre */
 export function useProductTree() {
   const q = useProducts();
   const products = q.data ?? [];
@@ -101,11 +91,7 @@ export function useProductTree() {
 export function useCreateProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: ProductInput) => {
-      const { data, error } = await supabase.from("products").insert(input).select().single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (input: ProductInput) => api.post<Product>("/products", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   });
 }
@@ -113,16 +99,8 @@ export function useCreateProduct() {
 export function useUpdateProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...input }: Partial<ProductInput> & { id: string }) => {
-      const { data, error } = await supabase
-        .from("products")
-        .update(input)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: ({ id, ...input }: Partial<ProductInput> & { id: string }) =>
+      api.patch<Product>(`/products/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   });
 }
@@ -130,10 +108,7 @@ export function useUpdateProduct() {
 export function useDeleteProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => api.delete<{ ok: true }>(`/products/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   });
 }
@@ -143,22 +118,10 @@ export function useDeleteProductTree() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (parentId: string) => {
-      // recoger ids hijos
-      const { data: kids, error: e1 } = await supabase
-        .from("products")
-        .select("id")
-        .eq("parent_id", parentId);
-      if (e1) throw e1;
-      const allIds = [parentId, ...(kids ?? []).map((k) => k.id)];
-      // borrar BOM asociado
-      const { error: e2 } = await supabase
-        .from("product_materials")
-        .delete()
-        .in("product_id", allIds);
-      if (e2) throw e2;
-      // borrar productos
-      const { error: e3 } = await supabase.from("products").delete().in("id", allIds);
-      if (e3) throw e3;
+      const kids = await api.get<Product[]>("/products", { parent_id: parentId });
+      const allIds = [parentId, ...kids.map((k) => k.id)];
+      await api.delete<{ deleted: number }>("/product-materials", { body: { product_ids: allIds } });
+      await api.delete<{ deleted: number }>("/products", { body: { ids: allIds } });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   });
@@ -191,18 +154,14 @@ export function useCreateProductWithVariants() {
       parent: ProductInput;
       variants: VariantInput[];
     }) => {
-      // 1) Crear padre
-      const { data: created, error: e1 } = await supabase
-        .from("products")
-        .insert({ ...parent, is_parent: true, stock: 0, safety_stock: 0 })
-        .select()
-        .single();
-      if (e1) throw e1;
-      const parentId = (created as Product).id;
-
+      const created = await api.post<Product>("/products", {
+        ...parent,
+        is_parent: true,
+        stock: 0,
+        safety_stock: 0,
+      });
       if (variants.length === 0) return created;
 
-      // 2) Insertar hijas
       const childRows = variants.map((v) => ({
         sku: v.sku,
         name: v.name,
@@ -219,25 +178,19 @@ export function useCreateProductWithVariants() {
         aging_days: v.aging_days,
         price: v.price,
         cost: v.cost,
-        parent_id: parentId,
+        parent_id: created.id,
         is_parent: false,
       }));
 
-      const { data: insertedChildren, error: e2 } = await supabase
-        .from("products")
-        .insert(childRows)
-        .select();
-      if (e2) throw e2;
+      const insertedChildren = await api.post<Product[]>("/products", childRows);
 
-      // 3) BOM por cada hija → su raw_material_id
-      const bomRows = (insertedChildren ?? []).map((child, idx) => ({
-        product_id: (child as Product).id,
+      const bomRows = insertedChildren.map((child, idx) => ({
+        product_id: child.id,
         raw_material_id: variants[idx].raw_material_id,
         quantity_required: 1,
       }));
       if (bomRows.length > 0) {
-        const { error: e3 } = await supabase.from("product_materials").insert(bomRows);
-        if (e3) throw e3;
+        await api.post("/product-materials", bomRows);
       }
 
       return created;

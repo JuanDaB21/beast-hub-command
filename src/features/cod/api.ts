@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/integrations/api/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface CodOrder {
@@ -27,36 +27,14 @@ const QK_COD = ["cod-orders"] as const;
 export function useCodOrders() {
   return useQuery({
     queryKey: QK_COD,
-    queryFn: async (): Promise<CodOrder[]> => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select(
-          "id, order_number, customer_name, customer_phone, status, source, is_cod, order_confirmed, order_confirmed_at, confirmed_by_staff_id, cod_confirmed, total, carrier, tracking_number, shipped_at, cod_received_at, received_by_staff_id, created_at"
-        )
-        .eq("is_cod", true)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as CodOrder[];
-    },
+    queryFn: () => api.get<CodOrder[]>("/cod/orders"),
   });
 }
 
 export function useConfirmCodOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { data: userData } = await supabase.auth.getUser();
-      const staffId = userData?.user?.id ?? null;
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          order_confirmed: true,
-          order_confirmed_at: new Date().toISOString(),
-          confirmed_by_staff_id: staffId,
-        })
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => api.post<CodOrder>(`/cod/orders/${id}/confirm`),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_COD }),
   });
 }
@@ -64,30 +42,7 @@ export function useConfirmCodOrder() {
 export function useConfirmCodReceipt() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { data: order, error: fetchErr } = await supabase
-        .from("orders")
-        .select("source, order_confirmed")
-        .eq("id", id)
-        .maybeSingle();
-      if (fetchErr) throw fetchErr;
-      if (!order) throw new Error("Pedido no encontrado");
-      if (order.source === "shopify" && !order.order_confirmed) {
-        throw new Error("Debes confirmar el pedido antes de registrar el recaudo");
-      }
-
-      const { data: userData } = await supabase.auth.getUser();
-      const staffId = userData?.user?.id ?? null;
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          cod_confirmed: true,
-          cod_received_at: new Date().toISOString(),
-          received_by_staff_id: staffId,
-        })
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => api.post<CodOrder>(`/cod/orders/${id}/receipt`),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_COD }),
   });
 }

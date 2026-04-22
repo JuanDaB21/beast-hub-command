@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/integrations/api/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface StaffProfile {
@@ -14,14 +14,7 @@ const QK_STAFF = ["staff-profiles"] as const;
 export function useStaff() {
   return useQuery({
     queryKey: QK_STAFF,
-    queryFn: async (): Promise<StaffProfile[]> => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, active, created_at")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as StaffProfile[];
-    },
+    queryFn: () => api.get<StaffProfile[]>("/staff"),
   });
 }
 
@@ -34,26 +27,8 @@ export interface NewStaffInput {
 export function useCreateStaff() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: NewStaffInput) => {
-      const { data, error } = await supabase.auth.signUp({
-        email: input.email,
-        password: input.password,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: { full_name: input.full_name },
-        },
-      });
-      if (error) throw error;
-      // Trigger handle_new_user creates profile automatically.
-      // Update full_name explicitly in case metadata wasn't picked up.
-      if (data.user?.id) {
-        await supabase
-          .from("profiles")
-          .update({ full_name: input.full_name, email: input.email })
-          .eq("id", data.user.id);
-      }
-      return data.user;
-    },
+    mutationFn: (input: NewStaffInput) =>
+      api.post<{ id: string; full_name: string; email: string }>("/staff", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_STAFF }),
   });
 }
@@ -61,7 +36,7 @@ export function useCreateStaff() {
 export function useUpdateStaff() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       id,
       full_name,
       active,
@@ -73,8 +48,7 @@ export function useUpdateStaff() {
       const patch: { full_name?: string; active?: boolean } = {};
       if (full_name !== undefined) patch.full_name = full_name;
       if (active !== undefined) patch.active = active;
-      const { error } = await supabase.from("profiles").update(patch).eq("id", id);
-      if (error) throw error;
+      return api.patch<StaffProfile>(`/staff/${id}`, patch);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_STAFF }),
   });

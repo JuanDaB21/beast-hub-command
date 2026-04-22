@@ -13,18 +13,18 @@ Rama de trabajo: `claude/railway-prod-RbRe3`.
 - [x] 1.4 Rutas (Chunk A) — `catalogs`, `suppliers`, `raw-materials`.
 - [x] 1.4 Rutas (Chunk B) — `products`, `product-materials`.
 - [x] 1.4 Rutas (Chunk C) — `orders`, `order-items`, `cod`, `logistics`.
-- [ ] 1.4 Rutas (Chunk D) — `work-orders` (+RPC `complete_work_order`), `supply-requests` (+RPC `complete_supply_request`).
-- [ ] 1.4 Rutas (Chunk E) — `returns`, `finance`, `bi`, `staff`, `config`.
-- [ ] 1.4 Rutas (Chunk F) — `supplier-portal` (público, sin `requireAuth`, valida `secure_token`).
+- [x] 1.4 Rutas (Chunk D) — `work-orders` (+RPC `complete_work_order`), `supply-requests` (+RPC `complete_supply_request`, +`auto-supply`).
+- [x] 1.4 Rutas (Chunk E) — `returns` (+`/resolve` transaccional con merma/flete), `finance` (guard manual-only edit/delete), `staff` (bcrypt + profile), `config` (`global_configs` map + `gross-revenue-current-month`). BI sin ruta propia; el frontend agrega sobre `/api/orders`, `/api/product-materials`, `/api/returns`.
+- [x] 1.4 Rutas (Chunk F) — `supplier-portal` (público, sin `requireAuth`, valida `secure_token`).
 - [x] 1.5 `server/index.ts` — CORS, JSON, health, mounts, SPA static, errorHandler.
 
 ### FASE 2 — DB ✅
 - [x] 2.1 Migraciones consolidadas en `server/migrations/001..005.sql` + `server/migrate.ts` con `schema_migrations`. RLS eliminado, triggers/funciones preservados.
 - [ ] 2.2 Variables de entorno definitivas en Railway (DATABASE_URL, JWT_SECRET, JWT_EXPIRES_IN, PORT, NODE_ENV, CORS_ORIGIN) — se configuran al desplegar.
 
-### FASE 3 — Frontend ⏳ pendiente
-- [ ] 3.1 `src/integrations/api/client.ts` — fetch wrapper con `Authorization: Bearer` desde localStorage.
-- [ ] 3.2 `AuthProvider.tsx` + `Auth.tsx` a JWT.
+### FASE 3 — Frontend ⏳ en curso
+- [x] 3.1 `src/integrations/api/client.ts` — fetch wrapper con `Authorization: Bearer` desde localStorage (`setAuthToken`/`getAuthToken`).
+- [x] 3.2 `AuthProvider.tsx` (signIn/signOut/user), `Auth.tsx`, `ProtectedRoute.tsx` a JWT.
 - [ ] 3.3 Migrar 12 `api.ts`: inventory, orders, production (api+configApi), sourcing, supply-requests, logistics, returns, cod, staff, bi, finance, supplier-portal.
 - [ ] 3.3b Eliminar `src/integrations/supabase/`, `supabase/`, uninstall `@supabase/supabase-js`.
 - [ ] 3.4 Env: eliminar `VITE_SUPABASE_*`, agregar `VITE_API_URL`.

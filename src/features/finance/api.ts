@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/integrations/api/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type FinancialTransactionType = "income" | "expense";
@@ -26,8 +26,8 @@ export interface FinancialTransactionInput {
 export interface FinanceFilters {
   type?: FinancialTransactionType | "all";
   category?: string | "all";
-  from?: string | null; // ISO
-  to?: string | null; // ISO
+  from?: string | null;
+  to?: string | null;
   search?: string;
 }
 
@@ -53,45 +53,21 @@ export const EXPENSE_CATEGORIES = [
 export function useFinancialTransactions(filters: FinanceFilters = {}) {
   return useQuery({
     queryKey: ["financial_transactions", filters],
-    queryFn: async () => {
-      let q = supabase
-        .from("financial_transactions")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (filters.type && filters.type !== "all") {
-        q = q.eq("transaction_type", filters.type);
-      }
-      if (filters.category && filters.category !== "all") {
-        q = q.eq("category", filters.category);
-      }
-      if (filters.from) q = q.gte("created_at", filters.from);
-      if (filters.to) q = q.lte("created_at", filters.to);
-      if (filters.search && filters.search.trim()) {
-        q = q.ilike("description", `%${filters.search.trim()}%`);
-      }
-
-      const { data, error } = await q;
-      if (error) throw error;
-      return (data ?? []) as FinancialTransaction[];
-    },
+    queryFn: () =>
+      api.get<FinancialTransaction[]>("/finance", {
+        type: filters.type && filters.type !== "all" ? filters.type : undefined,
+        category: filters.category && filters.category !== "all" ? filters.category : undefined,
+        from: filters.from ?? undefined,
+        to: filters.to ?? undefined,
+        search: filters.search?.trim() || undefined,
+      }),
   });
 }
 
 export function useCreateTransaction() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: FinancialTransactionInput) => {
-      const { error } = await supabase.from("financial_transactions").insert({
-        transaction_type: input.transaction_type,
-        amount: input.amount,
-        category: input.category,
-        reference_type: input.reference_type ?? "manual",
-        reference_id: input.reference_id ?? null,
-        description: input.description ?? null,
-      });
-      if (error) throw error;
-    },
+    mutationFn: (input: FinancialTransactionInput) => api.post<FinancialTransaction>("/finance", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["financial_transactions"] });
       qc.invalidateQueries({ queryKey: ["bi"] });
@@ -110,22 +86,12 @@ export interface UpdateTransactionInput {
 export function useUpdateTransaction() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: UpdateTransactionInput) => {
-      if (input.reference_type && input.reference_type !== "manual") {
-        throw new Error(
-          "Solo se pueden editar transacciones manuales. Las automáticas se gestionan desde su módulo de origen.",
-        );
-      }
-      const { error } = await supabase
-        .from("financial_transactions")
-        .update({
-          amount: input.amount,
-          category: input.category,
-          description: input.description ?? null,
-        })
-        .eq("id", input.id);
-      if (error) throw error;
-    },
+    mutationFn: (input: UpdateTransactionInput) =>
+      api.patch<FinancialTransaction>(`/finance/${input.id}`, {
+        amount: input.amount,
+        category: input.category,
+        description: input.description ?? null,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["financial_transactions"] });
       qc.invalidateQueries({ queryKey: ["bi"] });
@@ -136,18 +102,7 @@ export function useUpdateTransaction() {
 export function useDeleteTransaction() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (tx: FinancialTransaction) => {
-      if (tx.reference_type && tx.reference_type !== "manual") {
-        throw new Error(
-          "Solo se pueden eliminar transacciones manuales. Las automáticas se gestionan desde su módulo de origen.",
-        );
-      }
-      const { error } = await supabase
-        .from("financial_transactions")
-        .delete()
-        .eq("id", tx.id);
-      if (error) throw error;
-    },
+    mutationFn: (tx: FinancialTransaction) => api.delete<{ ok: true }>(`/finance/${tx.id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["financial_transactions"] });
       qc.invalidateQueries({ queryKey: ["bi"] });
@@ -156,13 +111,5 @@ export function useDeleteTransaction() {
 }
 
 export async function insertTransaction(input: FinancialTransactionInput) {
-  const { error } = await supabase.from("financial_transactions").insert({
-    transaction_type: input.transaction_type,
-    amount: input.amount,
-    category: input.category,
-    reference_type: input.reference_type ?? null,
-    reference_id: input.reference_id ?? null,
-    description: input.description ?? null,
-  });
-  if (error) throw error;
+  await api.post<FinancialTransaction>("/finance", input);
 }

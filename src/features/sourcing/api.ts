@@ -1,9 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/integrations/api/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
 export interface Supplier {
   id: string;
   name: string;
@@ -63,32 +60,19 @@ export interface RawMaterialWithRelations extends RawMaterial {
   size: Size | null;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Catalogs                                                           */
-/* ------------------------------------------------------------------ */
+/* ---- Catalogs ---- */
 export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
-    queryFn: async (): Promise<Category[]> => {
-      const { data, error } = await supabase.from("categories").select("*").order("name");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => api.get<Category[]>("/catalogs/categories"),
   });
 }
 
 export function useCreateCategory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (name: string): Promise<Category> => {
-      const { data, error } = await supabase
-        .from("categories")
-        .insert({ name: name.trim() })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (name: string) =>
+      api.post<Category>("/catalogs/categories", { name: name.trim() }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
   });
 }
@@ -96,15 +80,11 @@ export function useCreateCategory() {
 export function useCreateSubcategory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; category_id: string }): Promise<Subcategory> => {
-      const { data, error } = await supabase
-        .from("subcategories")
-        .insert({ name: input.name.trim(), category_id: input.category_id })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (input: { name: string; category_id: string }) =>
+      api.post<Subcategory>("/catalogs/subcategories", {
+        name: input.name.trim(),
+        category_id: input.category_id,
+      }),
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["subcategories", vars.category_id] });
       qc.invalidateQueries({ queryKey: ["subcategories", "all"] });
@@ -115,52 +95,33 @@ export function useCreateSubcategory() {
 export function useSubcategories(categoryId?: string | null) {
   return useQuery({
     queryKey: ["subcategories", categoryId ?? "all"],
-    queryFn: async (): Promise<Subcategory[]> => {
-      let q = supabase.from("subcategories").select("*").order("name");
-      if (categoryId) q = q.eq("category_id", categoryId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () =>
+      api.get<Subcategory[]>(
+        "/catalogs/subcategories",
+        categoryId ? { category_id: categoryId } : undefined,
+      ),
   });
 }
 
 export function useColors() {
   return useQuery({
     queryKey: ["colors"],
-    queryFn: async (): Promise<Color[]> => {
-      const { data, error } = await supabase.from("colors").select("*").order("name");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => api.get<Color[]>("/catalogs/colors"),
   });
 }
 
 export function useSizes() {
   return useQuery({
     queryKey: ["sizes"],
-    queryFn: async (): Promise<Size[]> => {
-      const { data, error } = await supabase.from("sizes").select("*").order("sort_order");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => api.get<Size[]>("/catalogs/sizes"),
   });
 }
 
-/* ------------------------------------------------------------------ */
-/*  Suppliers                                                          */
-/* ------------------------------------------------------------------ */
+/* ---- Suppliers ---- */
 export function useSuppliers() {
   return useQuery({
     queryKey: ["suppliers"],
-    queryFn: async (): Promise<Supplier[]> => {
-      const { data, error } = await supabase
-        .from("suppliers")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => api.get<Supplier[]>("/suppliers"),
   });
 }
 
@@ -176,38 +137,16 @@ export interface SupplierInput {
 export function useCreateSupplier() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: SupplierInput) => {
-      const { data, error } = await supabase.from("suppliers").insert(input).select().single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (input: SupplierInput) => api.post<Supplier>("/suppliers", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["suppliers"] }),
   });
 }
 
-/* ------------------------------------------------------------------ */
-/*  Raw materials                                                      */
-/* ------------------------------------------------------------------ */
-const RM_SELECT = `
-  *,
-  supplier:suppliers ( id, name, contact_phone ),
-  category:categories ( id, name ),
-  subcategory:subcategories ( id, category_id, name ),
-  color:colors ( id, name, hex_code ),
-  size:sizes ( id, label, sort_order )
-`;
-
+/* ---- Raw materials ---- */
 export function useRawMaterials() {
   return useQuery({
     queryKey: ["raw_materials"],
-    queryFn: async (): Promise<RawMaterialWithRelations[]> => {
-      const { data, error } = await supabase
-        .from("raw_materials")
-        .select(RM_SELECT)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as RawMaterialWithRelations[];
-    },
+    queryFn: () => api.get<RawMaterialWithRelations[]>("/raw-materials"),
   });
 }
 
@@ -227,11 +166,7 @@ export interface RawMaterialInput {
 export function useCreateRawMaterial() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: RawMaterialInput) => {
-      const { data, error } = await supabase.from("raw_materials").insert(input).select().single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (input: RawMaterialInput) => api.post<RawMaterial>("/raw-materials", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
   });
 }
@@ -242,24 +177,20 @@ export async function findExistingVariantNames(
   names: string[],
 ): Promise<Set<string>> {
   if (names.length === 0) return new Set();
-  const { data, error } = await supabase
-    .from("raw_materials")
-    .select("name")
-    .eq("supplier_id", supplierId)
-    .eq("category_id", categoryId)
-    .in("name", names);
-  if (error) throw error;
-  return new Set((data ?? []).map((r) => r.name));
+  const rows = await api.get<Array<{ name: string }>>("/raw-materials", {
+    supplier_id: supplierId,
+    category_id: categoryId,
+    names,
+  });
+  return new Set(rows.map((r) => r.name));
 }
 
 export function useCreateRawMaterialsBatch() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (inputs: RawMaterialInput[]) => {
+    mutationFn: (inputs: RawMaterialInput[]) => {
       if (inputs.length === 0) throw new Error("No variants to create");
-      const { data, error } = await supabase.from("raw_materials").insert(inputs).select();
-      if (error) throw error;
-      return data ?? [];
+      return api.post<RawMaterial[]>("/raw-materials", inputs);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
   });
@@ -270,16 +201,8 @@ export type RawMaterialUpdate = Partial<RawMaterialInput>;
 export function useUpdateRawMaterial() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: RawMaterialUpdate }) => {
-      const { data, error } = await supabase
-        .from("raw_materials")
-        .update(patch)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: ({ id, patch }: { id: string; patch: RawMaterialUpdate }) =>
+      api.patch<RawMaterial>(`/raw-materials/${id}`, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
   });
 }
@@ -288,8 +211,7 @@ export function useDeleteRawMaterial() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("raw_materials").delete().eq("id", id);
-      if (error) throw error;
+      await api.delete(`/raw-materials/${id}`);
       return id;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),
@@ -298,9 +220,7 @@ export function useDeleteRawMaterial() {
 
 export interface UpdateGroupInput {
   ids: string[];
-  /** Old base name to strip from each variant's name when renaming. */
   oldBaseName: string;
-  /** New base name to prefix; if undefined, keep current name. */
   newBaseName?: string;
   shared: {
     supplier_id?: string;
@@ -309,7 +229,6 @@ export interface UpdateGroupInput {
     unit_price?: number;
     unit_of_measure?: string;
   };
-  /** Per-variant suffix info to rebuild names: { id -> "<color> - <size>" } */
   suffixById?: Record<string, string>;
 }
 
@@ -318,23 +237,14 @@ export function useUpdateRawMaterialsGroup() {
   return useMutation({
     mutationFn: async (input: UpdateGroupInput) => {
       const { ids, newBaseName, shared, suffixById } = input;
-      // If renaming, update each row individually so the variant suffix is preserved.
       if (newBaseName !== undefined) {
         for (const id of ids) {
           const suffix = suffixById?.[id] ?? "";
           const newName = [newBaseName, suffix].filter(Boolean).join(" - ");
-          const { error } = await supabase
-            .from("raw_materials")
-            .update({ ...shared, name: newName })
-            .eq("id", id);
-          if (error) throw error;
+          await api.patch(`/raw-materials/${id}`, { ...shared, name: newName });
         }
       } else {
-        const { error } = await supabase
-          .from("raw_materials")
-          .update(shared)
-          .in("id", ids);
-        if (error) throw error;
+        await api.patch("/raw-materials", { ids, patch: shared });
       }
       return ids;
     },
@@ -347,8 +257,7 @@ export function useDeleteRawMaterialsGroup() {
   return useMutation({
     mutationFn: async (ids: string[]) => {
       if (!ids.length) return [];
-      const { error } = await supabase.from("raw_materials").delete().in("id", ids);
-      if (error) throw error;
+      await api.delete("/raw-materials", { body: { ids } });
       return ids;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["raw_materials"] }),

@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/integrations/api/client";
 import { useQuery } from "@tanstack/react-query";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/features/orders/api";
 
@@ -9,39 +9,43 @@ export interface RevenueByChannel {
   count: number;
 }
 
+interface OrderSnapshot {
+  source: "manual" | "shopify";
+  payment_method: PaymentMethod | null;
+  total: number;
+  status: string;
+  created_at: string;
+}
+
 export function useRevenueByPaymentMethod(range: { from: Date | null; to: Date | null; key: string }) {
   return useQuery({
     queryKey: ["bi-revenue-by-channel", range.key, range.from?.toISOString(), range.to?.toISOString()],
     queryFn: async (): Promise<RevenueByChannel[]> => {
-      let q = supabase
-        .from("orders")
-        .select("source, payment_method, total, status, created_at")
-        .neq("status", "cancelled")
-        .limit(5000);
-      if (range.from) q = q.gte("created_at", range.from.toISOString());
-      if (range.to) q = q.lte("created_at", range.to.toISOString());
-      const { data, error } = await q;
-      if (error) throw error;
+      const orders = await api.get<OrderSnapshot[]>("/orders", {
+        not_status: "cancelled",
+        limit: 5000,
+        from: range.from?.toISOString(),
+        to: range.to?.toISOString(),
+      });
 
       const buckets = new Map<string, RevenueByChannel>();
       const ensure = (key: string, label: string) => {
         if (!buckets.has(key)) buckets.set(key, { key, label, total: 0, count: 0 });
         return buckets.get(key)!;
       };
-      // seed all payment methods so they always appear
       (["fisico", "nequi", "daviplata", "bancolombia"] as PaymentMethod[]).forEach((m) =>
         ensure(m, PAYMENT_METHOD_LABEL[m]),
       );
       ensure("shopify", "Shopify / Online");
 
-      for (const row of (data ?? []) as any[]) {
+      for (const row of orders) {
         const total = Number(row.total) || 0;
         if (row.source === "shopify" || !row.payment_method) {
           const b = ensure("shopify", "Shopify / Online");
           b.total += total;
           b.count += 1;
         } else {
-          const pm = row.payment_method as PaymentMethod;
+          const pm = row.payment_method;
           const b = ensure(pm, PAYMENT_METHOD_LABEL[pm] ?? pm);
           b.total += total;
           b.count += 1;
@@ -53,7 +57,6 @@ export function useRevenueByPaymentMethod(range: { from: Date | null; to: Date |
     staleTime: 60_000,
   });
 }
-
 
 export type RangeKey = "today" | "7d" | "30d" | "month" | "all";
 
@@ -114,12 +117,6 @@ interface OrderRow {
   }[];
 }
 
-interface ProductCostInfo {
-  id: string;
-  name: string;
-  materials: { quantity_required: number; unit_price: number }[];
-}
-
 interface ReturnRow {
   id: string;
   order_id: string | null;
@@ -128,8 +125,13 @@ interface ReturnRow {
   created_at: string;
 }
 
+interface ProductMaterialRow {
+  product_id: string;
+  quantity_required: number;
+  raw_material: { unit_price: number } | null;
+}
+
 export interface BiData {
-  // KPIs
   revenue: number;
   revenueShopify: number;
   revenueManual: number;
@@ -138,13 +140,11 @@ export interface BiData {
   margin: number;
   marginPct: number;
   ordersCount: number;
-  returnsRate: number; // 0-1
+  returnsRate: number;
   scrapCount: number;
-  // Charts
   salesByDay: { date: string; revenue: number; orders: number }[];
   topProducts: { name: string; quantity: number; revenue: number }[];
   returnReasons: { reason: string; value: number }[];
-  // Monthly closure
   monthlyClosure: {
     month: string;
     shopify: number;
@@ -155,71 +155,44 @@ export interface BiData {
   }[];
 }
 
-function inRange(iso: string, range: DateRange) {
-  if (!range.from && !range.to) return true;
-  const t = new Date(iso).getTime();
-  if (range.from && t < range.from.getTime()) return false;
-  if (range.to && t > range.to.getTime()) return false;
-  return true;
-}
-
 export function useBiData(range: DateRange) {
   return useQuery({
     queryKey: ["bi", range.key, range.from?.toISOString(), range.to?.toISOString()],
     queryFn: async (): Promise<BiData> => {
-      // 1) Orders + items (limit defensive)
-      let q = supabase
-        .from("orders")
-        .select(`
-          id, order_number, source, status, total, shipping_cost, customer_pays_shipping, created_at,
-          items:order_items (
-            quantity, unit_price,
-            product:products ( id, name, sku )
-          )
-        `)
-        .order("created_at", { ascending: true })
-        .limit(5000);
-      if (range.from) q = q.gte("created_at", range.from.toISOString());
-      if (range.to) q = q.lte("created_at", range.to.toISOString());
-      const { data: ordersRaw, error: ordErr } = await q;
-      if (ordErr) throw ordErr;
-      const orders = (ordersRaw ?? []) as unknown as OrderRow[];
+      const orders = await api.get<OrderRow[]>("/orders", {
+        order: "asc",
+        limit: 5000,
+        from: range.from?.toISOString(),
+        to: range.to?.toISOString(),
+      });
 
-      // 2) Recipe / cost per product (sum of qty_required * unit_price)
       const productIds = Array.from(
         new Set(
           orders.flatMap((o) => o.items.map((it) => it.product?.id).filter((x): x is string => !!x)),
         ),
       );
-      let costMap = new Map<string, number>();
+
+      const costMap = new Map<string, number>();
       if (productIds.length > 0) {
-        const { data: pmRaw, error: pmErr } = await supabase
-          .from("product_materials")
-          .select(`
-            product_id, quantity_required,
-            raw_material:raw_materials ( unit_price )
-          `)
-          .in("product_id", productIds);
-        if (pmErr) throw pmErr;
-        for (const row of (pmRaw ?? []) as any[]) {
+        const pmRows = await api.get<ProductMaterialRow[]>("/product-materials", {
+          product_ids: productIds.join(","),
+        });
+        for (const row of pmRows) {
           const unit = Number(row.raw_material?.unit_price ?? 0);
           const qty = Number(row.quantity_required ?? 0);
           costMap.set(row.product_id, (costMap.get(row.product_id) ?? 0) + unit * qty);
         }
       }
 
-      // 3) Returns in range
-      let rq = supabase
-        .from("returns")
-        .select("id, order_id, reason_category, resolution_status, created_at")
-        .limit(5000);
-      if (range.from) rq = rq.gte("created_at", range.from.toISOString());
-      if (range.to) rq = rq.lte("created_at", range.to.toISOString());
-      const { data: retRaw, error: retErr } = await rq;
-      if (retErr) throw retErr;
-      const returns = (retRaw ?? []) as ReturnRow[];
+      const returns = await api.get<ReturnRow[]>("/returns");
+      const filteredReturns = returns.filter((r) => {
+        if (!range.from && !range.to) return true;
+        const t = new Date(r.created_at).getTime();
+        if (range.from && t < range.from.getTime()) return false;
+        if (range.to && t > range.to.getTime()) return false;
+        return true;
+      });
 
-      // ==== AGGREGATIONS ====
       const validOrders = orders.filter((o) => o.status !== "cancelled");
 
       let revenue = 0;
@@ -264,9 +237,9 @@ export function useBiData(range: DateRange) {
       const margin = revenue - cogs - shippingCost;
       const marginPct = revenue > 0 ? (margin / revenue) * 100 : 0;
 
-      const distinctReturnedOrders = new Set(returns.map((r) => r.order_id).filter(Boolean));
+      const distinctReturnedOrders = new Set(filteredReturns.map((r) => r.order_id).filter(Boolean));
       const returnsRate = validOrders.length > 0 ? distinctReturnedOrders.size / validOrders.length : 0;
-      const scrapCount = returns.filter((r) => r.resolution_status === "scrapped").length;
+      const scrapCount = filteredReturns.filter((r) => r.resolution_status === "scrapped").length;
 
       const salesByDay = Array.from(dayBucket.entries())
         .sort(([a], [b]) => a.localeCompare(b))
@@ -282,7 +255,7 @@ export function useBiData(range: DateRange) {
         }));
 
       const reasonBucket = new Map<string, number>();
-      for (const r of returns) {
+      for (const r of filteredReturns) {
         reasonBucket.set(r.reason_category, (reasonBucket.get(r.reason_category) ?? 0) + 1);
       }
       const returnReasons = Array.from(reasonBucket.entries()).map(([reason, value]) => ({
@@ -290,7 +263,6 @@ export function useBiData(range: DateRange) {
         value,
       }));
 
-      // Monthly closure (always last 6 months regardless of filter, for context)
       const monthBucket = new Map<
         string,
         { shopify: number; manual: number; cogs: number; shipping: number }

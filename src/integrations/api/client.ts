@@ -70,8 +70,8 @@ export const api = {
     request<T>('PATCH', path, { body, query }),
   put: <T>(path: string, body?: unknown, query?: Record<string, unknown>) =>
     request<T>('PUT', path, { body, query }),
-  delete: <T>(path: string, query?: Record<string, unknown>) =>
-    request<T>('DELETE', path, { query }),
+  delete: <T>(path: string, opts: { query?: Record<string, unknown>; body?: unknown } = {}) =>
+    request<T>('DELETE', path, opts),
 };
 
 export function setAuthToken(token: string | null) {
