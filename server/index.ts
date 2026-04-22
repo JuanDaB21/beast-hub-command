@@ -21,6 +21,7 @@ import { returnsRouter } from './routes/returns';
 import { financeRouter } from './routes/finance';
 import { staffRouter } from './routes/staff';
 import { configRouter } from './routes/config';
+import { supplierPortalRouter } from './routes/supplier-portal';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -39,6 +40,8 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRouter);
+// Public: supplier portal uses its own secure_token validation.
+app.use('/api/supplier-portal', supplierPortalRouter);
 app.use('/api/catalogs', requireAuth, catalogsRouter);
 app.use('/api/suppliers', requireAuth, suppliersRouter);
 app.use('/api/raw-materials', requireAuth, rawMaterialsRouter);
