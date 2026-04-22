@@ -1,14 +1,22 @@
 import bcrypt from 'bcryptjs';
 import { pool } from './db';
 
-async function run() {
-  const email = process.env.ADMIN_EMAIL;
-  const password = process.env.ADMIN_PASSWORD;
-  const name = process.env.ADMIN_NAME ?? 'Admin';
+const DEFAULT_ADMIN_EMAIL = 'admin@beasthub.com';
+const DEFAULT_ADMIN_PASSWORD = 'admin123';
+const DEFAULT_ADMIN_NAME = 'Admin';
 
-  if (!email || !password) {
-    console.error('ADMIN_EMAIL and ADMIN_PASSWORD env vars are required');
-    process.exit(1);
+export async function seedAdmin(): Promise<void> {
+  const email = (process.env.ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL).toLowerCase().trim();
+  const password = process.env.ADMIN_PASSWORD ?? DEFAULT_ADMIN_PASSWORD;
+  const name = process.env.ADMIN_NAME ?? DEFAULT_ADMIN_NAME;
+
+  const usingDefaults =
+    !process.env.ADMIN_EMAIL ||
+    !process.env.ADMIN_PASSWORD;
+  if (usingDefaults) {
+    console.warn(
+      `[seed-admin] Using default admin credentials (${DEFAULT_ADMIN_EMAIL} / ${DEFAULT_ADMIN_PASSWORD}) — cambiar por seguridad.`
+    );
   }
 
   const password_hash = await bcrypt.hash(password, 10);
@@ -20,25 +28,24 @@ async function run() {
        VALUES ($1, $2, $3, 'admin')
        ON CONFLICT (email) DO NOTHING
        RETURNING id`,
-      [email.toLowerCase().trim(), password_hash, name]
+      [email, password_hash, name]
     );
 
     if (rows.length === 0) {
-      console.log(`User ${email} already exists, nothing to do.`);
+      console.log(`[seed-admin] User ${email} already exists, skipping.`);
     } else {
-      console.log(`Admin user ${email} created (id: ${rows[0].id})`);
+      console.log(`[seed-admin] Admin user ${email} created (id: ${rows[0].id})`);
     }
-  } catch (err) {
-    console.error('Failed to create admin user:', err);
-    process.exitCode = 1;
   } finally {
     client.release();
   }
-
-  await pool.end();
 }
 
-run().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  seedAdmin()
+    .then(() => pool.end())
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+}
