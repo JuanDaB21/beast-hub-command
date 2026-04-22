@@ -11,6 +11,7 @@
     "build:server": "tsc -p server/tsconfig.json && node -e \"require('fs').writeFileSync('dist/server/package.json', JSON.stringify({type:'commonjs'}))\"",
     "start": "node dist/server/index.js",
     "migrate": "tsx server/migrate.ts",
+    "seed:admin": "tsx server/seed-admin.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
