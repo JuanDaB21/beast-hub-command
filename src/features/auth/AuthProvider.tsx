@@ -1,46 +1,77 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { api, getAuthToken, setAuthToken } from "@/integrations/api/client";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+}
+
+interface LoginResponse {
+  token: string;
+  user: AuthUser;
+}
 
 interface AuthCtx {
-  session: Session | null;
-  user: User | null;
+  user: AuthUser | null;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const Ctx = createContext<AuthCtx>({
-  session: null,
   user: null,
   loading: true,
+  signIn: async () => {},
   signOut: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set listener BEFORE fetching session
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
+    let cancelled = false;
+    if (!getAuthToken()) {
       setLoading(false);
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
-    return () => sub.subscription.unsubscribe();
+      return;
+    }
+    api
+      .get<AuthUser>("/auth/me")
+      .then((me) => {
+        if (!cancelled) setUser(me);
+      })
+      .catch(() => {
+        setAuthToken(null);
+        if (!cancelled) setUser(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+  const signIn = useCallback(async (email: string, password: string) => {
+    const res = await api.post<LoginResponse>("/auth/login", { email, password });
+    setAuthToken(res.token);
+    setUser(res.user);
+  }, []);
+
+  const signOut = useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // stateless logout; ignore network errors
+    }
+    setAuthToken(null);
+    setUser(null);
+  }, []);
 
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, loading, signOut }}>
-      {children}
-    </Ctx.Provider>
+    <Ctx.Provider value={{ user, loading, signIn, signOut }}>{children}</Ctx.Provider>
   );
 }
 

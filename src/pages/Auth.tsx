@@ -4,13 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { Loader2 } from "lucide-react";
 
 export default function Auth() {
-  const { session, loading } = useAuth();
+  const { user, loading, signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/";
@@ -20,26 +19,27 @@ export default function Auth() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) navigate(from, { replace: true });
-  }, [loading, session, from, navigate]);
+    if (!loading && user) navigate(from, { replace: true });
+  }, [loading, user, from, navigate]);
 
-  if (!loading && session) return <Navigate to={from} replace />;
+  if (!loading && user) return <Navigate to={from} replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) {
+    try {
+      await signIn(email, password);
+      toast({ title: "Bienvenido" });
+      navigate(from, { replace: true });
+    } catch (err) {
       toast({
         title: "No se pudo iniciar sesión",
-        description: error.message,
+        description: (err as Error).message,
         variant: "destructive",
       });
-      return;
+    } finally {
+      setBusy(false);
     }
-    toast({ title: "Bienvenido" });
-    navigate(from, { replace: true });
   };
 
   return (

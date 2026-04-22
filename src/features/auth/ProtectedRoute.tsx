@@ -3,7 +3,7 @@ import { useAuth } from "./AuthProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProtectedRoute({ children }: { children: JSX.Element }) {
-  const { session, loading } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -14,7 +14,7 @@ export function ProtectedRoute({ children }: { children: JSX.Element }) {
     );
   }
 
-  if (!session) {
+  if (!user) {
     return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
   }
 
