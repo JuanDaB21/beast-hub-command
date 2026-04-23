@@ -12,6 +12,7 @@ Rama: `claude/fix-railway-deployment-AE5PT`.
 - [x] FASE 3.4/3.5 — `.env` sólo con `VITE_API_URL=/api`, `vite.config.ts` con proxy `/api → http://localhost:3000`.
 - [x] FASE 4 — `railway.toml` (NIXPACKS, build + start único + healthcheck), scripts `build:server`, `start`, `migrate`, `dev:server` presentes, `.env.example` documentado.
 - [x] FASE 5 — Bootstrap inline: `server/index.ts` corre `runMigrations()` + `seedAdmin()` antes de `app.listen`. Admin quemado por defecto (`admin@beasthub.com` / `admin123`, overridable por env). Sin `tsx` en runtime de producción.
+- [x] FASE 6 — Integración Shopify (rama `claude/shopify-inventory-integration-ESOeH`): migración `006_shopify.sql` agrega `shopify_product_id`/`shopify_variant_id UNIQUE` en `products`, `shopify_order_id UNIQUE`/`shopify_order_number` en `orders`, y tabla singleton `shopify_config`. `server/lib/shopifyClient.ts` implementa cliente REST API (version 2024-01), paginación por Link header, parsers CSV nativos (sin deps), mappers Shopify→Beast Hub y upsert transaccional. `server/routes/shopify.ts` monta 6 endpoints en `/api/shopify/` (config, test, sync directa productos/órdenes, import CSV productos/órdenes). Frontend: `src/features/shopify/api.ts` hooks React Query y `src/features/config/ShopifyPanel.tsx` panel en tab "Shopify" de Config.
 
 ## Convenciones clave
 
@@ -26,6 +27,14 @@ Rama: `claude/fix-railway-deployment-AE5PT`.
   - `finance`: PATCH/DELETE solo permite `reference_type='manual'`.
 - **Build dual module**: raíz `"type":"module"` (Vite/ESM), `server/package.json` `{"type":"commonjs"}` para que tsx y el bundle compilado carguen CJS. `scripts/copy-server-assets.cjs` escribe `dist/server/package.json` y copia `server/migrations/*.sql` a `dist/server/migrations/` post-`tsc`.
 - **Bootstrap server**: `server/index.ts` importa `runMigrations` y `seedAdmin` y los corre dentro de una `async function bootstrap()` antes de `app.listen`. En error crashea con `process.exit(1)` para que Railway reinicie.
+- **Shopify sync**:
+  - Credenciales en `shopify_config` (singleton `id=1`). Access token se retorna enmascarado en `GET /api/shopify/config`; solo se actualiza si el body no empieza con `****`.
+  - Paginación: `shopifyPaginateAll` lee header `Link: ...rel="next"` y extrae `page_info`. Throttle 500ms entre páginas (plan Basic: 2 req/s). Cap de seguridad: `MAX_PAGES=40` (10k items).
+  - Mapeo productos: Shopify product → `products` parent (`is_parent=true`, `sku='PARENT-{shopify_id}'`), variantes → `products` children. Options con nombre matching `/color|colour/i` y `/size|talla|taille/i` mapean a `base_color` y `size`.
+  - Upsert variantes: (1) match por `shopify_variant_id`, (2) fallback por `sku` (backfilleando `shopify_variant_id`), (3) insert. `ON CONFLICT` no sirve con dos UNIQUEs.
+  - Mapeo órdenes: `source='shopify'`, `order_number='SHO-{name_sin_#}'` (colisión→ sufijo `-A`,`-B`,...), `customer_phone` fallback chain `customer.phone → billing_address.phone → 'N/A'`, `fulfillment_status` mapea a `status` (fulfilled→shipped, partial→processing, else→pending), `is_cod=true` si `payment_gateway` ∈ {cash_on_delivery, cod, manual, contra_entrega, contraentrega}. `payment_method` se deja NULL (trigger `validate_order_payment_method` permite NULL).
+  - Idempotencia: sync orders skipea si ya existe `shopify_order_id`. Total se recalcula por trigger desde `order_items`.
+  - CSV: parser nativo RFC 4180 (strip BOM, comillas escape `""`). Acepta formato estándar de export de Shopify Admin. Requiere `express.text({type:'text/plain'})` en `server/index.ts` para payloads grandes.
 
 ## Variables de entorno Railway
 
