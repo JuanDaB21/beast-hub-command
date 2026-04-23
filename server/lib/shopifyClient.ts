@@ -83,11 +83,16 @@ function requireConfig(cfg: ShopifyConfig | null): ShopifyConfig {
 
 const SHOPIFY_API_VERSION = '2024-01';
 
+interface ShopifyFetchResult<T> {
+  body: T;
+  nextPageInfo: string | null;
+}
+
 async function shopifyFetch<T>(
   cfg: ShopifyConfig,
   path: string,
   params: Record<string, string> = {}
-): Promise<T> {
+): Promise<ShopifyFetchResult<T>> {
   const qs = new URLSearchParams(params).toString();
   const url = `https://${cfg.store_domain}/admin/api/${SHOPIFY_API_VERSION}/${path}${qs ? '?' + qs : ''}`;
 
@@ -111,10 +116,17 @@ async function shopifyFetch<T>(
       status: 502,
     });
   }
-  return res.json() as Promise<T>;
+
+  // Parse Link header for cursor-based pagination (rel="next")
+  const link = res.headers.get('link') ?? '';
+  const nextMatch = link.match(/<[^>]*[?&]page_info=([^&>]+)[^>]*>;\s*rel="next"/);
+  const nextPageInfo = nextMatch ? decodeURIComponent(nextMatch[1]) : null;
+
+  const body = (await res.json()) as T;
+  return { body, nextPageInfo };
 }
 
-/** Paginate through a Shopify list endpoint respecting rate limits. */
+/** Paginate through a Shopify list endpoint using Link-header cursors. */
 async function shopifyPaginateAll<T>(
   cfg: ShopifyConfig,
   resource: string,
@@ -122,30 +134,30 @@ async function shopifyPaginateAll<T>(
 ): Promise<T[]> {
   const results: T[] = [];
   let pageInfo: string | null = null;
+  const MAX_PAGES = 40; // safety cap — 10k items
 
-  do {
-    const params: Record<string, string> = { limit: '250' };
-    if (pageInfo) params.page_info = pageInfo;
+  for (let i = 0; i < MAX_PAGES; i++) {
+    // Shopify disallows combining page_info with other filters, so limit
+    // is only set on the first request.
+    const params: Record<string, string> = pageInfo
+      ? { limit: '250', page_info: pageInfo }
+      : { limit: '250', status: 'any' };
 
-    const data = await shopifyFetch<{ [key: string]: T[] } & { next?: string }>(
+    const { body, nextPageInfo } = await shopifyFetch<Record<string, T[]>>(
       cfg,
       `${resource}.json`,
       params
     );
-    const page = (data as any)[rootKey] as T[];
-    if (page) results.push(...page);
 
-    // Shopify cursor pagination via Link header is not accessible here
-    // so we rely on page_info from the previous response's next cursor.
-    // If Shopify returns fewer than 250 items, we're on the last page.
-    pageInfo = null;
-    if (page && page.length === 250) {
-      // Simple approach: stop after first page if no cursor support
-      // For a full implementation, headers would carry the next cursor.
-      // We break here; products/orders rarely exceed 250 in a single page.
-      break;
-    }
-  } while (pageInfo);
+    const page = body[rootKey] ?? [];
+    results.push(...page);
+
+    if (!nextPageInfo) break;
+    pageInfo = nextPageInfo;
+
+    // Gentle throttle to respect 2 req/s rate limit on Basic plan
+    await new Promise((r) => setTimeout(r, 500));
+  }
 
   return results;
 }
@@ -172,7 +184,7 @@ interface MappedProduct {
 
 function mapShopifyProduct(product: ShopifyProduct): MappedProduct {
   const colorOptionIndex = product.options.findIndex((o) =>
-    /color|colour|color/i.test(o.name)
+    /color|colour/i.test(o.name)
   );
   const sizeOptionIndex = product.options.findIndex((o) =>
     /size|talla|taille/i.test(o.name)
@@ -625,6 +637,6 @@ export async function syncOrdersFromShopify(): Promise<SyncOrdersResult> {
 
 export async function testShopifyConnection(): Promise<{ shop: string }> {
   const cfg = requireConfig(await getShopifyConfig());
-  const data = await shopifyFetch<{ shop: { name: string } }>(cfg, 'shop.json');
-  return { shop: data.shop.name };
+  const { body } = await shopifyFetch<{ shop: { name: string } }>(cfg, 'shop.json');
+  return { shop: body.shop.name };
 }
