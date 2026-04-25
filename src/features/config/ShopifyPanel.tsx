@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import {
+  AlertTriangle,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   Loader2,
+  Package,
   RefreshCw,
   Save,
   ShoppingBag,
@@ -16,10 +18,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import {
   useSaveShopifyConfig,
   useShopifyConfig,
+  useShopifyLocations,
+  useShopifyInventoryErrors,
+  usePullShopifyInventory,
+  usePushPendingInventory,
   useSyncShopifyOrders,
   useSyncShopifyProducts,
   useTestShopifyConnection,
@@ -158,25 +171,71 @@ export function ShopifyPanel() {
   const [domain, setDomain] = useState("");
   const [token, setToken] = useState("");
   const [syncEnabled, setSyncEnabled] = useState(false);
+  const [locationId, setLocationId] = useState<string>("");
+  const [inventorySyncEnabled, setInventorySyncEnabled] = useState(false);
   const [initialized, setInitialized] = useState(false);
+
+  const hasCredentials = !!(cfg?.store_domain && cfg?.access_token);
+  const locations = useShopifyLocations(hasCredentials);
+  const pullInventory = usePullShopifyInventory();
+  const pushPending = usePushPendingInventory();
+  const inventoryErrors = useShopifyInventoryErrors();
 
   if (!initialized && cfg) {
     setDomain(cfg.store_domain ?? "");
     setToken(cfg.access_token ?? "");
     setSyncEnabled(cfg.sync_enabled ?? false);
+    setLocationId(cfg.location_id ?? "");
+    setInventorySyncEnabled(cfg.inventory_sync_enabled ?? false);
     setInitialized(true);
   }
 
   const handleSave = async () => {
     try {
+      const selectedLocation = locations.data?.find((l) => l.id === locationId);
       await save.mutateAsync({
         store_domain: domain,
         access_token: token.startsWith("****") ? undefined : token,
         sync_enabled: syncEnabled,
+        location_id: locationId || null,
+        location_name: selectedLocation?.name ?? null,
+        inventory_sync_enabled: inventorySyncEnabled,
       });
       toast({ title: "Configuración de Shopify guardada" });
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const handlePullInventory = async () => {
+    try {
+      const result = await pullInventory.mutateAsync();
+      toast({
+        title: "Inventario sincronizado desde Shopify",
+        description: (
+          <div className="text-sm">
+            {result.updated} actualizados · {result.unmatched} sin match en BH
+          </div>
+        ),
+      });
+    } catch (e: any) {
+      toast({ title: "Error al traer inventario", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const handlePushPending = async () => {
+    try {
+      const result = await pushPending.mutateAsync();
+      toast({
+        title: "Reintento completado",
+        description: (
+          <div className="text-sm">
+            {result.succeeded} éxitos · {result.failed} fallos · {result.attempted} intentados
+          </div>
+        ),
+      });
+    } catch (e: any) {
+      toast({ title: "Error al reintentar", description: e.message, variant: "destructive" });
     }
   };
 
@@ -190,8 +249,12 @@ export function ShopifyPanel() {
         res.orders_count !== null
           ? `Órdenes: ${res.orders_count}`
           : `Órdenes: sin acceso (${res.orders_error})`,
+        res.locations_count !== null
+          ? `Locations: ${res.locations_count}`
+          : `Locations: sin acceso (${res.locations_error})`,
       ];
-      const allGood = res.products_count !== null && res.orders_count !== null;
+      const allGood =
+        res.products_count !== null && res.orders_count !== null && res.locations_count !== null;
       toast({
         title: `Conexión exitosa — ${res.shop}`,
         description: <div className="text-sm space-y-0.5">{lines.map((l) => <div key={l}>{l}</div>)}</div>,
@@ -257,8 +320,6 @@ export function ShopifyPanel() {
       </div>
     );
   }
-
-  const hasCredentials = !!(cfg?.store_domain && cfg?.access_token);
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -397,6 +458,119 @@ export function ShopifyPanel() {
               </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Inventario bidireccional */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Inventario bidireccional
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Beast Hub es la fuente dominante: cada cambio local de stock se empuja
+            a Shopify. Usa el botón "Traer" solo en el setup inicial.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="shopify-location">Location de Shopify</Label>
+            <Select
+              value={locationId || undefined}
+              onValueChange={setLocationId}
+              disabled={!hasCredentials || locations.isLoading}
+            >
+              <SelectTrigger id="shopify-location">
+                <SelectValue
+                  placeholder={
+                    !hasCredentials
+                      ? "Guarda credenciales primero"
+                      : locations.isLoading
+                        ? "Cargando…"
+                        : "Selecciona una location"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.data?.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.name} {!l.active && "(inactiva)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Toda la sync de inventario usa esta location.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="inventory-sync-enabled"
+              checked={inventorySyncEnabled}
+              onCheckedChange={setInventorySyncEnabled}
+              disabled={!cfg?.location_id && !locationId}
+            />
+            <Label htmlFor="inventory-sync-enabled" className="cursor-pointer">
+              Push automático Beast Hub → Shopify
+            </Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Última sync desde Shopify: {formatDate(cfg?.last_inventory_sync)}
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handlePullInventory}
+              disabled={
+                pullInventory.isPending || !hasCredentials || !cfg?.location_id
+              }
+            >
+              {pullInventory.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              {pullInventory.isPending ? "Trayendo…" : "Traer inventario desde Shopify"}
+            </Button>
+          </div>
+          {inventoryErrors.data && inventoryErrors.data.length > 0 && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-amber-900">
+                <AlertTriangle className="h-4 w-4" />
+                {inventoryErrors.data.length} producto
+                {inventoryErrors.data.length === 1 ? "" : "s"} con errores de sync
+              </div>
+              <ul className="text-xs text-amber-900 space-y-1 max-h-40 overflow-y-auto">
+                {inventoryErrors.data.slice(0, 10).map((e) => (
+                  <li key={e.id} className="truncate">
+                    <span className="font-mono">{e.product_sku ?? "?"}</span>
+                    {" — "}
+                    {e.error_message}
+                  </li>
+                ))}
+                {inventoryErrors.data.length > 10 && (
+                  <li className="italic">
+                    …y {inventoryErrors.data.length - 10} más
+                  </li>
+                )}
+              </ul>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handlePushPending}
+                disabled={pushPending.isPending}
+              >
+                {pushPending.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                {pushPending.isPending ? "Reintentando…" : "Reintentar todos"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

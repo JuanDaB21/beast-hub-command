@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db';
 import { asyncHandler, buildInsert, buildUpdate } from '../util';
+import { tryPushInventory } from '../lib/inventorySync';
 
 const COLS = [
   'sku',
@@ -105,6 +106,9 @@ productsRouter.patch(
     const { sql, params } = buildUpdate('products', COLS, req.body, String(req.params.id));
     const { rows } = await pool.query(sql, params);
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    if (Object.prototype.hasOwnProperty.call(req.body ?? {}, 'stock')) {
+      await tryPushInventory(String(req.params.id));
+    }
     res.json(rows[0]);
   })
 );

@@ -10,6 +10,10 @@ export interface ShopifyConfig {
   sync_enabled: boolean;
   last_products_sync: string | null;
   last_orders_sync: string | null;
+  location_id: string | null;
+  location_name: string | null;
+  last_inventory_sync: string | null;
+  inventory_sync_enabled: boolean;
 }
 
 interface ShopifyVariant {
@@ -17,6 +21,7 @@ interface ShopifyVariant {
   sku: string;
   price: string;
   inventory_quantity: number;
+  inventory_item_id: number | null;
   option1: string | null;
   option2: string | null;
   option3: string | null;
@@ -126,6 +131,38 @@ async function shopifyFetch<T>(
   return { body, nextPageInfo };
 }
 
+async function shopifyMutate<T>(
+  cfg: ShopifyConfig,
+  method: 'POST' | 'PUT',
+  path: string,
+  payload: unknown
+): Promise<T> {
+  const url = `https://${cfg.store_domain}/admin/api/${SHOPIFY_API_VERSION}/${path}`;
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'X-Shopify-Access-Token': cfg.access_token,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (res.status === 401) {
+    throw Object.assign(new Error('Credenciales de Shopify inválidas (401).'), { status: 400 });
+  }
+  if (res.status === 429) {
+    throw Object.assign(new Error('Rate limit de Shopify alcanzado.'), { status: 429 });
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw Object.assign(
+      new Error(`Shopify API error ${res.status}: ${res.statusText}${text ? ' — ' + text.slice(0, 200) : ''}`),
+      { status: 502 }
+    );
+  }
+  return (await res.json()) as T;
+}
+
 /** Paginate through a Shopify list endpoint using Link-header cursors. */
 async function shopifyPaginateAll<T>(
   cfg: ShopifyConfig,
@@ -168,6 +205,7 @@ async function shopifyPaginateAll<T>(
 
 interface MappedVariant {
   shopify_variant_id: string;
+  shopify_inventory_item_id: string | null;
   sku: string;
   sku_synthesized: boolean;
   price: number;
@@ -217,6 +255,7 @@ function mapShopifyProduct(product: ShopifyProduct): MappedProduct {
 
     variants.push({
       shopify_variant_id: String(v.id),
+      shopify_inventory_item_id: v.inventory_item_id ? String(v.inventory_item_id) : null,
       sku,
       sku_synthesized,
       price: parseFloat(v.price) || 0,
@@ -360,17 +399,24 @@ export function parseShopifyProductsCsv(csvText: string): ShopifyProduct[] {
     }
 
     const product = productMap.get(handle)!;
-    const sku = row['Variant SKU'];
-    if (!sku) continue;
+    const sku = row['Variant SKU'] || '';
+    const price = row['Variant Price'] || '';
+    const opt1 = row['Option1 Value'] || '';
+    const opt2 = row['Option2 Value'] || '';
+    const opt3 = row['Option3 Value'] || '';
+
+    // Skip image-only continuation rows (no variant data at all).
+    if (!sku && !price && !opt1 && !opt2 && !opt3) continue;
 
     product.variants.push({
       id: variantIdCounter++,
-      sku,
-      price: row['Variant Price'] || '0',
+      sku, // may be empty — mapShopifyProduct synthesizes if so
+      price: price || '0',
       inventory_quantity: parseInt(row['Variant Inventory Qty'] || '0', 10),
-      option1: row['Option1 Value'] || null,
-      option2: row['Option2 Value'] || null,
-      option3: row['Option3 Value'] || null,
+      inventory_item_id: null, // CSV does not include this; only API path populates it
+      option1: opt1 || null,
+      option2: opt2 || null,
+      option3: opt3 || null,
     });
   }
 
@@ -494,10 +540,10 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
         const byVariantId = await client.query(
           `UPDATE products
              SET sku=$1, name=$2, price=$3, stock=$4, base_color=$5, size=$6,
-                 parent_id=$7, updated_at=now()
-           WHERE shopify_variant_id=$8
+                 parent_id=$7, shopify_inventory_item_id=$8, updated_at=now()
+           WHERE shopify_variant_id=$9
            RETURNING id`,
-          [v.sku, v.name, v.price, v.stock, v.base_color, v.size, parentId, v.shopify_variant_id]
+          [v.sku, v.name, v.price, v.stock, v.base_color, v.size, parentId, v.shopify_inventory_item_id, v.shopify_variant_id]
         );
         if (byVariantId.rowCount && byVariantId.rowCount > 0) {
           result.upserted++;
@@ -508,10 +554,11 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
         const bySku = await client.query(
           `UPDATE products
              SET shopify_variant_id=$1, name=$2, price=$3, stock=$4,
-                 base_color=$5, size=$6, parent_id=$7, updated_at=now()
-           WHERE sku=$8 AND is_parent=false
+                 base_color=$5, size=$6, parent_id=$7,
+                 shopify_inventory_item_id=$8, updated_at=now()
+           WHERE sku=$9 AND is_parent=false
            RETURNING id`,
-          [v.shopify_variant_id, v.name, v.price, v.stock, v.base_color, v.size, parentId, v.sku]
+          [v.shopify_variant_id, v.name, v.price, v.stock, v.base_color, v.size, parentId, v.shopify_inventory_item_id, v.sku]
         );
         if (bySku.rowCount && bySku.rowCount > 0) {
           result.upserted++;
@@ -521,9 +568,10 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
         // 3. Insert new variant
         await client.query(
           `INSERT INTO products
-             (sku, name, is_parent, parent_id, shopify_variant_id, price, stock, base_color, size, active)
-           VALUES ($1, $2, false, $3, $4, $5, $6, $7, $8, true)`,
-          [v.sku, v.name, parentId, v.shopify_variant_id, v.price, v.stock, v.base_color, v.size]
+             (sku, name, is_parent, parent_id, shopify_variant_id, shopify_inventory_item_id,
+              price, stock, base_color, size, active)
+           VALUES ($1, $2, false, $3, $4, $5, $6, $7, $8, $9, true)`,
+          [v.sku, v.name, parentId, v.shopify_variant_id, v.shopify_inventory_item_id, v.price, v.stock, v.base_color, v.size]
         );
         result.upserted++;
       }
@@ -599,6 +647,7 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
         ]
       );
       const orderId = orderRes.rows[0].id;
+      const decrementedProductIds: string[] = [];
 
       for (const item of mapped.items) {
         // Resolve product_id: first by shopify_variant_id, then by SKU
@@ -620,10 +669,26 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
            VALUES ($1, $2, $3, $4)`,
           [orderId, productId, item.quantity, item.unit_price]
         );
+
+        // BH-dominant: Shopify already decremented its own stock when the order
+        // was placed. Mirror that in BH so the next push doesn't overwrite it.
+        if (productId) {
+          await client.query(
+            'UPDATE products SET stock = stock - $1 WHERE id = $2',
+            [item.quantity, productId]
+          );
+          decrementedProductIds.push(productId);
+        }
       }
 
       await client.query('COMMIT');
       result.imported++;
+
+      // Push to Shopify (idempotent — set.json with the post-decrement value).
+      // If our decrement matches Shopify's, this is a no-op there.
+      for (const pid of decrementedProductIds) {
+        await tryPushInventoryAfterCommit(pid);
+      }
     } catch (err: any) {
       await client.query('ROLLBACK');
       result.errors.push(`${mapped.shopify_order_number}: ${err.message}`);
@@ -633,6 +698,12 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
   }
 
   return result;
+}
+
+// Lazy import to avoid a circular dependency: inventorySync imports from this file.
+async function tryPushInventoryAfterCommit(productId: string): Promise<void> {
+  const { tryPushInventory } = await import('./inventorySync');
+  await tryPushInventory(productId);
 }
 
 // ---------------------------------------------------------------------------
@@ -659,8 +730,10 @@ export interface TestConnectionResult {
   shop: string;
   products_count: number | null;
   orders_count: number | null;
+  locations_count: number | null;
   products_error: string | null;
   orders_error: string | null;
+  locations_error: string | null;
 }
 
 async function safeCount(cfg: ShopifyConfig, resource: 'products' | 'orders'): Promise<{ count: number | null; error: string | null }> {
@@ -673,15 +746,189 @@ async function safeCount(cfg: ShopifyConfig, resource: 'products' | 'orders'): P
   }
 }
 
+async function safeLocationsCount(cfg: ShopifyConfig): Promise<{ count: number | null; error: string | null }> {
+  try {
+    const { body } = await shopifyFetch<{ locations: unknown[] }>(cfg, 'locations.json');
+    return { count: body.locations?.length ?? 0, error: null };
+  } catch (err: any) {
+    return { count: null, error: err.message ?? 'error desconocido' };
+  }
+}
+
 export async function testShopifyConnection(): Promise<TestConnectionResult> {
   const cfg = requireConfig(await getShopifyConfig());
   const { body } = await shopifyFetch<{ shop: { name: string } }>(cfg, 'shop.json');
-  const [products, orders] = await Promise.all([safeCount(cfg, 'products'), safeCount(cfg, 'orders')]);
+  const [products, orders, locations] = await Promise.all([
+    safeCount(cfg, 'products'),
+    safeCount(cfg, 'orders'),
+    safeLocationsCount(cfg),
+  ]);
   return {
     shop: body.shop.name,
     products_count: products.count,
     orders_count: orders.count,
+    locations_count: locations.count,
     products_error: products.error,
     orders_error: orders.error,
+    locations_error: locations.error,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Inventory: locations, pull, push (BH-dominant bidirectional sync)
+// ---------------------------------------------------------------------------
+
+export interface ShopifyLocation {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
+export async function listShopifyLocations(): Promise<ShopifyLocation[]> {
+  const cfg = requireConfig(await getShopifyConfig());
+  const { body } = await shopifyFetch<{ locations: Array<{ id: number; name: string; active: boolean }> }>(
+    cfg,
+    'locations.json'
+  );
+  return body.locations.map((l) => ({ id: String(l.id), name: l.name, active: l.active }));
+}
+
+export interface InventoryPullResult {
+  updated: number;
+  unmatched: number;
+  errors: string[];
+}
+
+/** Pull inventory levels from Shopify into BH for the configured location. */
+export async function pullInventoryFromShopify(): Promise<InventoryPullResult> {
+  const cfg = requireConfig(await getShopifyConfig());
+  if (!cfg.location_id) {
+    throw Object.assign(new Error('Selecciona una location en la configuración primero.'), { status: 400 });
+  }
+
+  const result: InventoryPullResult = { updated: 0, unmatched: 0, errors: [] };
+
+  // Paginate inventory_levels.json filtered by location.
+  let pageInfo: string | null = null;
+  const MAX_PAGES = 80; // 80 * 250 = 20k items
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const params: Record<string, string> = pageInfo
+      ? { limit: '250', page_info: pageInfo }
+      : { limit: '250', location_ids: cfg.location_id };
+    const { body, nextPageInfo } = await shopifyFetch<{
+      inventory_levels: Array<{ inventory_item_id: number; available: number | null }>;
+    }>(cfg, 'inventory_levels.json', params);
+
+    for (const lvl of body.inventory_levels ?? []) {
+      const itemId = String(lvl.inventory_item_id);
+      const available = lvl.available ?? 0;
+      const upd = await pool.query(
+        'UPDATE products SET stock = $1, updated_at = now() WHERE shopify_inventory_item_id = $2',
+        [available, itemId]
+      );
+      if (upd.rowCount && upd.rowCount > 0) result.updated++;
+      else result.unmatched++;
+    }
+
+    if (!nextPageInfo) break;
+    pageInfo = nextPageInfo;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+
+  await pool.query('UPDATE shopify_config SET last_inventory_sync = now() WHERE id = 1');
+  return result;
+}
+
+export interface PushInventoryResult {
+  ok: boolean;
+  error: string | null;
+  skipped_reason: 'no_inventory_item' | 'no_location' | 'sync_disabled' | null;
+}
+
+/** Push a single product's stock to Shopify. Logs errors to shopify_sync_errors on failure. */
+export async function pushInventoryToShopify(productId: string): Promise<PushInventoryResult> {
+  const cfg = await getShopifyConfig();
+  if (!cfg || !cfg.store_domain || !cfg.access_token) {
+    return { ok: false, error: null, skipped_reason: 'sync_disabled' };
+  }
+  if (!cfg.location_id) {
+    return { ok: false, error: null, skipped_reason: 'no_location' };
+  }
+
+  const { rows } = await pool.query(
+    'SELECT shopify_inventory_item_id, stock FROM products WHERE id = $1',
+    [productId]
+  );
+  const product = rows[0];
+  if (!product?.shopify_inventory_item_id) {
+    return { ok: false, error: null, skipped_reason: 'no_inventory_item' };
+  }
+
+  try {
+    await shopifyMutate(cfg, 'POST', 'inventory_levels/set.json', {
+      location_id: Number(cfg.location_id),
+      inventory_item_id: Number(product.shopify_inventory_item_id),
+      available: Number(product.stock),
+    });
+    // Resolve any prior errors for this product.
+    await pool.query(
+      `UPDATE shopify_sync_errors SET resolved_at = now()
+       WHERE product_id = $1 AND resolved_at IS NULL`,
+      [productId]
+    );
+    return { ok: true, error: null, skipped_reason: null };
+  } catch (err: any) {
+    const message = err.message ?? String(err);
+    await pool.query(
+      `INSERT INTO shopify_sync_errors (product_id, operation, error_message)
+       VALUES ($1, 'push_inventory', $2)`,
+      [productId, message]
+    );
+    return { ok: false, error: message, skipped_reason: null };
+  }
+}
+
+export interface PushBulkResult {
+  attempted: number;
+  succeeded: number;
+  failed: number;
+}
+
+/** Re-push all products with unresolved errors. */
+export async function pushPendingInventoryErrors(): Promise<PushBulkResult> {
+  const { rows } = await pool.query<{ product_id: string }>(
+    `SELECT DISTINCT product_id FROM shopify_sync_errors
+     WHERE resolved_at IS NULL AND product_id IS NOT NULL`
+  );
+  const result: PushBulkResult = { attempted: rows.length, succeeded: 0, failed: 0 };
+  for (const r of rows) {
+    const pushed = await pushInventoryToShopify(r.product_id);
+    if (pushed.ok) result.succeeded++;
+    else result.failed++;
+    await new Promise((p) => setTimeout(p, 500));
+  }
+  return result;
+}
+
+export interface InventoryError {
+  id: string;
+  product_id: string | null;
+  product_name: string | null;
+  product_sku: string | null;
+  operation: string;
+  error_message: string;
+  attempted_at: string;
+}
+
+export async function listInventoryErrors(): Promise<InventoryError[]> {
+  const { rows } = await pool.query<InventoryError>(
+    `SELECT e.id, e.product_id, p.name AS product_name, p.sku AS product_sku,
+            e.operation, e.error_message, e.attempted_at
+       FROM shopify_sync_errors e
+       LEFT JOIN products p ON p.id = e.product_id
+       WHERE e.resolved_at IS NULL
+       ORDER BY e.attempted_at DESC
+       LIMIT 200`
+  );
+  return rows;
 }
