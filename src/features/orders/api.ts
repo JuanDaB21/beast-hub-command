@@ -151,6 +151,14 @@ export function useDeleteOrder() {
   });
 }
 
+export function useDeleteAllOrders() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.delete<{ deleted: number }>("/orders/all"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_ORDERS }),
+  });
+}
+
 /* ---- Products list (lectura para el selector del formulario) ---- */
 export function useProductsForOrder() {
   return useQuery({

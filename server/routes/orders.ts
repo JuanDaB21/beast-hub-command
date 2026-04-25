@@ -152,6 +152,21 @@ ordersRouter.patch(
   })
 );
 
+/**
+ * DELETE /api/orders/all
+ * Borra TODAS las órdenes. order_items y returns caen por ON DELETE CASCADE.
+ * Nota: financial_transactions.reference_id no es FK; sus filas quedan huérfanas
+ * a propósito para preservar el histórico contable.
+ * Debe declararse antes de '/:id' para que Express no lo matchee como param.
+ */
+ordersRouter.delete(
+  '/all',
+  asyncHandler(async (_req, res) => {
+    const { rowCount } = await pool.query('DELETE FROM orders');
+    res.json({ deleted: rowCount ?? 0 });
+  })
+);
+
 ordersRouter.delete(
   '/:id',
   asyncHandler(async (req, res) => {
