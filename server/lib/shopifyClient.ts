@@ -169,6 +169,7 @@ async function shopifyPaginateAll<T>(
 interface MappedVariant {
   shopify_variant_id: string;
   sku: string;
+  sku_synthesized: boolean;
   price: number;
   stock: number;
   base_color: string | null;
@@ -182,6 +183,15 @@ interface MappedProduct {
   variants: MappedVariant[];
 }
 
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function mapShopifyProduct(product: ShopifyProduct): MappedProduct {
   const colorOptionIndex = product.options.findIndex((o) =>
     /color|colour/i.test(o.name)
@@ -193,15 +203,22 @@ function mapShopifyProduct(product: ShopifyProduct): MappedProduct {
   const variants: MappedVariant[] = [];
 
   for (const v of product.variants) {
-    if (!v.sku?.trim()) continue; // skip variants without SKU
-
     const optionValues = [v.option1, v.option2, v.option3];
     const base_color = colorOptionIndex >= 0 ? (optionValues[colorOptionIndex] ?? null) : null;
     const size = sizeOptionIndex >= 0 ? (optionValues[sizeOptionIndex] ?? null) : (v.option1 ?? null);
 
+    const rawSku = v.sku?.trim() ?? '';
+    const sku_synthesized = !rawSku;
+    const sku = rawSku || slugify(
+      `${product.handle}-${[v.option1, v.option2, v.option3].filter(Boolean).join('-')}`
+    );
+
+    if (!sku) continue; // last-resort guard: no handle and no options → impossible to identify
+
     variants.push({
       shopify_variant_id: String(v.id),
-      sku: v.sku.trim(),
+      sku,
+      sku_synthesized,
       price: parseFloat(v.price) || 0,
       stock: v.inventory_quantity ?? 0,
       base_color,
@@ -415,11 +432,12 @@ export function parseShopifyOrdersCsv(csvText: string): ShopifyOrder[] {
 export interface SyncProductsResult {
   upserted: number;
   skipped: number;
+  synthesized_skus: number;
   errors: string[];
 }
 
 export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<SyncProductsResult> {
-  const result: SyncProductsResult = { upserted: 0, skipped: 0, errors: [] };
+  const result: SyncProductsResult = { upserted: 0, skipped: 0, synthesized_skus: 0, errors: [] };
 
   for (const raw of shopifyProducts) {
     const mapped = mapShopifyProduct(raw);
@@ -470,6 +488,8 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
 
       // Upsert each variant: try by shopify_variant_id first, then by sku, then insert
       for (const v of mapped.variants) {
+        if (v.sku_synthesized) result.synthesized_skus++;
+
         // 1. Try to match by shopify_variant_id
         const byVariantId = await client.query(
           `UPDATE products
@@ -635,8 +655,33 @@ export async function syncOrdersFromShopify(): Promise<SyncOrdersResult> {
   return result;
 }
 
-export async function testShopifyConnection(): Promise<{ shop: string }> {
+export interface TestConnectionResult {
+  shop: string;
+  products_count: number | null;
+  orders_count: number | null;
+  products_error: string | null;
+  orders_error: string | null;
+}
+
+async function safeCount(cfg: ShopifyConfig, resource: 'products' | 'orders'): Promise<{ count: number | null; error: string | null }> {
+  const params: Record<string, string> = resource === 'orders' ? { status: 'any' } : {};
+  try {
+    const { body } = await shopifyFetch<{ count: number }>(cfg, `${resource}/count.json`, params);
+    return { count: body.count ?? 0, error: null };
+  } catch (err: any) {
+    return { count: null, error: err.message ?? 'error desconocido' };
+  }
+}
+
+export async function testShopifyConnection(): Promise<TestConnectionResult> {
   const cfg = requireConfig(await getShopifyConfig());
   const { body } = await shopifyFetch<{ shop: { name: string } }>(cfg, 'shop.json');
-  return { shop: body.shop.name };
+  const [products, orders] = await Promise.all([safeCount(cfg, 'products'), safeCount(cfg, 'orders')]);
+  return {
+    shop: body.shop.name,
+    products_count: products.count,
+    orders_count: orders.count,
+    products_error: products.error,
+    orders_error: orders.error,
+  };
 }

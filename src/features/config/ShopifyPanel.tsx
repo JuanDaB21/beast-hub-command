@@ -49,9 +49,12 @@ function SyncResultToast({
       ? (result as SyncProductsResult).upserted
       : (result as SyncOrdersResult).imported;
   const label = type === "products" ? "variantes" : "órdenes";
+  const synthesized =
+    type === "products" ? (result as SyncProductsResult).synthesized_skus : 0;
   const lines = [
     `${count} ${label} sincronizadas`,
     `${result.skipped} omitidas`,
+    synthesized > 0 ? `${synthesized} SKUs generados` : null,
     result.errors.length > 0 ? `${result.errors.length} errores` : null,
   ].filter(Boolean);
   return <div className="text-sm">{lines.join(" · ")}</div>;
@@ -180,7 +183,20 @@ export function ShopifyPanel() {
   const handleTest = async () => {
     try {
       const res = await testConn.mutateAsync();
-      toast({ title: `Conexión exitosa — tienda: ${res.shop}` });
+      const lines = [
+        res.products_count !== null
+          ? `Productos: ${res.products_count}`
+          : `Productos: sin acceso (${res.products_error})`,
+        res.orders_count !== null
+          ? `Órdenes: ${res.orders_count}`
+          : `Órdenes: sin acceso (${res.orders_error})`,
+      ];
+      const allGood = res.products_count !== null && res.orders_count !== null;
+      toast({
+        title: `Conexión exitosa — ${res.shop}`,
+        description: <div className="text-sm space-y-0.5">{lines.map((l) => <div key={l}>{l}</div>)}</div>,
+        variant: allGood ? undefined : "destructive",
+      });
     } catch (e: any) {
       toast({ title: "Error de conexión", description: e.message, variant: "destructive" });
     }

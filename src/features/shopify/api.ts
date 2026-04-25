@@ -18,6 +18,7 @@ export interface ShopifyConfigInput {
 export interface SyncProductsResult {
   upserted: number;
   skipped: number;
+  synthesized_skus: number;
   errors: string[];
 }
 
@@ -25,6 +26,14 @@ export interface SyncOrdersResult {
   imported: number;
   skipped: number;
   errors: string[];
+}
+
+export interface TestConnectionResult {
+  shop: string;
+  products_count: number | null;
+  orders_count: number | null;
+  products_error: string | null;
+  orders_error: string | null;
 }
 
 const QK = ["shopify_config"] as const;
@@ -47,7 +56,7 @@ export function useSaveShopifyConfig() {
 
 export function useTestShopifyConnection() {
   return useMutation({
-    mutationFn: () => api.get<{ shop: string }>("/shopify/test"),
+    mutationFn: () => api.get<TestConnectionResult>("/shopify/test"),
   });
 }
 
