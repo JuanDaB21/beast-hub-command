@@ -64,10 +64,13 @@ function SyncResultToast({
   const label = type === "products" ? "variantes" : "órdenes";
   const synthesized =
     type === "products" ? (result as SyncProductsResult).synthesized_skus : 0;
+  const unmatched =
+    type === "orders" ? (result as SyncOrdersResult).unmatched_items : 0;
   const lines = [
     `${count} ${label} sincronizadas`,
     `${result.skipped} omitidas`,
     synthesized > 0 ? `${synthesized} SKUs generados` : null,
+    unmatched > 0 ? `${unmatched} items sin producto` : null,
     result.errors.length > 0 ? `${result.errors.length} errores` : null,
   ].filter(Boolean);
   return <div className="text-sm">{lines.join(" · ")}</div>;

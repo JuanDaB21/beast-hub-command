@@ -60,6 +60,8 @@ export interface SyncProductsResult {
 export interface SyncOrdersResult {
   imported: number;
   skipped: number;
+  unmatched_items: number;
+  unmatched_samples: string[];
   errors: string[];
 }
 
