@@ -21,9 +21,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import {
   useConfirmCod,
+  useDeleteAllOrders,
   useDeleteOrder,
   useOrders,
   useUpdateOrderStatus,
@@ -45,10 +46,13 @@ export default function Orders() {
   const updateStatus = useUpdateOrderStatus();
   const confirmCod = useConfirmCod();
   const del = useDeleteOrder();
+  const delAll = useDeleteAllOrders();
 
   const [filter, setFilter] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<OrderWithItems | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteAllConfirmText, setDeleteAllConfirmText] = useState("");
   const [shipTarget, setShipTarget] = useState<{
     order: OrderWithItems;
     targetStatus: "shipped" | "delivered";
@@ -96,11 +100,39 @@ export default function Orders() {
     }
   };
 
+  const closeDeleteAll = () => {
+    setDeleteAllOpen(false);
+    setDeleteAllConfirmText("");
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      const { deleted } = await delAll.mutateAsync();
+      toast({ title: `${deleted} pedidos eliminados` });
+    } catch (err: any) {
+      toast({ title: "Error al eliminar", description: err.message, variant: "destructive" });
+    } finally {
+      closeDeleteAll();
+    }
+  };
+
   const headerActions = (
-    <Button size="sm" className="gap-2" onClick={() => setFormOpen(true)}>
-      <Plus className="h-4 w-4" />
-      <span className="hidden sm:inline">Nuevo pedido</span>
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant="destructive"
+        className="gap-2"
+        disabled={orders.length === 0}
+        onClick={() => setDeleteAllOpen(true)}
+      >
+        <Trash2 className="h-4 w-4" />
+        <span className="hidden sm:inline">Eliminar todos</span>
+      </Button>
+      <Button size="sm" className="gap-2" onClick={() => setFormOpen(true)}>
+        <Plus className="h-4 w-4" />
+        <span className="hidden sm:inline">Nuevo pedido</span>
+      </Button>
+    </div>
   );
 
   return (
@@ -197,6 +229,40 @@ export default function Orders() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteAllOpen} onOpenChange={(o) => !o && closeDeleteAll()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar TODOS los pedidos</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a eliminar <strong>{orders.length}</strong> pedido(s) junto con sus líneas y
+              devoluciones asociadas. Los registros financieros históricos no se borrarán. Esta
+              acción es irreversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Para confirmar, escribe <strong>ELIMINAR</strong> abajo:
+            </p>
+            <Input
+              autoFocus
+              value={deleteAllConfirmText}
+              onChange={(e) => setDeleteAllConfirmText(e.target.value)}
+              placeholder="ELIMINAR"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAll}
+              disabled={deleteAllConfirmText !== "ELIMINAR" || delAll.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {delAll.isPending ? "Eliminando…" : "Eliminar todos"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
