@@ -17,7 +17,8 @@ export interface ShopifyConfig {
 }
 
 interface ShopifyVariant {
-  id: number;
+  // Nullable: CSV exports don't include real Variant IDs.
+  id: number | string | null;
   sku: string;
   price: string;
   inventory_quantity: number;
@@ -25,10 +26,12 @@ interface ShopifyVariant {
   option1: string | null;
   option2: string | null;
   option3: string | null;
+  cost?: number | null;
 }
 
 interface ShopifyProduct {
-  id: number;
+  // Nullable: CSV exports don't include real Product IDs.
+  id: number | string | null;
   title: string;
   handle: string;
   options: Array<{ name: string; position: number }>;
@@ -51,7 +54,7 @@ interface ShopifyCustomer {
 }
 
 interface ShopifyOrder {
-  id: number;
+  id: number | string;
   name: string; // e.g. "#1001"
   financial_status: string;
   fulfillment_status: string | null;
@@ -204,11 +207,12 @@ async function shopifyPaginateAll<T>(
 // ---------------------------------------------------------------------------
 
 interface MappedVariant {
-  shopify_variant_id: string;
+  shopify_variant_id: string | null;
   shopify_inventory_item_id: string | null;
   sku: string;
   sku_synthesized: boolean;
   price: number;
+  cost: number;
   stock: number;
   base_color: string | null;
   size: string | null;
@@ -216,7 +220,8 @@ interface MappedVariant {
 }
 
 interface MappedProduct {
-  shopify_product_id: string;
+  shopify_product_id: string | null;
+  parent_sku: string;
   name: string;
   variants: MappedVariant[];
 }
@@ -254,11 +259,12 @@ function mapShopifyProduct(product: ShopifyProduct): MappedProduct {
     if (!sku) continue; // last-resort guard: no handle and no options → impossible to identify
 
     variants.push({
-      shopify_variant_id: String(v.id),
+      shopify_variant_id: v.id != null ? String(v.id) : null,
       shopify_inventory_item_id: v.inventory_item_id ? String(v.inventory_item_id) : null,
       sku,
       sku_synthesized,
       price: parseFloat(v.price) || 0,
+      cost: v.cost != null ? Number(v.cost) || 0 : 0,
       stock: v.inventory_quantity ?? 0,
       base_color,
       size,
@@ -266,8 +272,14 @@ function mapShopifyProduct(product: ShopifyProduct): MappedProduct {
     });
   }
 
+  const shopify_product_id = product.id != null ? String(product.id) : null;
+  const parent_sku = shopify_product_id
+    ? `PARENT-${shopify_product_id}`
+    : `PARENT-csv-${product.handle}`;
+
   return {
-    shopify_product_id: String(product.id),
+    shopify_product_id,
+    parent_sku,
     name: product.title,
     variants,
   };
@@ -303,6 +315,7 @@ export interface MappedOrder {
   items: Array<{
     shopify_variant_id: string | null;
     sku: string;
+    title: string;
     quantity: number;
     unit_price: number;
   }>;
@@ -329,6 +342,7 @@ export function mapShopifyOrder(order: ShopifyOrder): MappedOrder {
     items: order.line_items.map((li) => ({
       shopify_variant_id: li.variant_id ? String(li.variant_id) : null,
       sku: li.sku ?? '',
+      title: li.title ?? '',
       quantity: li.quantity,
       unit_price: parseFloat(li.price) || 0,
     })),
@@ -339,66 +353,86 @@ export function mapShopifyOrder(order: ShopifyOrder): MappedOrder {
 // CSV parsers (Shopify standard export format)
 // ---------------------------------------------------------------------------
 
-function parseCsvLine(line: string): string[] {
-  const result: string[] = [];
+// RFC 4180 compliant: parses the entire text in one pass so that newlines
+// inside quoted fields (e.g. HTML descriptions) don't break row boundaries.
+function parseCsv(text: string): Array<Record<string, string>> {
+  const stripped = text.replace(/^﻿/, ''); // strip UTF-8 BOM
+  const rows: string[][] = [];
+  let fields: string[] = [];
   let current = '';
   let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
+
+  for (let i = 0; i < stripped.length; i++) {
+    const ch = stripped[i];
     if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') {
+      if (inQuotes && stripped[i + 1] === '"') {
         current += '"';
         i++;
       } else {
         inQuotes = !inQuotes;
       }
     } else if (ch === ',' && !inQuotes) {
-      result.push(current);
+      fields.push(current);
+      current = '';
+    } else if (!inQuotes && (ch === '\n' || ch === '\r')) {
+      if (ch === '\r' && stripped[i + 1] === '\n') i++;
+      fields.push(current);
+      if (fields.some((f) => f.length > 0)) rows.push(fields);
+      fields = [];
       current = '';
     } else {
       current += ch;
     }
   }
-  result.push(current);
-  return result;
-}
+  if (current.length > 0 || fields.length > 0) {
+    fields.push(current);
+    if (fields.some((f) => f.length > 0)) rows.push(fields);
+  }
 
-function parseCsv(text: string): Array<Record<string, string>> {
-  const stripped = text.replace(/^﻿/, ''); // strip BOM
-  const lines = stripped.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return [];
-  const headers = parseCsvLine(lines[0]);
-  return lines.slice(1).map((line) => {
-    const values = parseCsvLine(line);
-    const row: Record<string, string> = {};
-    headers.forEach((h, i) => (row[h.trim()] = (values[i] ?? '').trim()));
-    return row;
+  if (rows.length < 2) return [];
+  const headers = rows[0].map((h) => h.trim());
+  return rows.slice(1).map((row) => {
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => (obj[h] = (row[i] ?? '').trim()));
+    return obj;
   });
 }
 
 export function parseShopifyProductsCsv(csvText: string): ShopifyProduct[] {
   const rows = parseCsv(csvText);
   const productMap = new Map<string, ShopifyProduct>();
-  let variantIdCounter = Date.now();
 
   for (const row of rows) {
     const handle = row['Handle'];
     if (!handle) continue;
 
-    if (!productMap.has(handle)) {
-      productMap.set(handle, {
-        id: variantIdCounter++,
+    let product = productMap.get(handle);
+
+    // Option names only appear on the first (parent) row of a product.
+    // Capture them whenever they are present so subsequent variant rows
+    // don't downgrade a real name to a placeholder.
+    const opt1Name = row['Option1 Name'] || '';
+    const opt2Name = row['Option2 Name'] || '';
+
+    if (!product) {
+      product = {
+        id: null, // CSV does not include real Shopify Product IDs
         title: row['Title'] || handle,
         handle,
         options: [
-          { name: row['Option1 Name'] || 'Option1', position: 1 },
-          { name: row['Option2 Name'] || 'Option2', position: 2 },
+          { name: opt1Name || 'Option1', position: 1 },
+          { name: opt2Name || 'Option2', position: 2 },
         ],
         variants: [],
-      });
+      };
+      productMap.set(handle, product);
+    } else {
+      // Backfill option names if a later row carries them.
+      if (opt1Name && product.options[0].name === 'Option1') product.options[0].name = opt1Name;
+      if (opt2Name && product.options[1].name === 'Option2') product.options[1].name = opt2Name;
+      if (row['Title']) product.title = row['Title'];
     }
 
-    const product = productMap.get(handle)!;
     const sku = row['Variant SKU'] || '';
     const price = row['Variant Price'] || '';
     const opt1 = row['Option1 Value'] || '';
@@ -408,8 +442,11 @@ export function parseShopifyProductsCsv(csvText: string): ShopifyProduct[] {
     // Skip image-only continuation rows (no variant data at all).
     if (!sku && !price && !opt1 && !opt2 && !opt3) continue;
 
+    const costRaw = row['Cost per item'] || '';
+    const cost = costRaw ? parseFloat(costRaw) || 0 : 0;
+
     product.variants.push({
-      id: variantIdCounter++,
+      id: null, // CSV does not include real Shopify Variant IDs
       sku, // may be empty — mapShopifyProduct synthesizes if so
       price: price || '0',
       inventory_quantity: parseInt(row['Variant Inventory Qty'] || '0', 10),
@@ -417,6 +454,7 @@ export function parseShopifyProductsCsv(csvText: string): ShopifyProduct[] {
       option1: opt1 || null,
       option2: opt2 || null,
       option3: opt3 || null,
+      cost,
     });
   }
 
@@ -426,7 +464,6 @@ export function parseShopifyProductsCsv(csvText: string): ShopifyProduct[] {
 export function parseShopifyOrdersCsv(csvText: string): ShopifyOrder[] {
   const rows = parseCsv(csvText);
   const orderMap = new Map<string, ShopifyOrder>();
-  let idCounter = Date.now();
 
   for (const row of rows) {
     const name = row['Name'];
@@ -435,8 +472,13 @@ export function parseShopifyOrdersCsv(csvText: string): ShopifyOrder[] {
     if (!orderMap.has(name)) {
       const billingName = row['Billing Name'] || '';
       const [firstName = '', ...rest] = billingName.split(' ');
+      // Use the real Shopify order ID from the "Id" column (idempotency on
+      // re-imports). Fall back to the order name only as a last resort.
+      const realId = row['Id'] || '';
+      const billingPhone = row['Billing Phone'] || '';
+      const shippingPhone = row['Shipping Phone'] || '';
       orderMap.set(name, {
-        id: idCounter++,
+        id: realId || `csv-${name}`,
         name,
         financial_status: row['Financial Status'] || 'pending',
         fulfillment_status: row['Fulfillment Status'] || null,
@@ -446,10 +488,14 @@ export function parseShopifyOrdersCsv(csvText: string): ShopifyOrder[] {
         customer: {
           first_name: firstName || null,
           last_name: rest.join(' ') || null,
-          phone: row['Phone'] || null,
+          // Shopify CSV often leaves the trailing "Phone" column empty and
+          // puts the actual number in "Billing Phone" / "Shipping Phone".
+          phone: row['Phone'] || billingPhone || shippingPhone || null,
           email: row['Email'] || null,
         },
-        billing_address: null,
+        billing_address: billingPhone
+          ? { phone: billingPhone, name: billingName || null }
+          : null,
         line_items: [],
         created_at: row['Created at'] || new Date().toISOString(),
       });
@@ -496,34 +542,46 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
     try {
       await client.query('BEGIN');
 
-      // Upsert parent product
-      const parentRes = await client.query(
-        `INSERT INTO products
-           (sku, name, is_parent, shopify_product_id, active)
-         VALUES ($1, $2, true, $3, true)
-         ON CONFLICT (shopify_product_id)
-           DO UPDATE SET name = EXCLUDED.name, updated_at = now()
-         RETURNING id`,
-        [`PARENT-${mapped.shopify_product_id}`, mapped.name, mapped.shopify_product_id]
-      );
-
-      // Handle case where parent was previously created without shopify_product_id
-      let parentId: string;
-      if (parentRes.rows[0]) {
-        parentId = parentRes.rows[0].id;
-      } else {
-        // Fallback: find parent by sku
-        const existing = await client.query(
-          `SELECT id FROM products WHERE sku = $1`,
-          [`PARENT-${mapped.shopify_product_id}`]
+      // Find existing parent: by shopify_product_id (if known) then by deterministic SKU.
+      // Avoids ON CONFLICT — there is no UNIQUE constraint on shopify_product_id and
+      // CSV imports may legitimately have it NULL.
+      let parentId: string | null = null;
+      if (mapped.shopify_product_id) {
+        const r = await client.query(
+          `SELECT id FROM products
+             WHERE shopify_product_id = $1 AND is_parent = true
+             LIMIT 1`,
+          [mapped.shopify_product_id]
         );
-        parentId = existing.rows[0]?.id;
-        if (parentId) {
-          await client.query(
-            `UPDATE products SET shopify_product_id = $1, name = $2, updated_at = now() WHERE id = $3`,
-            [mapped.shopify_product_id, mapped.name, parentId]
-          );
-        }
+        parentId = r.rows[0]?.id ?? null;
+      }
+      if (!parentId) {
+        const r = await client.query(
+          `SELECT id FROM products WHERE sku = $1 LIMIT 1`,
+          [mapped.parent_sku]
+        );
+        parentId = r.rows[0]?.id ?? null;
+      }
+
+      if (parentId) {
+        // Update parent name; only set shopify_product_id if not already set
+        // (so re-importing a CSV doesn't wipe a real ID written by API sync).
+        await client.query(
+          `UPDATE products
+             SET name = $1,
+                 shopify_product_id = COALESCE(shopify_product_id, $2),
+                 updated_at = now()
+           WHERE id = $3`,
+          [mapped.name, mapped.shopify_product_id, parentId]
+        );
+      } else {
+        const r = await client.query(
+          `INSERT INTO products (sku, name, is_parent, shopify_product_id, active)
+           VALUES ($1, $2, true, $3, true)
+           RETURNING id`,
+          [mapped.parent_sku, mapped.name, mapped.shopify_product_id]
+        );
+        parentId = r.rows[0].id;
       }
 
       if (!parentId) {
@@ -532,47 +590,55 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
         continue;
       }
 
-      // Upsert each variant: try by shopify_variant_id first, then by sku, then insert
+      // Upsert each variant: try by shopify_variant_id first (if not null), then by sku, then insert.
+      // COALESCE on Shopify-only fields ensures CSV imports never overwrite real IDs from API path.
       for (const v of mapped.variants) {
         if (v.sku_synthesized) result.synthesized_skus++;
 
-        // 1. Try to match by shopify_variant_id
-        const byVariantId = await client.query(
-          `UPDATE products
-             SET sku=$1, name=$2, price=$3, stock=$4, base_color=$5, size=$6,
-                 parent_id=$7, shopify_inventory_item_id=$8, updated_at=now()
-           WHERE shopify_variant_id=$9
-           RETURNING id`,
-          [v.sku, v.name, v.price, v.stock, v.base_color, v.size, parentId, v.shopify_inventory_item_id, v.shopify_variant_id]
-        );
-        if (byVariantId.rowCount && byVariantId.rowCount > 0) {
-          result.upserted++;
-          continue;
+        let existingId: string | null = null;
+        if (v.shopify_variant_id) {
+          const r = await client.query(
+            `SELECT id FROM products WHERE shopify_variant_id = $1 LIMIT 1`,
+            [v.shopify_variant_id]
+          );
+          existingId = r.rows[0]?.id ?? null;
+        }
+        if (!existingId) {
+          const r = await client.query(
+            `SELECT id FROM products WHERE sku = $1 AND is_parent = false LIMIT 1`,
+            [v.sku]
+          );
+          existingId = r.rows[0]?.id ?? null;
         }
 
-        // 2. Try to match by sku (backfill shopify_variant_id)
-        const bySku = await client.query(
-          `UPDATE products
-             SET shopify_variant_id=$1, name=$2, price=$3, stock=$4,
-                 base_color=$5, size=$6, parent_id=$7,
-                 shopify_inventory_item_id=$8, updated_at=now()
-           WHERE sku=$9 AND is_parent=false
-           RETURNING id`,
-          [v.shopify_variant_id, v.name, v.price, v.stock, v.base_color, v.size, parentId, v.shopify_inventory_item_id, v.sku]
-        );
-        if (bySku.rowCount && bySku.rowCount > 0) {
-          result.upserted++;
-          continue;
+        if (existingId) {
+          await client.query(
+            `UPDATE products
+               SET sku = $1,
+                   name = $2,
+                   price = $3,
+                   stock = $4,
+                   base_color = $5,
+                   size = $6,
+                   parent_id = $7,
+                   shopify_variant_id = COALESCE(shopify_variant_id, $8),
+                   shopify_inventory_item_id = COALESCE(shopify_inventory_item_id, $9),
+                   cost = CASE WHEN $10::numeric > 0 THEN $10::numeric ELSE cost END,
+                   updated_at = now()
+             WHERE id = $11`,
+            [v.sku, v.name, v.price, v.stock, v.base_color, v.size, parentId,
+             v.shopify_variant_id, v.shopify_inventory_item_id, v.cost, existingId]
+          );
+        } else {
+          await client.query(
+            `INSERT INTO products
+               (sku, name, is_parent, parent_id, shopify_variant_id, shopify_inventory_item_id,
+                price, cost, stock, base_color, size, active)
+             VALUES ($1, $2, false, $3, $4, $5, $6, $7, $8, $9, $10, true)`,
+            [v.sku, v.name, parentId, v.shopify_variant_id, v.shopify_inventory_item_id,
+             v.price, v.cost, v.stock, v.base_color, v.size]
+          );
         }
-
-        // 3. Insert new variant
-        await client.query(
-          `INSERT INTO products
-             (sku, name, is_parent, parent_id, shopify_variant_id, shopify_inventory_item_id,
-              price, stock, base_color, size, active)
-           VALUES ($1, $2, false, $3, $4, $5, $6, $7, $8, $9, true)`,
-          [v.sku, v.name, parentId, v.shopify_variant_id, v.shopify_inventory_item_id, v.price, v.stock, v.base_color, v.size]
-        );
         result.upserted++;
       }
 
@@ -595,11 +661,19 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
 export interface SyncOrdersResult {
   imported: number;
   skipped: number;
+  unmatched_items: number;
+  unmatched_samples: string[];
   errors: string[];
 }
 
 export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrdersResult> {
-  const result: SyncOrdersResult = { imported: 0, skipped: 0, errors: [] };
+  const result: SyncOrdersResult = {
+    imported: 0,
+    skipped: 0,
+    unmatched_items: 0,
+    unmatched_samples: [],
+    errors: [],
+  };
 
   for (const raw of shopifyOrders) {
     const mapped = mapShopifyOrder(raw);
@@ -678,6 +752,13 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
             [item.quantity, productId]
           );
           decrementedProductIds.push(productId);
+        } else {
+          // CSV exports often ship empty Lineitem SKU — record so the user can act.
+          result.unmatched_items++;
+          if (result.unmatched_samples.length < 10) {
+            const ref = item.sku ? `sku=${item.sku}` : `nombre="${item.title}"`;
+            result.unmatched_samples.push(`${mapped.shopify_order_number}: ${ref}`);
+          }
         }
       }
 
