@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db';
 import { asyncHandler } from '../util';
+import { tryPushInventory } from '../lib/inventorySync';
 
 const ITEMS_SUBQUERY = `
   COALESCE(
@@ -125,7 +126,14 @@ workOrdersRouter.delete(
 workOrdersRouter.post(
   '/:id/complete',
   asyncHandler(async (req, res) => {
-    await pool.query('SELECT complete_work_order($1)', [String(req.params.id)]);
+    const id = String(req.params.id);
+    await pool.query('SELECT complete_work_order($1)', [id]);
+    // The stored fn bumps stock for every product in this work order's items.
+    const { rows } = await pool.query<{ product_id: string }>(
+      'SELECT DISTINCT product_id FROM work_order_items WHERE work_order_id = $1',
+      [id]
+    );
+    for (const r of rows) await tryPushInventory(r.product_id);
     res.json({ ok: true });
   })
 );

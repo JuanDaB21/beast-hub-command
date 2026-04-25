@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db';
 import { asyncHandler, buildInsert } from '../util';
+import { tryPushInventory } from '../lib/inventorySync';
 
 const SELECT_WITH_RELATIONS = `
   SELECT r.*,
@@ -116,6 +117,10 @@ returnsRouter.post(
       throw err;
     } finally {
       client.release();
+    }
+
+    if (body.resolution === 'restocked' && body.product_id) {
+      await tryPushInventory(body.product_id);
     }
 
     res.json({ ok: true });
