@@ -110,6 +110,18 @@ export function useColors() {
   });
 }
 
+export function useCreateColor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name: string; hex_code: string | null }) =>
+      api.post<Color>("/catalogs/colors", {
+        name: input.name.trim(),
+        hex_code: input.hex_code,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["colors"] }),
+  });
+}
+
 export function useSizes() {
   return useQuery({
     queryKey: ["sizes"],

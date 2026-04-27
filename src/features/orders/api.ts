@@ -33,6 +33,9 @@ export interface Order {
   source: OrderSource;
   customer_name: string;
   customer_phone: string;
+  customer_address: string | null;
+  customer_city: string | null;
+  customer_city_dane_code: string | null;
   status: OrderStatus;
   is_cod: boolean;
   cod_confirmed: boolean;
@@ -79,6 +82,9 @@ export interface NewOrderItemInput {
 export interface NewOrderInput {
   customer_name: string;
   customer_phone: string;
+  customer_address?: string | null;
+  customer_city?: string | null;
+  customer_city_dane_code?: string | null;
   is_cod: boolean;
   customer_pays_shipping: boolean;
   status: OrderStatus;
@@ -104,6 +110,9 @@ export function useCreateManualOrder() {
         source: "manual",
         customer_name: input.customer_name,
         customer_phone: input.customer_phone,
+        customer_address: input.customer_address ?? null,
+        customer_city: input.customer_city ?? null,
+        customer_city_dane_code: input.customer_city_dane_code ?? null,
         status: input.status,
         is_cod: input.is_cod,
         cod_confirmed: false,

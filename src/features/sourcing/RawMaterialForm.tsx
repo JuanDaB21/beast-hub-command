@@ -10,6 +10,7 @@ import {
   useCategories,
   useColors,
   useCreateCategory,
+  useCreateColor,
   useCreateRawMaterialsBatch,
   useCreateSubcategory,
   useSizes,
@@ -48,11 +49,15 @@ export function RawMaterialForm({ onSuccess }: Props) {
   const createBatch = useCreateRawMaterialsBatch();
   const createCategory = useCreateCategory();
   const createSubcategory = useCreateSubcategory();
+  const createColor = useCreateColor();
 
   const [newCategory, setNewCategory] = useState("");
   const [newSubcategory, setNewSubcategory] = useState("");
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [showNewSubcategory, setShowNewSubcategory] = useState(false);
+  const [newColorName, setNewColorName] = useState("");
+  const [newColorHex, setNewColorHex] = useState("#000000");
+  const [showNewColor, setShowNewColor] = useState(false);
 
   const handleCreateCategory = async () => {
     const value = newCategory.trim();
@@ -78,6 +83,21 @@ export function RawMaterialForm({ onSuccess }: Props) {
       setNewSubcategory("");
       setShowNewSubcategory(false);
       toast({ title: "Subcategoría creada", description: sub.name });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleCreateColor = async () => {
+    const value = newColorName.trim();
+    if (!value) return;
+    try {
+      const color = await createColor.mutateAsync({ name: value, hex_code: newColorHex || null });
+      setColorIds((prev) => (prev.includes(color.id) ? prev : [...prev, color.id]));
+      setNewColorName("");
+      setNewColorHex("#000000");
+      setShowNewColor(false);
+      toast({ title: "Color creado", description: color.name });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -323,7 +343,50 @@ export function RawMaterialForm({ onSuccess }: Props) {
       </div>
 
       <div className="space-y-2">
-        <Label>Colores</Label>
+        <div className="flex items-center justify-between">
+          <Label>Colores</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 gap-1 px-2 text-xs"
+            onClick={() => setShowNewColor((v) => !v)}
+          >
+            {showNewColor ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+            {showNewColor ? "Cancelar" : "Nuevo"}
+          </Button>
+        </div>
+        {showNewColor && (
+          <div className="flex items-center gap-2 rounded-md border p-2">
+            <input
+              type="color"
+              value={newColorHex}
+              onChange={(e) => setNewColorHex(e.target.value)}
+              className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent p-0.5"
+              aria-label="Tono del color"
+            />
+            <Input
+              autoFocus
+              value={newColorName}
+              onChange={(e) => setNewColorName(e.target.value)}
+              placeholder="Nombre del color"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleCreateColor();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleCreateColor}
+              disabled={createColor.isPending || !newColorName.trim()}
+            >
+              {createColor.isPending ? "..." : "Crear"}
+            </Button>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2 rounded-md border bg-muted/30 p-2">
           {colors.length === 0 && (
             <span className="text-xs text-muted-foreground">No hay colores en el catálogo.</span>

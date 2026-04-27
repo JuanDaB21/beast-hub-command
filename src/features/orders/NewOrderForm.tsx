@@ -11,6 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
+import { CityCombobox } from "@/components/shared/CityCombobox";
+import type { DaneCity } from "@/lib/daneCities";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Trash2, Plus, Info } from "lucide-react";
 import {
@@ -43,6 +45,8 @@ export function NewOrderForm({ onSuccess }: Props) {
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+  const [selectedCity, setSelectedCity] = useState<DaneCity | null>(null);
   const [isCod, setIsCod] = useState(false);
   const [customerPaysShipping, setCustomerPaysShipping] = useState(false);
   const [status] = useState<OrderStatus>("pending");
@@ -115,6 +119,9 @@ export function NewOrderForm({ onSuccess }: Props) {
       await create.mutateAsync({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
+        customer_address: customerAddress.trim() || null,
+        customer_city: selectedCity?.name ?? null,
+        customer_city_dane_code: selectedCity?.dane_code ?? null,
         is_cod: isCod,
         customer_pays_shipping: customerPaysShipping,
         status,
@@ -124,6 +131,8 @@ export function NewOrderForm({ onSuccess }: Props) {
       toast({ title: "Pedido creado" });
       setCustomerName("");
       setCustomerPhone("");
+      setCustomerAddress("");
+      setSelectedCity(null);
       setIsCod(false);
       setCustomerPaysShipping(false);
       setPaymentMethod("");
@@ -151,6 +160,27 @@ export function NewOrderForm({ onSuccess }: Props) {
             onChange={(e) => setCustomerPhone(e.target.value)}
             required
           />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="o-address">Dirección</Label>
+          <Input
+            id="o-address"
+            placeholder="Calle, número, barrio…"
+            value={customerAddress}
+            onChange={(e) => setCustomerAddress(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Ciudad</Label>
+          <CityCombobox value={selectedCity} onChange={setSelectedCity} />
+          {selectedCity && (
+            <p className="text-xs text-muted-foreground">
+              DANE: <span className="font-mono">{selectedCity.dane_code}</span>
+            </p>
+          )}
         </div>
       </div>
 
