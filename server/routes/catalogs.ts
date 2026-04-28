@@ -72,9 +72,24 @@ catalogsRouter.get(
 catalogsRouter.post(
   '/colors',
   asyncHandler(async (req, res) => {
-    const { sql, params } = buildInsert('colors', ['name', 'hex_code'], req.body);
-    const { rows } = await pool.query(sql, params);
-    res.status(201).json(rows[0]);
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    if (!name) return res.status(400).json({ error: 'name requerido' });
+    const hex_code =
+      typeof req.body?.hex_code === 'string' && req.body.hex_code.trim()
+        ? req.body.hex_code.trim()
+        : null;
+    try {
+      const { rows } = await pool.query(
+        'INSERT INTO colors (name, hex_code) VALUES ($1, $2) RETURNING *',
+        [name, hex_code]
+      );
+      res.status(201).json(rows[0]);
+    } catch (err: any) {
+      if (err?.code === '23505') {
+        return res.status(400).json({ error: 'Ya existe un color con ese nombre' });
+      }
+      throw err;
+    }
   })
 );
 
