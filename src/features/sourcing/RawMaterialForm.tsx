@@ -93,13 +93,16 @@ export function RawMaterialForm({ onSuccess }: Props) {
     if (!value) return;
     try {
       const color = await createColor.mutateAsync({ name: value, hex_code: newColorHex || null });
+      if (!color || typeof color.id !== "string") {
+        throw new Error("Respuesta inválida del servidor al crear el color");
+      }
       setColorIds((prev) => (prev.includes(color.id) ? prev : [...prev, color.id]));
       setNewColorName("");
       setNewColorHex("#000000");
       setShowNewColor(false);
       toast({ title: "Color creado", description: color.name });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: err?.message ?? "No se pudo crear el color", variant: "destructive" });
     }
   };
 
