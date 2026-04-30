@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
+import { StandardCombobox } from "@/components/shared/StandardCombobox";
 import { useUpdateProduct, type Product } from "./api";
+import { usePrintDesigns } from "@/features/print-designs/api";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
@@ -16,11 +18,12 @@ interface Props {
 
 export function VariantEditDialog({ variant, open, onOpenChange }: Props) {
   const update = useUpdateProduct();
+  const { data: printDesigns = [] } = usePrintDesigns({ active: true });
   const [stock, setStock] = useState(0);
   const [safety, setSafety] = useState(0);
   const [aging, setAging] = useState(30);
   const [price, setPrice] = useState(0);
-  const [printDesign, setPrintDesign] = useState("");
+  const [designId, setDesignId] = useState<string | null>(null);
   const [printHeight, setPrintHeight] = useState(0);
   const [active, setActive] = useState(true);
 
@@ -30,10 +33,19 @@ export function VariantEditDialog({ variant, open, onOpenChange }: Props) {
     setSafety(Number(variant.safety_stock));
     setAging(Number(variant.aging_days));
     setPrice(Number(variant.price));
-    setPrintDesign(variant.print_design ?? "");
+    setDesignId(variant.print_design_id ?? null);
     setPrintHeight(Number(variant.print_height_cm ?? 0));
     setActive(variant.active);
   }, [variant]);
+
+  const designOptions = useMemo(
+    () => printDesigns.map((d) => ({ value: d.id, label: d.name })),
+    [printDesigns],
+  );
+  const selectedDesign = useMemo(
+    () => printDesigns.find((d) => d.id === designId) ?? null,
+    [printDesigns, designId],
+  );
 
   const handleSave = async () => {
     if (!variant) return;
@@ -44,7 +56,9 @@ export function VariantEditDialog({ variant, open, onOpenChange }: Props) {
         safety_stock: safety,
         aging_days: aging,
         price,
-        print_design: printDesign.trim() || null,
+        print_design_id: selectedDesign?.id ?? null,
+        print_design: selectedDesign?.name ?? null,
+        print_color: selectedDesign?.hex_code ?? null,
         print_height_cm: printHeight,
         active,
       });
@@ -74,8 +88,24 @@ export function VariantEditDialog({ variant, open, onOpenChange }: Props) {
             <NumF label="Precio" value={price} step="100" onChange={setPrice} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="v-print">Estampado</Label>
-            <Input id="v-print" value={printDesign} onChange={(e) => setPrintDesign(e.target.value)} />
+            <Label>Estampado</Label>
+            <StandardCombobox
+              options={designOptions}
+              value={designId}
+              onChange={setDesignId}
+              placeholder="Sin estampado"
+              searchPlaceholder="Buscar estampado..."
+              emptyText="No hay estampados activos"
+            />
+            {selectedDesign && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span
+                  className="inline-block h-3 w-3 rounded-full border border-border"
+                  style={{ backgroundColor: selectedDesign.hex_code }}
+                />
+                <span>{selectedDesign.hex_code}</span>
+              </div>
+            )}
           </div>
           <NumF label="Altura estampado (cm)" value={printHeight} step="0.5" onChange={setPrintHeight} />
           <div className="flex items-center justify-between rounded-md border p-3">

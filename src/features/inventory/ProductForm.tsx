@@ -12,6 +12,7 @@ import { StandardCombobox } from "@/components/shared/StandardCombobox";
 import {
   useCreateProductWithVariants,
   useUpdateProduct,
+  useAddVariantsToParent,
   useProducts,
   type Product,
   type ProductInput,
@@ -40,8 +41,6 @@ const slug = (s: string) =>
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
     .toUpperCase();
-
-const shortCode = (s: string, n = 3) => slug(s).replace(/-/g, "").slice(0, n) || "X";
 
 export function ProductForm({ product, onSuccess }: Props) {
   // ── Modo edición de un padre legacy/existente ─────────────────────
@@ -74,14 +73,35 @@ export function ProductForm({ product, onSuccess }: Props) {
   const { data: printDesigns = [] } = usePrintDesigns({ active: true });
   const { data: configs } = useGlobalConfigs();
   const createWithVariants = useCreateProductWithVariants();
+  const addVariants = useAddVariantsToParent();
   const update = useUpdateProduct();
-  const pending = createWithVariants.isPending || update.isPending;
+  const pending = createWithVariants.isPending || addVariants.isPending || update.isPending;
+
+  // SKUs de hijos del padre actual (modo edición) — para detectar combinaciones que ya existen
+  const existingChildSkus = useMemo(() => {
+    if (!product) return new Set<string>();
+    return new Set(
+      products
+        .filter((p) => p.parent_id === product.id)
+        .map((p) => p.sku.toLowerCase()),
+    );
+  }, [products, product]);
 
   const printingPerMeter = Number(configs?.printing_cost_per_meter ?? 0);
   const ironingCost = Number(configs?.ironing_cost ?? 0);
 
-  // Cargar producto en modo edición (sólo edita campos del padre)
+  // Cargar producto en modo edición. La selección de base/colores/tallas/estampados
+  // siempre arranca vacía: en edición sólo se usa para AGREGAR variantes nuevas.
   useEffect(() => {
+    setBaseGroupKey(null);
+    setSelectedColors(new Set());
+    setSelectedSizes(new Set());
+    setSelectedDesignIds(new Set());
+    setDefStock(0);
+    setDefSafety(0);
+    setDefAging(30);
+    setDefPrice(0);
+    setDefPrintHeight(0);
     if (product) {
       setSkuPrefix(product.sku);
       setParentName(product.name);
@@ -94,15 +114,6 @@ export function ProductForm({ product, onSuccess }: Props) {
       setProductUrl("");
       setDescription("");
       setActive(true);
-      setBaseGroupKey(null);
-      setSelectedColors(new Set());
-      setSelectedSizes(new Set());
-      setSelectedDesignIds(new Set());
-      setDefStock(0);
-      setDefSafety(0);
-      setDefAging(30);
-      setDefPrice(0);
-      setDefPrintHeight(0);
     }
   }, [product]);
 
@@ -179,10 +190,10 @@ export function ProductForm({ product, onSuccess }: Props) {
           (v) => v.color_id === cId && v.size_id === sId,
         );
         designList.forEach((design) => {
-          const printSuffix = design ? `-${shortCode(design.name, 3)}` : "";
+          const printSuffix = design ? `-${slug(design.name)}` : "";
           const sku =
             (skuPrefix ? slug(skuPrefix) : "PROD") +
-            `-${shortCode(colorName, 2)}-${shortCode(sizeLabel, 2)}${printSuffix}`;
+            `-${slug(colorName)}-${slug(sizeLabel)}${printSuffix}`;
           const fullName = [parentName || "Producto", colorName, sizeLabel]
             .filter(Boolean)
             .join(" ") + (design ? ` / ${design.name}` : "");
@@ -192,6 +203,7 @@ export function ProductForm({ product, onSuccess }: Props) {
             name: fullName.trim(),
             variantLabel: variant?.name ?? `${selectedGroup.baseName} - ${colorName} - ${sizeLabel}`,
             available: !!variant,
+            existing: existingChildSkus.has(sku.toLowerCase()),
           });
         });
       });
@@ -207,6 +219,7 @@ export function ProductForm({ product, onSuccess }: Props) {
     parentName,
     colorOptions,
     sizeOptions,
+    existingChildSkus,
   ]);
 
   // ── Costo por variante ────────────────────────────────────────────
@@ -218,8 +231,65 @@ export function ProductForm({ product, onSuccess }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!skuPrefix.trim() || !parentName.trim()) {
+      toast({ title: "Faltan datos", description: "SKU y nombre son obligatorios.", variant: "destructive" });
+      return;
+    }
+
+    // Construir variantes desde la selección actual (modo crear o agregar)
+    const variants: VariantInput[] = [];
+    if (selectedGroup) {
+      const designList: Array<PrintDesign | null> =
+        selectedDesignIds.size > 0
+          ? printDesigns.filter((d) => selectedDesignIds.has(d.id))
+          : [null];
+      selectedColors.forEach((cId) => {
+        const colorName = colorOptions.find((c) => c.id === cId)?.name ?? "";
+        selectedSizes.forEach((sId) => {
+          const sizeLabel = sizeOptions.find((s) => s.id === sId)?.label ?? "";
+          const variant = selectedGroup.variants.find(
+            (v) => v.color_id === cId && v.size_id === sId,
+          );
+          if (!variant) return;
+          designList.forEach((design) => {
+            const printSuffix = design ? `-${slug(design.name)}` : "";
+            const sku =
+              slug(skuPrefix) +
+              `-${slug(colorName)}-${slug(sizeLabel)}${printSuffix}`;
+            const fullName = [parentName, colorName, sizeLabel]
+              .filter(Boolean)
+              .join(" ") + (design ? ` / ${design.name}` : "");
+            const baseCost = Number(variant.unit_price);
+            const totalCost = baseCost + (defPrintHeight / 100) * printingPerMeter + ironingCost;
+            const inkQty =
+              design?.ink_raw_material_id && defPrintHeight > 0
+                ? defPrintHeight * (design.ink_grams_per_cm ?? 0.5)
+                : 0;
+            variants.push({
+              sku,
+              name: fullName.trim(),
+              base_color: colorName,
+              size: sizeLabel,
+              print_design: design?.name ?? null,
+              print_design_id: design?.id ?? null,
+              print_color: design?.hex_code ?? null,
+              print_height_cm: defPrintHeight,
+              raw_material_id: variant.id,
+              ink_raw_material_id: design?.ink_raw_material_id ?? null,
+              ink_quantity_required: inkQty,
+              stock: defStock,
+              safety_stock: defSafety,
+              aging_days: defAging,
+              price: defPrice,
+              cost: Math.round(totalCost),
+            });
+          });
+        });
+      });
+    }
+
     if (isEdit && product) {
-      // Modo edición: sólo metadatos del padre (legacy soportado)
+      // ── Modo edición: update padre + (opcional) agregar variantes nuevas ──
       try {
         await update.mutateAsync({
           id: product.id,
@@ -229,23 +299,65 @@ export function ProductForm({ product, onSuccess }: Props) {
           product_url: productUrl.trim() || null,
           active,
         });
-        toast({ title: "Producto actualizado" });
+
+        // Filtrar a las variantes nuevas (no existentes en el padre)
+        const newVariants = variants.filter(
+          (v) => !existingChildSkus.has(v.sku.toLowerCase()),
+        );
+
+        if (newVariants.length > 0) {
+          // Validar duplicados internos (entre las nuevas)
+          const seen = new Set<string>();
+          for (const v of newVariants) {
+            const key = v.sku.toLowerCase();
+            if (seen.has(key)) {
+              toast({ title: "SKUs duplicados", description: `Repetido: ${v.sku}`, variant: "destructive" });
+              return;
+            }
+            seen.add(key);
+          }
+          // Validar contra todos los SKUs globales (excluyendo los hijos del padre actual)
+          const globalSkus = new Set(
+            products
+              .filter((p) => p.parent_id !== product.id && p.id !== product.id)
+              .map((p) => p.sku.toLowerCase()),
+          );
+          const conflict = newVariants.find((v) => globalSkus.has(v.sku.toLowerCase()));
+          if (conflict) {
+            toast({
+              title: "SKU existente",
+              description: `${conflict.sku} ya existe en otro producto.`,
+              variant: "destructive",
+            });
+            return;
+          }
+
+          await addVariants.mutateAsync({
+            parentId: product.id,
+            parentDescription: description.trim() || null,
+            parentUrl: productUrl.trim() || null,
+            parentActive: active,
+            variants: newVariants,
+          });
+          toast({
+            title: "Producto actualizado",
+            description: `${newVariants.length} variantes nuevas agregadas.`,
+          });
+        } else {
+          toast({ title: "Producto actualizado" });
+        }
         onSuccess?.();
       } catch (err) {
         toast({
           title: "Error",
-          description: err instanceof Error ? err.message : "No se pudo actualizar",
+          description: err instanceof Error ? err.message : "No se pudo guardar",
           variant: "destructive",
         });
       }
       return;
     }
 
-    // Validaciones creación
-    if (!skuPrefix.trim() || !parentName.trim()) {
-      toast({ title: "Faltan datos", description: "SKU y nombre son obligatorios.", variant: "destructive" });
-      return;
-    }
+    // ── Modo creación ─────────────────────────────────────────────────
     if (!selectedGroup) {
       toast({ title: "Falta base padre", description: "Selecciona una base de raw_materials.", variant: "destructive" });
       return;
@@ -259,56 +371,6 @@ export function ProductForm({ product, onSuccess }: Props) {
       });
       return;
     }
-
-    // Resolver mapping row→raw_material_id
-    const variants: VariantInput[] = [];
-    const designList: Array<PrintDesign | null> =
-      selectedDesignIds.size > 0
-        ? printDesigns.filter((d) => selectedDesignIds.has(d.id))
-        : [null];
-    selectedColors.forEach((cId) => {
-      const colorName = colorOptions.find((c) => c.id === cId)?.name ?? "";
-      selectedSizes.forEach((sId) => {
-        const sizeLabel = sizeOptions.find((s) => s.id === sId)?.label ?? "";
-        const variant = selectedGroup.variants.find(
-          (v) => v.color_id === cId && v.size_id === sId,
-        );
-        if (!variant) return;
-        designList.forEach((design) => {
-          const printSuffix = design ? `-${shortCode(design.name, 3)}` : "";
-          const sku =
-            slug(skuPrefix) +
-            `-${shortCode(colorName, 2)}-${shortCode(sizeLabel, 2)}${printSuffix}`;
-          const fullName = [parentName, colorName, sizeLabel]
-            .filter(Boolean)
-            .join(" ") + (design ? ` / ${design.name}` : "");
-          const baseCost = Number(variant.unit_price);
-          const totalCost = baseCost + (defPrintHeight / 100) * printingPerMeter + ironingCost;
-          const inkQty =
-            design?.ink_raw_material_id && defPrintHeight > 0
-              ? defPrintHeight * (design.ink_grams_per_cm ?? 0.5)
-              : 0;
-          variants.push({
-            sku,
-            name: fullName.trim(),
-            base_color: colorName,
-            size: sizeLabel,
-            print_design: design?.name ?? null,
-            print_design_id: design?.id ?? null,
-            print_color: design?.hex_code ?? null,
-            print_height_cm: defPrintHeight,
-            raw_material_id: variant.id,
-            ink_raw_material_id: design?.ink_raw_material_id ?? null,
-            ink_quantity_required: inkQty,
-            stock: defStock,
-            safety_stock: defSafety,
-            aging_days: defAging,
-            price: defPrice,
-            cost: Math.round(totalCost),
-          });
-        });
-      });
-    });
 
     // Verificar SKUs duplicados (entre sí o existentes)
     const seenSku = new Set<string>();
@@ -366,47 +428,29 @@ export function ProductForm({ product, onSuccess }: Props) {
   };
 
   // ────────────────────────────── RENDER ──────────────────────────────
-  if (isEdit) {
-    return (
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Alert>
-          <AlertDescription className="text-xs">
-            En modo edición sólo se modifican los datos del producto padre. Para editar stock, precio
-            o estampado de cada variante, abre la variante desde la tabla.
-          </AlertDescription>
-        </Alert>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label>SKU base *</Label>
-            <Input value={skuPrefix} onChange={(e) => setSkuPrefix(e.target.value)} required />
-          </div>
-          <div className="space-y-1.5">
-            <Label>URL</Label>
-            <Input type="url" value={productUrl} onChange={(e) => setProductUrl(e.target.value)} />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Nombre del producto *</Label>
-          <Input value={parentName} onChange={(e) => setParentName(e.target.value)} required />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Descripción</Label>
-          <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
-        </div>
-        <div className="flex items-center justify-between rounded-md border p-3">
-          <Label>Producto activo</Label>
-          <Switch checked={active} onCheckedChange={setActive} />
-        </div>
-        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-          {pending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-          Guardar cambios
-        </Button>
-      </form>
-    );
-  }
+  const newRowsCount = previewRows.filter((r) => r.available && !r.existing).length;
+  const submitLabel = isEdit
+    ? newRowsCount > 0
+      ? `Guardar cambios + ${newRowsCount} variantes nuevas`
+      : "Guardar cambios"
+    : pending
+    ? "Creando..."
+    : `Crear producto + ${previewRows.filter((r) => r.available).length} variantes`;
+  const submitDisabled = isEdit
+    ? pending
+    : pending || previewRows.filter((r) => r.available).length === 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {isEdit && (
+        <Alert>
+          <AlertDescription className="text-xs">
+            Editas un producto existente. Puedes cambiar los datos del padre y agregar nuevas
+            combinaciones de color/talla/estampado. Las variantes que ya existen se omitirán
+            automáticamente.
+          </AlertDescription>
+        </Alert>
+      )}
       {/* 1. Producto padre */}
       <section className="space-y-3">
         <h3 className="text-sm font-semibold">1. Producto padre</h3>
@@ -617,13 +661,11 @@ export function ProductForm({ product, onSuccess }: Props) {
 
       <Button
         type="submit"
-        disabled={pending || previewRows.filter((r) => r.available).length === 0}
+        disabled={submitDisabled}
         className="w-full sm:w-auto"
       >
         {pending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-        {pending
-          ? "Creando..."
-          : `Crear producto + ${previewRows.filter((r) => r.available).length} variantes`}
+        {submitLabel}
       </Button>
     </form>
   );

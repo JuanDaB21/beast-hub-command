@@ -215,3 +215,69 @@ export function useCreateProductWithVariants() {
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   });
 }
+
+/** Agrega variantes nuevas a un padre existente sin tocar las viejas. */
+export function useAddVariantsToParent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      parentId,
+      parentDescription,
+      parentUrl,
+      parentActive,
+      variants,
+    }: {
+      parentId: string;
+      parentDescription: string | null;
+      parentUrl: string | null;
+      parentActive: boolean;
+      variants: VariantInput[];
+    }) => {
+      if (variants.length === 0) return [] as Product[];
+
+      const childRows = variants.map((v) => ({
+        sku: v.sku,
+        name: v.name,
+        description: parentDescription,
+        product_url: parentUrl,
+        active: parentActive,
+        base_color: v.base_color,
+        size: v.size,
+        print_color: v.print_color,
+        print_design: v.print_design,
+        print_design_id: v.print_design_id,
+        print_height_cm: v.print_height_cm,
+        stock: v.stock,
+        safety_stock: v.safety_stock,
+        aging_days: v.aging_days,
+        price: v.price,
+        cost: v.cost,
+        parent_id: parentId,
+        is_parent: false,
+      }));
+
+      const insertedChildren = await api.post<Product[]>("/products", childRows);
+
+      const bomRows = insertedChildren.flatMap((child, idx) => {
+        const v = variants[idx];
+        const rows: Array<{ product_id: string; raw_material_id: string; quantity_required: number }> = [
+          { product_id: child.id, raw_material_id: v.raw_material_id, quantity_required: 1 },
+        ];
+        if (v.ink_raw_material_id && v.ink_quantity_required > 0) {
+          rows.push({
+            product_id: child.id,
+            raw_material_id: v.ink_raw_material_id,
+            quantity_required: v.ink_quantity_required,
+          });
+        }
+        return rows;
+      });
+      if (bomRows.length > 0) {
+        await api.post("/product-materials", bomRows);
+      }
+
+      return insertedChildren;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+  });
+}

@@ -79,6 +79,7 @@ export function FinanceLedgerTable({
               <TableHead>Fecha</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Categoría</TableHead>
+              <TableHead>Cargado a</TableHead>
               <TableHead>Descripción</TableHead>
               <TableHead>Origen</TableHead>
               <TableHead className="text-right">Monto</TableHead>
@@ -88,7 +89,7 @@ export function FinanceLedgerTable({
           <TableBody>
             {transactions.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                   No hay transacciones para los filtros seleccionados.
                 </TableCell>
               </TableRow>
@@ -110,6 +111,9 @@ export function FinanceLedgerTable({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">{t.category}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {t.charged_to?.full_name ?? "—"}
+                  </TableCell>
                   <TableCell className="max-w-[280px] truncate text-sm text-muted-foreground">
                     {t.description ?? "—"}
                   </TableCell>
@@ -126,18 +130,18 @@ export function FinanceLedgerTable({
                     {isIncome ? "+" : "−"} {fmt(Number(t.amount))}
                   </TableCell>
                   <TableCell className="text-right">
-                    {isManual ? (
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => setEditTarget(t)}
-                          aria-label="Editar"
-                          title="Editar"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => setEditTarget(t)}
+                        aria-label="Editar"
+                        title={isManual ? "Editar" : "Editar cargado a"}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      {isManual && (
                         <Button
                           size="icon"
                           variant="ghost"
@@ -148,10 +152,8 @@ export function FinanceLedgerTable({
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -160,7 +162,7 @@ export function FinanceLedgerTable({
           {transactions.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={5} className="text-right text-xs text-muted-foreground">
+                <TableCell colSpan={6} className="text-right text-xs text-muted-foreground">
                   Totales del filtro
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold">
