@@ -21,6 +21,7 @@ const COLS = [
   'parent_id',
   'is_parent',
   'print_design',
+  'print_design_id',
 ] as const;
 
 export const productsRouter = Router();
