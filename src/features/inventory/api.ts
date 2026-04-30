@@ -20,6 +20,10 @@ export interface Product {
   parent_id: string | null;
   is_parent: boolean;
   print_design: string | null;
+  print_design_id: string | null;
+  shopify_product_id: string | null;
+  shopify_variant_id: string | null;
+  base_group_key: string | null;
   created_at: string;
   updated_at: string;
 }

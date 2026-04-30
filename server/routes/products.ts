@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { pool } from '../db';
 import { asyncHandler, buildInsert, buildUpdate } from '../util';
 import { tryPushInventory } from '../lib/inventorySync';
+import { relinkChildrenByPrintDesign } from '../lib/baseLinking';
 
 const COLS = [
   'sku',
@@ -104,12 +105,32 @@ productsRouter.post(
 productsRouter.patch(
   '/:id',
   asyncHandler(async (req, res) => {
-    const { sql, params } = buildUpdate('products', COLS, req.body, String(req.params.id));
+    const id = String(req.params.id);
+    const { sql, params } = buildUpdate('products', COLS, req.body, id);
     const { rows } = await pool.query(sql, params);
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+
     if (Object.prototype.hasOwnProperty.call(req.body ?? {}, 'stock')) {
-      await tryPushInventory(String(req.params.id));
+      await tryPushInventory(id);
     }
+
+    // If a parent's print_design_id changed, re-materialize BOM for all linked children.
+    if (rows[0].is_parent && Object.prototype.hasOwnProperty.call(req.body ?? {}, 'print_design_id')) {
+      const client = await pool.connect();
+      try {
+        await relinkChildrenByPrintDesign(
+          client,
+          id,
+          rows[0].print_design_id ?? null,
+          Number(rows[0].print_height_cm ?? 0)
+        );
+      } catch (err) {
+        console.error('[products.patch] relinkChildrenByPrintDesign failed:', err);
+      } finally {
+        client.release();
+      }
+    }
+
     res.json(rows[0]);
   })
 );

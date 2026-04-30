@@ -182,3 +182,183 @@ export function useShopifyInventoryErrors() {
     refetchInterval: 30_000,
   });
 }
+
+// ---------------------------------------------------------------------------
+// BOM / Base linking
+// ---------------------------------------------------------------------------
+
+export interface UnlinkedChild {
+  parent_id: string;
+  parent_name: string;
+  parent_sku: string;
+  base_group_key: string | null;
+  child_id: string;
+  child_sku: string;
+  base_color: string | null;
+  size: string | null;
+}
+
+export interface UnlinkedParent {
+  parent_id: string;
+  parent_name: string;
+  parent_sku: string;
+  base_group_key: string | null;
+  children: UnlinkedChild[];
+}
+
+export interface LinkPreviewItem {
+  product_id: string;
+  sku: string;
+  base_color: string | null;
+  size: string | null;
+  resolved_color_id: string | null;
+  resolved_size_id: string | null;
+  raw_material_id: string | null;
+  can_link: boolean;
+}
+
+export interface LinkPreviewResult {
+  base_group_key: string;
+  print_design_id: string | null;
+  print_height_cm: number;
+  previews: LinkPreviewItem[];
+}
+
+export interface BulkLinkItem {
+  product_id: string;
+  raw_material_id: string;
+  print_design_id?: string | null;
+  print_height_cm?: number;
+}
+
+export interface BulkLinkResult {
+  linked: number;
+  errors: Array<{ product_id: string; ok: boolean; error?: string }>;
+}
+
+export interface SetBaseGroupResult {
+  parent_id: string;
+  linked: number;
+  unresolved: Array<{ child_id: string; sku: string; base_color: string | null; size: string | null; reason: string }>;
+}
+
+export interface ColorAlias {
+  alias_norm: string;
+  color_id: string;
+  color_name: string;
+  hex_code: string | null;
+}
+
+export interface SizeAlias {
+  alias_norm: string;
+  size_id: string;
+  size_label: string;
+}
+
+const UNLINKED_QK = ["shopify_unlinked"] as const;
+const COLOR_ALIASES_QK = ["shopify_color_aliases"] as const;
+const SIZE_ALIASES_QK = ["shopify_size_aliases"] as const;
+
+export function useUnlinkedProducts() {
+  return useQuery({
+    queryKey: UNLINKED_QK,
+    queryFn: () => api.get<UnlinkedParent[]>("/shopify/links/unlinked"),
+  });
+}
+
+export function useLinkPreview() {
+  return useMutation({
+    mutationFn: (body: { parent_id: string; base_group_key: string; print_design_id?: string | null; print_height_cm?: number }) =>
+      api.post<LinkPreviewResult>("/shopify/links/preview", body),
+  });
+}
+
+export function useSetBaseGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { parent_id: string; base_group_key: string; print_design_id?: string | null; print_height_cm?: number }) =>
+      api.put<SetBaseGroupResult>(`/shopify/links/parent/${body.parent_id}/base-group`, {
+        base_group_key: body.base_group_key,
+        print_design_id: body.print_design_id,
+        print_height_cm: body.print_height_cm,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: UNLINKED_QK });
+      qc.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useBulkLink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (items: BulkLinkItem[]) =>
+      api.post<BulkLinkResult>("/shopify/links/bulk", items),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: UNLINKED_QK });
+      qc.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useDeleteLink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (productId: string) =>
+      api.delete(`/shopify/links/${productId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: UNLINKED_QK });
+      qc.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useColorAliases() {
+  return useQuery({
+    queryKey: COLOR_ALIASES_QK,
+    queryFn: () => api.get<ColorAlias[]>("/shopify/aliases/colors"),
+  });
+}
+
+export function useSizeAliases() {
+  return useQuery({
+    queryKey: SIZE_ALIASES_QK,
+    queryFn: () => api.get<SizeAlias[]>("/shopify/aliases/sizes"),
+  });
+}
+
+export function useAddColorAlias() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { alias: string; color_id: string }) =>
+      api.post<{ ok: boolean }>("/shopify/aliases/colors", body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: COLOR_ALIASES_QK }),
+  });
+}
+
+export function useAddSizeAlias() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { alias: string; size_id: string }) =>
+      api.post<{ ok: boolean }>("/shopify/aliases/sizes", body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SIZE_ALIASES_QK }),
+  });
+}
+
+export function useDeleteColorAlias() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (aliasNorm: string) =>
+      api.delete(`/shopify/aliases/colors/${encodeURIComponent(aliasNorm)}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: COLOR_ALIASES_QK }),
+  });
+}
+
+export function useDeleteSizeAlias() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (aliasNorm: string) =>
+      api.delete(`/shopify/aliases/sizes/${encodeURIComponent(aliasNorm)}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SIZE_ALIASES_QK }),
+  });
+}

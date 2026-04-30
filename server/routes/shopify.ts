@@ -15,6 +15,14 @@ import {
   pushPendingInventoryErrors,
   listInventoryErrors,
 } from '../lib/shopifyClient';
+import {
+  bulkAutoLink,
+  resolveColorId,
+  resolveSizeId,
+  findRawMaterial,
+  upsertLinkAndMaterialize,
+  normalize,
+} from '../lib/baseLinking';
 
 export const shopifyRouter = Router();
 
@@ -198,5 +206,315 @@ shopifyRouter.get(
   asyncHandler(async (_req, res) => {
     const errors = await listInventoryErrors();
     res.json(errors);
+  })
+);
+
+// ===========================================================================
+// BOM / Base linking endpoints
+// ===========================================================================
+
+/**
+ * GET /links/unlinked
+ * Returns Shopify-synced children that have no product_base_links row,
+ * grouped by parent. Includes resolver suggestions per child.
+ */
+shopifyRouter.get(
+  '/links/unlinked',
+  asyncHandler(async (_req, res) => {
+    const { rows } = await pool.query<{
+      parent_id: string;
+      parent_name: string;
+      parent_sku: string;
+      base_group_key: string | null;
+      child_id: string;
+      child_sku: string;
+      base_color: string | null;
+      size: string | null;
+    }>(
+      `SELECT p.id AS parent_id, p.name AS parent_name, p.sku AS parent_sku,
+              p.base_group_key,
+              c.id AS child_id, c.sku AS child_sku, c.base_color, c.size
+         FROM products p
+         JOIN products c ON c.parent_id = p.id AND c.is_parent = false
+        WHERE (p.shopify_product_id IS NOT NULL OR c.shopify_variant_id IS NOT NULL)
+          AND NOT EXISTS (
+            SELECT 1 FROM product_base_links pbl WHERE pbl.product_id = c.id
+          )
+        ORDER BY p.name, c.sku`
+    );
+
+    // Group by parent
+    const parentMap = new Map<string, {
+      parent_id: string;
+      parent_name: string;
+      parent_sku: string;
+      base_group_key: string | null;
+      children: typeof rows;
+    }>();
+    for (const r of rows) {
+      if (!parentMap.has(r.parent_id)) {
+        parentMap.set(r.parent_id, {
+          parent_id: r.parent_id,
+          parent_name: r.parent_name,
+          parent_sku: r.parent_sku,
+          base_group_key: r.base_group_key,
+          children: [],
+        });
+      }
+      parentMap.get(r.parent_id)!.children.push(r);
+    }
+
+    res.json(Array.from(parentMap.values()));
+  })
+);
+
+/**
+ * POST /links/preview
+ * Dry-run: resolve color+size per child of parent_id against a given base_group_key.
+ * Does not write anything.
+ */
+shopifyRouter.post(
+  '/links/preview',
+  asyncHandler(async (req, res) => {
+    const { parent_id, base_group_key, print_design_id, print_height_cm } =
+      req.body as {
+        parent_id: string;
+        base_group_key: string;
+        print_design_id?: string | null;
+        print_height_cm?: number;
+      };
+
+    if (!parent_id || !base_group_key) {
+      return res.status(400).json({ error: 'parent_id y base_group_key requeridos' });
+    }
+
+    const baseGroupKey = base_group_key;
+
+    const { rows: children } = await pool.query<{
+      id: string;
+      sku: string;
+      base_color: string | null;
+      size: string | null;
+    }>(
+      `SELECT id, sku, base_color, size FROM products
+        WHERE parent_id = $1 AND is_parent = false
+        ORDER BY sku`,
+      [parent_id]
+    );
+
+    const client = await pool.connect();
+    try {
+      const previews = [];
+      for (const c of children) {
+        const colorId = await resolveColorId(client, c.base_color);
+        const sizeId = await resolveSizeId(client, c.size);
+        const rmId = await findRawMaterial(client, { base_group_key: baseGroupKey, color_id: colorId, size_id: sizeId });
+
+        previews.push({
+          product_id: c.id,
+          sku: c.sku,
+          base_color: c.base_color,
+          size: c.size,
+          resolved_color_id: colorId,
+          resolved_size_id: sizeId,
+          raw_material_id: rmId,
+          can_link: !!rmId,
+        });
+      }
+      res.json({ base_group_key: baseGroupKey, print_design_id: print_design_id ?? null, print_height_cm: print_height_cm ?? 0, previews });
+    } finally {
+      client.release();
+    }
+  })
+);
+
+/**
+ * PUT /links/parent/:id/base-group
+ * Set the base_group_key on a parent and trigger bulkAutoLink.
+ * Body: { base_group_key, print_design_id?, print_height_cm? }
+ */
+shopifyRouter.put(
+  '/links/parent/:id/base-group',
+  asyncHandler(async (req, res) => {
+    const parentId = String(req.params.id);
+    const { base_group_key, print_design_id, print_height_cm } =
+      req.body as {
+        base_group_key: string;
+        print_design_id?: string | null;
+        print_height_cm?: number;
+      };
+
+    if (!base_group_key) {
+      return res.status(400).json({ error: 'base_group_key requerido' });
+    }
+
+    // Persist key + optional print_design on parent.
+    const sets: string[] = ['base_group_key = $1', 'updated_at = now()'];
+    const params: unknown[] = [base_group_key, parentId];
+    if (print_design_id !== undefined) {
+      params.splice(params.length - 1, 0, print_design_id ?? null);
+      sets.push(`print_design_id = $${params.length - 1}`);
+    }
+    if (print_height_cm !== undefined) {
+      params.splice(params.length - 1, 0, print_height_cm);
+      sets.push(`print_height_cm = $${params.length - 1}`);
+    }
+
+    await pool.query(
+      `UPDATE products SET ${sets.join(', ')} WHERE id = $${params.length}`,
+      params
+    );
+
+    const client = await pool.connect();
+    try {
+      const linkResult = await bulkAutoLink(client, parentId, {
+        default_print_design_id: print_design_id,
+        default_print_height_cm: print_height_cm,
+      });
+      res.json(linkResult);
+    } finally {
+      client.release();
+    }
+  })
+);
+
+/**
+ * POST /links/bulk
+ * Upsert links + materialize BOM for a list of products. Idempotent.
+ */
+shopifyRouter.post(
+  '/links/bulk',
+  asyncHandler(async (req, res) => {
+    const items = req.body as Array<{
+      product_id: string;
+      raw_material_id: string;
+      print_design_id?: string | null;
+      print_height_cm?: number;
+    }>;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Se requiere un array de items' });
+    }
+
+    const client = await pool.connect();
+    const results: Array<{ product_id: string; ok: boolean; error?: string }> = [];
+    try {
+      for (const item of items) {
+        try {
+          await client.query('BEGIN');
+          await upsertLinkAndMaterialize(client, {
+            product_id: item.product_id,
+            raw_material_id: item.raw_material_id,
+            print_design_id: item.print_design_id ?? null,
+            print_height_cm: item.print_height_cm ?? 0,
+            link_source: 'wizard',
+          });
+          await client.query('COMMIT');
+          results.push({ product_id: item.product_id, ok: true });
+        } catch (err: any) {
+          await client.query('ROLLBACK');
+          results.push({ product_id: item.product_id, ok: false, error: err.message });
+        }
+      }
+    } finally {
+      client.release();
+    }
+
+    const failed = results.filter((r) => !r.ok);
+    res.json({ linked: results.filter((r) => r.ok).length, errors: failed });
+  })
+);
+
+/**
+ * DELETE /links/:product_id
+ * Remove a link and its materialized BOM rows.
+ */
+shopifyRouter.delete(
+  '/links/:product_id',
+  asyncHandler(async (req, res) => {
+    const productId = String(req.params.product_id);
+    await pool.query('DELETE FROM product_base_links WHERE product_id = $1', [productId]);
+    await pool.query('DELETE FROM product_materials WHERE product_id = $1', [productId]);
+    res.json({ ok: true });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Alias management
+// ---------------------------------------------------------------------------
+
+/** GET /aliases/colors */
+shopifyRouter.get(
+  '/aliases/colors',
+  asyncHandler(async (_req, res) => {
+    const { rows } = await pool.query(
+      `SELECT ca.alias_norm, ca.color_id, c.name AS color_name, c.hex_code
+         FROM color_aliases ca JOIN colors c ON c.id = ca.color_id
+        ORDER BY ca.alias_norm`
+    );
+    res.json(rows);
+  })
+);
+
+/** POST /aliases/colors — { alias, color_id } */
+shopifyRouter.post(
+  '/aliases/colors',
+  asyncHandler(async (req, res) => {
+    const { alias, color_id } = req.body as { alias: string; color_id: string };
+    if (!alias?.trim() || !color_id) return res.status(400).json({ error: 'alias y color_id requeridos' });
+    const aliasNorm = normalize(alias);
+    await pool.query(
+      `INSERT INTO color_aliases (alias_norm, color_id) VALUES ($1, $2)
+       ON CONFLICT (alias_norm) DO UPDATE SET color_id = EXCLUDED.color_id`,
+      [aliasNorm, color_id]
+    );
+    res.json({ ok: true, alias_norm: aliasNorm });
+  })
+);
+
+/** DELETE /aliases/colors/:alias_norm */
+shopifyRouter.delete(
+  '/aliases/colors/:alias_norm',
+  asyncHandler(async (req, res) => {
+    await pool.query('DELETE FROM color_aliases WHERE alias_norm = $1', [req.params.alias_norm]);
+    res.json({ ok: true });
+  })
+);
+
+/** GET /aliases/sizes */
+shopifyRouter.get(
+  '/aliases/sizes',
+  asyncHandler(async (_req, res) => {
+    const { rows } = await pool.query(
+      `SELECT sa.alias_norm, sa.size_id, s.label AS size_label
+         FROM size_aliases sa JOIN sizes s ON s.id = sa.size_id
+        ORDER BY sa.alias_norm`
+    );
+    res.json(rows);
+  })
+);
+
+/** POST /aliases/sizes — { alias, size_id } */
+shopifyRouter.post(
+  '/aliases/sizes',
+  asyncHandler(async (req, res) => {
+    const { alias, size_id } = req.body as { alias: string; size_id: string };
+    if (!alias?.trim() || !size_id) return res.status(400).json({ error: 'alias y size_id requeridos' });
+    const aliasNorm = normalize(alias);
+    await pool.query(
+      `INSERT INTO size_aliases (alias_norm, size_id) VALUES ($1, $2)
+       ON CONFLICT (alias_norm) DO UPDATE SET size_id = EXCLUDED.size_id`,
+      [aliasNorm, size_id]
+    );
+    res.json({ ok: true, alias_norm: aliasNorm });
+  })
+);
+
+/** DELETE /aliases/sizes/:alias_norm */
+shopifyRouter.delete(
+  '/aliases/sizes/:alias_norm',
+  asyncHandler(async (req, res) => {
+    await pool.query('DELETE FROM size_aliases WHERE alias_norm = $1', [req.params.alias_norm]);
+    res.json({ ok: true });
   })
 );
