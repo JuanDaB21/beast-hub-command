@@ -5,6 +5,7 @@ import { CommissionsPanel } from "@/features/config/CommissionsPanel";
 import { TaxesPanel } from "@/features/config/TaxesPanel";
 import { PrintingConfigPanel } from "@/features/production/PrintingConfigPanel";
 import { ShopifyPanel } from "@/features/config/ShopifyPanel";
+import { PrintDesignsTable } from "@/features/print-designs/PrintDesignsTable";
 
 export default function Config() {
   return (
@@ -18,6 +19,7 @@ export default function Config() {
           <TabsTrigger value="production">Costos de Producción</TabsTrigger>
           <TabsTrigger value="commissions">Comisiones y Pasarelas</TabsTrigger>
           <TabsTrigger value="taxes">Proyección de Impuestos</TabsTrigger>
+          <TabsTrigger value="estampados">Estampados</TabsTrigger>
           <TabsTrigger value="shopify">Shopify</TabsTrigger>
         </TabsList>
 
@@ -32,6 +34,9 @@ export default function Config() {
         </TabsContent>
         <TabsContent value="taxes">
           <TaxesPanel />
+        </TabsContent>
+        <TabsContent value="estampados">
+          <PrintDesignsTable />
         </TabsContent>
         <TabsContent value="shopify">
           <ShopifyPanel />

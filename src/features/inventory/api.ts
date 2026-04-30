@@ -133,9 +133,12 @@ export interface VariantInput {
   base_color: string | null;
   size: string | null;
   print_design: string | null;
+  print_design_id: string | null;
   print_color: string | null;
   print_height_cm: number;
   raw_material_id: string;
+  ink_raw_material_id: string | null;
+  ink_quantity_required: number;
   stock: number;
   safety_stock: number;
   aging_days: number;
@@ -172,6 +175,7 @@ export function useCreateProductWithVariants() {
         size: v.size,
         print_color: v.print_color,
         print_design: v.print_design,
+        print_design_id: v.print_design_id,
         print_height_cm: v.print_height_cm,
         stock: v.stock,
         safety_stock: v.safety_stock,
@@ -184,11 +188,20 @@ export function useCreateProductWithVariants() {
 
       const insertedChildren = await api.post<Product[]>("/products", childRows);
 
-      const bomRows = insertedChildren.map((child, idx) => ({
-        product_id: child.id,
-        raw_material_id: variants[idx].raw_material_id,
-        quantity_required: 1,
-      }));
+      const bomRows = insertedChildren.flatMap((child, idx) => {
+        const v = variants[idx];
+        const rows: Array<{ product_id: string; raw_material_id: string; quantity_required: number }> = [
+          { product_id: child.id, raw_material_id: v.raw_material_id, quantity_required: 1 },
+        ];
+        if (v.ink_raw_material_id && v.ink_quantity_required > 0) {
+          rows.push({
+            product_id: child.id,
+            raw_material_id: v.ink_raw_material_id,
+            quantity_required: v.ink_quantity_required,
+          });
+        }
+        return rows;
+      });
       if (bomRows.length > 0) {
         await api.post("/product-materials", bomRows);
       }

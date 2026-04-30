@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Calculator, Loader2, AlertTriangle, Plus, X } from "lucide-react";
+import { Calculator, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ import {
 import { useRawMaterials } from "@/features/sourcing/api";
 import { groupMaterials } from "@/features/sourcing/groupHelpers";
 import { useGlobalConfigs } from "@/features/production/configApi";
+import { usePrintDesigns, type PrintDesign } from "@/features/print-designs/api";
 import { toast } from "@/hooks/use-toast";
 import { VariantPreviewTable, type PreviewRow } from "./VariantPreviewTable";
 
@@ -58,9 +59,8 @@ export function ProductForm({ product, onSuccess }: Props) {
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set());
   const [selectedSizes, setSelectedSizes] = useState<Set<string>>(new Set());
 
-  // ── Estampados (lista dinámica) ──────────────────────────────────
-  const [prints, setPrints] = useState<string[]>([]);
-  const [newPrint, setNewPrint] = useState("");
+  // ── Estampados (selección desde catálogo) ────────────────────────
+  const [selectedDesignIds, setSelectedDesignIds] = useState<Set<string>>(new Set());
 
   // ── Defaults aplicados a todas las variantes ─────────────────────
   const [defStock, setDefStock] = useState(0);
@@ -71,6 +71,7 @@ export function ProductForm({ product, onSuccess }: Props) {
 
   const { data: products = [] } = useProducts();
   const { data: rawMaterials = [] } = useRawMaterials();
+  const { data: printDesigns = [] } = usePrintDesigns({ active: true });
   const { data: configs } = useGlobalConfigs();
   const createWithVariants = useCreateProductWithVariants();
   const update = useUpdateProduct();
@@ -96,8 +97,7 @@ export function ProductForm({ product, onSuccess }: Props) {
       setBaseGroupKey(null);
       setSelectedColors(new Set());
       setSelectedSizes(new Set());
-      setPrints([]);
-      setNewPrint("");
+      setSelectedDesignIds(new Set());
       setDefStock(0);
       setDefSafety(0);
       setDefAging(30);
@@ -154,19 +154,22 @@ export function ProductForm({ product, onSuccess }: Props) {
     fn(next);
   };
 
-  const addPrint = () => {
-    const v = newPrint.trim();
-    if (!v) return;
-    if (prints.includes(v)) return;
-    setPrints([...prints, v]);
-    setNewPrint("");
+  const toggleDesign = (id: string) => {
+    setSelectedDesignIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
-  const removePrint = (p: string) => setPrints(prints.filter((x) => x !== p));
 
   // ── Vista previa de variantes ───────────────────────────────────
   const previewRows: PreviewRow[] = useMemo(() => {
     if (!selectedGroup || selectedColors.size === 0 || selectedSizes.size === 0) return [];
-    const printList = prints.length > 0 ? prints : [""]; // permite crear sin estampado
+    const designList: Array<PrintDesign | null> =
+      selectedDesignIds.size > 0
+        ? printDesigns.filter((d) => selectedDesignIds.has(d.id))
+        : [null]; // sin estampado → una variante por color×talla
     const rows: PreviewRow[] = [];
     selectedColors.forEach((cId) => {
       const colorName = colorOptions.find((c) => c.id === cId)?.name ?? "";
@@ -175,16 +178,16 @@ export function ProductForm({ product, onSuccess }: Props) {
         const variant = selectedGroup.variants.find(
           (v) => v.color_id === cId && v.size_id === sId,
         );
-        printList.forEach((print) => {
-          const printSuffix = print ? `-${shortCode(print, 3)}` : "";
+        designList.forEach((design) => {
+          const printSuffix = design ? `-${shortCode(design.name, 3)}` : "";
           const sku =
             (skuPrefix ? slug(skuPrefix) : "PROD") +
             `-${shortCode(colorName, 2)}-${shortCode(sizeLabel, 2)}${printSuffix}`;
           const fullName = [parentName || "Producto", colorName, sizeLabel]
             .filter(Boolean)
-            .join(" ") + (print ? ` / ${print}` : "");
+            .join(" ") + (design ? ` / ${design.name}` : "");
           rows.push({
-            key: `${cId}-${sId}-${print}`,
+            key: `${cId}-${sId}-${design?.id ?? ""}`,
             sku,
             name: fullName.trim(),
             variantLabel: variant?.name ?? `${selectedGroup.baseName} - ${colorName} - ${sizeLabel}`,
@@ -198,7 +201,8 @@ export function ProductForm({ product, onSuccess }: Props) {
     selectedGroup,
     selectedColors,
     selectedSizes,
-    prints,
+    selectedDesignIds,
+    printDesigns,
     skuPrefix,
     parentName,
     colorOptions,
@@ -258,7 +262,10 @@ export function ProductForm({ product, onSuccess }: Props) {
 
     // Resolver mapping row→raw_material_id
     const variants: VariantInput[] = [];
-    const printList = prints.length > 0 ? prints : [""];
+    const designList: Array<PrintDesign | null> =
+      selectedDesignIds.size > 0
+        ? printDesigns.filter((d) => selectedDesignIds.has(d.id))
+        : [null];
     selectedColors.forEach((cId) => {
       const colorName = colorOptions.find((c) => c.id === cId)?.name ?? "";
       selectedSizes.forEach((sId) => {
@@ -267,25 +274,32 @@ export function ProductForm({ product, onSuccess }: Props) {
           (v) => v.color_id === cId && v.size_id === sId,
         );
         if (!variant) return;
-        printList.forEach((print) => {
-          const printSuffix = print ? `-${shortCode(print, 3)}` : "";
+        designList.forEach((design) => {
+          const printSuffix = design ? `-${shortCode(design.name, 3)}` : "";
           const sku =
             slug(skuPrefix) +
             `-${shortCode(colorName, 2)}-${shortCode(sizeLabel, 2)}${printSuffix}`;
           const fullName = [parentName, colorName, sizeLabel]
             .filter(Boolean)
-            .join(" ") + (print ? ` / ${print}` : "");
+            .join(" ") + (design ? ` / ${design.name}` : "");
           const baseCost = Number(variant.unit_price);
           const totalCost = baseCost + (defPrintHeight / 100) * printingPerMeter + ironingCost;
+          const inkQty =
+            design?.ink_raw_material_id && defPrintHeight > 0
+              ? defPrintHeight * (design.ink_grams_per_cm ?? 0.5)
+              : 0;
           variants.push({
             sku,
             name: fullName.trim(),
             base_color: colorName,
             size: sizeLabel,
-            print_design: print || null,
-            print_color: print || null,
+            print_design: design?.name ?? null,
+            print_design_id: design?.id ?? null,
+            print_color: design?.hex_code ?? null,
             print_height_cm: defPrintHeight,
             raw_material_id: variant.id,
+            ink_raw_material_id: design?.ink_raw_material_id ?? null,
+            ink_quantity_required: inkQty,
             stock: defStock,
             safety_stock: defSafety,
             aging_days: defAging,
@@ -505,42 +519,42 @@ export function ProductForm({ product, onSuccess }: Props) {
       {/* 3. Estampados */}
       <section className="space-y-3 rounded-lg border p-4">
         <h3 className="text-sm font-semibold">3. Estampados</h3>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Ej. Estampado Negro"
-            value={newPrint}
-            onChange={(e) => setNewPrint(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addPrint();
-              }
-            }}
-          />
-          <Button type="button" variant="outline" onClick={addPrint}>
-            <Plus className="h-4 w-4 mr-1" /> Añadir
-          </Button>
-        </div>
-        {prints.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {prints.map((p) => (
-              <Badge key={p} variant="secondary" className="gap-1 pr-1">
-                {p}
-                <button
-                  type="button"
-                  onClick={() => removePrint(p)}
-                  className="ml-1 rounded hover:bg-background/50 p-0.5"
-                  aria-label={`Quitar ${p}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        ) : (
+        {printDesigns.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            Si no añades estampados, se creará una variante por color×talla sin estampado.
+            No hay estampados activos. Créalos en{" "}
+            <span className="font-medium">Configuración → Estampados</span>.
           </p>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {printDesigns.map((d) => (
+                <label
+                  key={d.id}
+                  className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 cursor-pointer hover:bg-muted/50"
+                >
+                  <Checkbox
+                    checked={selectedDesignIds.has(d.id)}
+                    onCheckedChange={() => toggleDesign(d.id)}
+                  />
+                  <span
+                    className="inline-block h-3.5 w-3.5 rounded-full border border-border flex-shrink-0"
+                    style={{ backgroundColor: d.hex_code }}
+                  />
+                  <span className="text-sm">{d.name}</span>
+                  {d.ink_raw_material && (
+                    <Badge variant="secondary" className="text-xs py-0">
+                      tinta
+                    </Badge>
+                  )}
+                </label>
+              ))}
+            </div>
+            {selectedDesignIds.size === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Sin selección: se crea una variante por color×talla sin estampado.
+              </p>
+            )}
+          </>
         )}
       </section>
 
