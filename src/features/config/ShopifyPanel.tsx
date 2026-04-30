@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Link2,
   Loader2,
   Package,
   RefreshCw,
@@ -38,9 +39,12 @@ import {
   useTestShopifyConnection,
   useImportShopifyProductsCsv,
   useImportShopifyOrdersCsv,
+  useUnlinkedProducts,
   type SyncProductsResult,
   type SyncOrdersResult,
+  type UnlinkedParent,
 } from "@/features/shopify/api";
+import { LinkingWizard } from "@/features/shopify/LinkingWizard";
 
 function formatDate(iso: string | null | undefined) {
   if (!iso) return "Nunca";
@@ -165,6 +169,8 @@ function CsvImportSection({
 export function ShopifyPanel() {
   const { data: cfg, isLoading } = useShopifyConfig();
   const save = useSaveShopifyConfig();
+  const unlinked = useUnlinkedProducts();
+  const [wizardParent, setWizardParent] = useState<UnlinkedParent | null>(null);
   const testConn = useTestShopifyConnection();
   const syncProducts = useSyncShopifyProducts();
   const syncOrders = useSyncShopifyOrders();
@@ -576,6 +582,50 @@ export function ShopifyPanel() {
           )}
         </CardContent>
       </Card>
+
+      {/* BOM Linking */}
+      {unlinked.data && unlinked.data.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Link2 className="h-4 w-4" />
+              Productos sin BOM ({unlinked.data.length})
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Estos productos sincronizados desde Shopify no tienen receta. Sin receta no se pueden
+              usar en órdenes de producción.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {unlinked.data.map((parent) => (
+              <div
+                key={parent.parent_id}
+                className="flex items-center justify-between rounded-md border p-3"
+              >
+                <div>
+                  <p className="text-sm font-medium">{parent.parent_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {parent.children.length} variante{parent.children.length !== 1 ? "s" : ""} sin base
+                    {parent.base_group_key && (
+                      <span className="ml-2 text-green-700">· base configurada (auto-link pendiente)</span>
+                    )}
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setWizardParent(parent)}>
+                  <Link2 className="h-3.5 w-3.5 mr-1.5" />
+                  Vincular
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      <LinkingWizard
+        parent={wizardParent}
+        open={!!wizardParent}
+        onClose={() => setWizardParent(null)}
+      />
 
       {/* CSV Import */}
       <Card>

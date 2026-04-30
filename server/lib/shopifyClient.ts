@@ -1,4 +1,5 @@
 import { pool } from '../db';
+import { bulkAutoLink } from './baseLinking';
 
 // ---------------------------------------------------------------------------
 // Types (minimal — only what we need from the Shopify API)
@@ -538,6 +539,7 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
       continue;
     }
 
+    let parentId: string | null = null;
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -545,7 +547,6 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
       // Find existing parent: by shopify_product_id (if known) then by deterministic SKU.
       // Avoids ON CONFLICT — there is no UNIQUE constraint on shopify_product_id and
       // CSV imports may legitimately have it NULL.
-      let parentId: string | null = null;
       if (mapped.shopify_product_id) {
         const r = await client.query(
           `SELECT id FROM products
@@ -648,6 +649,24 @@ export async function syncProducts(shopifyProducts: ShopifyProduct[]): Promise<S
       result.errors.push(`${mapped.name}: ${err.message}`);
     } finally {
       client.release();
+    }
+
+    // Auto-link runs after the main client is released, using its own connection.
+    // Silently skips if parent has no base_group_key; per-child errors are non-fatal.
+    if (parentId) {
+      const linkClient = await pool.connect();
+      try {
+        const autoResult = await bulkAutoLink(linkClient, parentId);
+        if (autoResult.unresolved.length > 0) {
+          result.errors.push(
+            `[auto-link] ${mapped.name}: ${autoResult.unresolved.length} variante(s) sin base resuelta`
+          );
+        }
+      } catch (linkErr: any) {
+        result.errors.push(`[auto-link] ${mapped.name}: ${linkErr.message}`);
+      } finally {
+        linkClient.release();
+      }
     }
   }
 

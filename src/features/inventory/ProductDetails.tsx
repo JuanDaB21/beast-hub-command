@@ -1,3 +1,5 @@
+import { ShoppingBag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { getStockStatus, isAgingFlagged, AGING_THRESHOLD_DAYS } from "./status";
 import type { Product } from "./api";
@@ -10,6 +12,7 @@ export function ProductDetails({ product }: { product: Product }) {
   const aging = isAgingFlagged(product);
   const margin = Number(product.price) - Number(product.cost);
   const marginPct = product.price > 0 ? (margin / Number(product.price)) * 100 : 0;
+  const isShopify = !!(product.shopify_product_id || product.shopify_variant_id);
 
   return (
     <div className="space-y-3 text-sm">
@@ -17,6 +20,12 @@ export function ProductDetails({ product }: { product: Product }) {
         <StatusBadge tone={stock.tone} label={stock.label} />
         {aging && <StatusBadge tone="yellow" label={`Aging ${product.aging_days}d`} />}
         <StatusBadge tone={product.active ? "green" : "neutral"} label={product.active ? "Activo" : "Inactivo"} />
+        {isShopify && (
+          <Badge variant="outline" className="gap-1 text-xs border-green-300 text-green-700">
+            <ShoppingBag className="h-3 w-3" />
+            Shopify
+          </Badge>
+        )}
       </div>
 
       {product.description && (
