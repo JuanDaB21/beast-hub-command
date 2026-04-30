@@ -12,6 +12,8 @@ export interface FinancialTransaction {
   reference_id: string | null;
   description: string | null;
   created_at: string;
+  charged_to_staff_id: string | null;
+  charged_to: { id: string; full_name: string | null } | null;
 }
 
 export interface FinancialTransactionInput {
@@ -21,6 +23,7 @@ export interface FinancialTransactionInput {
   reference_type?: string | null;
   reference_id?: string | null;
   description?: string | null;
+  charged_to_staff_id?: string | null;
 }
 
 export interface FinanceFilters {
@@ -78,20 +81,28 @@ export function useCreateTransaction() {
 export interface UpdateTransactionInput {
   id: string;
   reference_type: string | null;
-  amount: number;
-  category: string;
+  amount?: number;
+  category?: string;
   description?: string | null;
+  charged_to_staff_id?: string | null;
 }
 
 export function useUpdateTransaction() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpdateTransactionInput) =>
-      api.patch<FinancialTransaction>(`/finance/${input.id}`, {
-        amount: input.amount,
-        category: input.category,
-        description: input.description ?? null,
-      }),
+    mutationFn: (input: UpdateTransactionInput) => {
+      const isManual = !input.reference_type || input.reference_type === "manual";
+      const body: Record<string, unknown> = {};
+      if (isManual) {
+        if (input.amount !== undefined) body.amount = input.amount;
+        if (input.category !== undefined) body.category = input.category;
+        if (input.description !== undefined) body.description = input.description ?? null;
+      }
+      if (input.charged_to_staff_id !== undefined) {
+        body.charged_to_staff_id = input.charged_to_staff_id ?? null;
+      }
+      return api.patch<FinancialTransaction>(`/finance/${input.id}`, body);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["financial_transactions"] });
       qc.invalidateQueries({ queryKey: ["bi"] });

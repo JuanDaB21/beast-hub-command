@@ -2,7 +2,15 @@ import { Router } from 'express';
 import { pool } from '../db';
 import { asyncHandler } from '../util';
 
-const INSERT_COLS = ['transaction_type', 'amount', 'category', 'reference_type', 'reference_id', 'description'];
+const INSERT_COLS = [
+  'transaction_type',
+  'amount',
+  'category',
+  'reference_type',
+  'reference_id',
+  'description',
+  'charged_to_staff_id',
+];
 
 export const financeRouter = Router();
 
@@ -16,28 +24,37 @@ financeRouter.get(
 
     if (type && type !== 'all') {
       params.push(type);
-      where.push(`transaction_type = $${params.length}`);
+      where.push(`ft.transaction_type = $${params.length}`);
     }
     if (category && category !== 'all') {
       params.push(category);
-      where.push(`category = $${params.length}`);
+      where.push(`ft.category = $${params.length}`);
     }
     if (from) {
       params.push(from);
-      where.push(`created_at >= $${params.length}`);
+      where.push(`ft.created_at >= $${params.length}`);
     }
     if (to) {
       params.push(to);
-      where.push(`created_at <= $${params.length}`);
+      where.push(`ft.created_at <= $${params.length}`);
     }
     if (search && search.trim()) {
       params.push(`%${search.trim()}%`);
-      where.push(`description ILIKE $${params.length}`);
+      where.push(`ft.description ILIKE $${params.length}`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
     const { rows } = await pool.query(
-      `SELECT * FROM financial_transactions ${whereSql} ORDER BY created_at DESC LIMIT 5000`,
+      `SELECT ft.*,
+              CASE
+                WHEN p.id IS NULL THEN NULL
+                ELSE json_build_object('id', p.id, 'full_name', p.full_name)
+              END AS charged_to
+       FROM financial_transactions ft
+       LEFT JOIN profiles p ON p.id = ft.charged_to_staff_id
+       ${whereSql}
+       ORDER BY ft.created_at DESC
+       LIMIT 5000`,
       params
     );
     res.json(rows);
@@ -60,8 +77,9 @@ financeRouter.post(
 );
 
 /**
- * PATCH /:id — solo transacciones manuales. Las automáticas (referencia no-'manual')
- * deben gestionarse desde su módulo de origen.
+ * PATCH /:id — campos contables solo en transacciones manuales. El campo
+ * charged_to_staff_id es metadata de responsable y se permite editar también
+ * en transacciones automáticas.
  */
 financeRouter.patch(
   '/:id',
@@ -72,18 +90,41 @@ financeRouter.patch(
       [id]
     );
     if (!cur[0]) return res.status(404).json({ error: 'Not found' });
-    if (cur[0].reference_type && cur[0].reference_type !== 'manual') {
+
+    const body = req.body as Record<string, unknown>;
+    const isManual = !cur[0].reference_type || cur[0].reference_type === 'manual';
+    const accountingFields = ['amount', 'category', 'description'];
+    const wantsAccountingChange = accountingFields.some((k) =>
+      Object.prototype.hasOwnProperty.call(body, k),
+    );
+    if (wantsAccountingChange && !isManual) {
       return res.status(400).json({
         error:
           'Solo se pueden editar transacciones manuales. Las automáticas se gestionan desde su módulo de origen.',
       });
     }
-    const { amount, category, description } = req.body as Record<string, unknown>;
+
+    const sets: string[] = [];
+    const params: unknown[] = [];
+    const push = (col: string, val: unknown) => {
+      params.push(val);
+      sets.push(`${col} = $${params.length}`);
+    };
+    if (isManual) {
+      if (Object.prototype.hasOwnProperty.call(body, 'amount')) push('amount', body.amount);
+      if (Object.prototype.hasOwnProperty.call(body, 'category')) push('category', body.category);
+      if (Object.prototype.hasOwnProperty.call(body, 'description')) push('description', body.description ?? null);
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'charged_to_staff_id')) {
+      push('charged_to_staff_id', body.charged_to_staff_id ?? null);
+    }
+    if (sets.length === 0) {
+      return res.json(cur[0]);
+    }
+    params.push(id);
     const { rows } = await pool.query(
-      `UPDATE financial_transactions
-       SET amount = $1, category = $2, description = $3
-       WHERE id = $4 RETURNING *`,
-      [amount, category, description ?? null, id]
+      `UPDATE financial_transactions SET ${sets.join(', ')} WHERE id = $${params.length} RETURNING *`,
+      params,
     );
     res.json(rows[0]);
   })
