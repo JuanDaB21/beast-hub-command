@@ -19,6 +19,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils";
 import type { Product, ProductWithChildren } from "./api";
 import { getStockStatus, isAgingFlagged } from "./status";
+import { matchesAllTokens } from "@/lib/textSearch";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
@@ -45,9 +46,8 @@ export function ProductsTable({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const filterFn = (p: Product) => {
-    const v = globalFilter.trim().toLowerCase();
-    if (!v) return true;
-    return p.sku.toLowerCase().includes(v) || p.name.toLowerCase().includes(v);
+    if (!globalFilter.trim()) return true;
+    return matchesAllTokens(`${p.sku} ${p.name}`, globalFilter);
   };
 
   const visibleParents = useMemo(

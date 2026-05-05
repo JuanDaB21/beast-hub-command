@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { CheckCircle2, Loader2, Play, Trash2, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CheckCircle2, Loader2, Play, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,14 +14,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { StandardCombobox } from "@/components/shared/StandardCombobox";
 import { DtfChecklist } from "./DtfChecklist";
 import { ComponentsChecklist } from "./ComponentsChecklist";
 import {
+  useAddWorkOrderItem,
   useCompleteWorkOrder,
   useDeleteWorkOrder,
+  useRemoveWorkOrderItem,
+  useUpdateWorkOrderItemQty,
   useUpdateWorkOrderStatus,
+  type WorkOrderItemRow,
   type WorkOrderWithItems,
 } from "./api";
+import { useProducts } from "@/features/inventory/api";
 import { workOrderLabel, workOrderTone } from "./status";
 import { toast } from "sonner";
 
@@ -131,15 +138,10 @@ export function WorkOrderDetails({ wo, onClose }: Props) {
             <div className="p-3 border-b bg-muted/30 text-sm font-medium">Productos del lote</div>
             <ul className="divide-y">
               {wo.items.map((it) => (
-                <li key={it.id} className="flex items-center justify-between p-3 text-sm">
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{it.product?.name ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground">{it.product?.sku ?? ""}</p>
-                  </div>
-                  <p className="tabular-nums font-medium">×{it.quantity_to_produce}</p>
-                </li>
+                <WorkOrderItemRowView key={it.id} item={it} editable={!isClosed} />
               ))}
             </ul>
+            {!isClosed && <AddItemRow workOrderId={wo.id} />}
           </div>
         </TabsContent>
 
@@ -210,6 +212,154 @@ export function WorkOrderDetails({ wo, onClose }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function WorkOrderItemRowView({
+  item,
+  editable,
+}: {
+  item: WorkOrderItemRow;
+  editable: boolean;
+}) {
+  const updateQty = useUpdateWorkOrderItemQty();
+  const remove = useRemoveWorkOrderItem();
+  const [qty, setQty] = useState(String(item.quantity_to_produce));
+
+  const commit = async () => {
+    const n = parseInt(qty, 10);
+    if (!Number.isFinite(n) || n <= 0) {
+      setQty(String(item.quantity_to_produce));
+      return;
+    }
+    if (n === item.quantity_to_produce) return;
+    try {
+      await updateQty.mutateAsync({ id: item.id, quantity_to_produce: n });
+      toast.success("Cantidad actualizada");
+    } catch (err) {
+      setQty(String(item.quantity_to_produce));
+      toast.error("Error", { description: (err as Error).message });
+    }
+  };
+
+  const handleRemove = async () => {
+    try {
+      await remove.mutateAsync(item.id);
+      toast.success("Producto eliminado del lote");
+    } catch (err) {
+      toast.error("Error", { description: (err as Error).message });
+    }
+  };
+
+  if (!editable) {
+    return (
+      <li className="flex items-center justify-between p-3 text-sm">
+        <div className="min-w-0">
+          <p className="font-medium truncate">{item.product?.name ?? "—"}</p>
+          <p className="text-xs text-muted-foreground">{item.product?.sku ?? ""}</p>
+        </div>
+        <p className="tabular-nums font-medium">×{item.quantity_to_produce}</p>
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex items-center gap-2 p-3 text-sm">
+      <div className="min-w-0 flex-1">
+        <p className="font-medium truncate">{item.product?.name ?? "—"}</p>
+        <p className="text-xs text-muted-foreground">{item.product?.sku ?? ""}</p>
+      </div>
+      <Input
+        type="number"
+        min={1}
+        value={qty}
+        onChange={(e) => setQty(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        disabled={updateQty.isPending}
+        className="w-20 text-right tabular-nums"
+      />
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        onClick={handleRemove}
+        disabled={remove.isPending}
+        aria-label="Eliminar del lote"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </li>
+  );
+}
+
+function AddItemRow({ workOrderId }: { workOrderId: string }) {
+  const { data: products = [] } = useProducts();
+  const add = useAddWorkOrderItem();
+  const [productId, setProductId] = useState<string | null>(null);
+  const [qty, setQty] = useState(1);
+
+  const productOptions = useMemo(
+    () =>
+      products
+        .filter((p) => p.active)
+        .map((p) => ({ value: p.id, label: `${p.sku} · ${p.name}` })),
+    [products],
+  );
+
+  const handleAdd = async () => {
+    if (!productId || qty <= 0) return;
+    try {
+      await add.mutateAsync({
+        work_order_id: workOrderId,
+        product_id: productId,
+        quantity_to_produce: qty,
+      });
+      toast.success("Producto agregado");
+      setProductId(null);
+      setQty(1);
+    } catch (err) {
+      toast.error("Error", { description: (err as Error).message });
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 border-t bg-muted/20 p-3 sm:flex-row sm:items-center">
+      <div className="flex-1 min-w-0">
+        <StandardCombobox
+          options={productOptions}
+          value={productId}
+          onChange={setProductId}
+          placeholder="Agregar producto..."
+          searchPlaceholder="Buscar SKU o nombre..."
+        />
+      </div>
+      <Input
+        type="number"
+        min={1}
+        value={qty}
+        onChange={(e) => setQty(parseInt(e.target.value) || 0)}
+        className="w-full sm:w-24 text-right tabular-nums"
+      />
+      <Button
+        type="button"
+        size="sm"
+        onClick={handleAdd}
+        disabled={!productId || qty <= 0 || add.isPending}
+      >
+        {add.isPending ? (
+          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4 mr-1" />
+        )}
+        Agregar
+      </Button>
     </div>
   );
 }
