@@ -89,8 +89,8 @@ export function NewWorkOrderForm({ onCreated }: Props) {
 
         <div className="space-y-2">
           {items.map((it, idx) => (
-            <div key={idx} className="flex flex-col sm:flex-row gap-2 p-2 border rounded-md">
-              <div className="flex-1">
+            <div key={idx} className="flex flex-col sm:flex-row gap-2 p-2 border rounded-md min-w-0">
+              <div className="flex-1 min-w-0">
                 <StandardCombobox
                   options={productOptions}
                   value={it.product_id}

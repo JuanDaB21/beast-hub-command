@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { getStockStatus, isAgingFlagged } from "./status";
 import type { Product, ProductWithChildren } from "./api";
+import { matchesAllTokens } from "@/lib/textSearch";
 
 interface Props {
   parents: ProductWithChildren[];
@@ -41,13 +42,9 @@ export function AvailableVariantsList({ parents, orphans }: Props) {
   }, [parents, orphans]);
 
   const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return allRows;
-    return allRows.filter(
-      (r) =>
-        r.sku.toLowerCase().includes(q) ||
-        r.name.toLowerCase().includes(q) ||
-        (r.parentName?.toLowerCase().includes(q) ?? false),
+    if (!filter.trim()) return allRows;
+    return allRows.filter((r) =>
+      matchesAllTokens(`${r.sku} ${r.name} ${r.parentName ?? ""}`, filter),
     );
   }, [allRows, filter]);
 

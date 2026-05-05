@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { matchesAllTokens } from "@/lib/textSearch";
 
 export interface ComboboxOption {
   value: string;
@@ -53,9 +54,8 @@ export function StandardCombobox({
   }, [open]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter((o) => o.label.toLowerCase().includes(q));
+    if (!query.trim()) return options;
+    return options.filter((o) => matchesAllTokens(o.label, query));
   }, [options, query]);
 
   const handleSelect = (optValue: string) => {

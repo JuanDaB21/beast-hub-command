@@ -167,3 +167,40 @@ export function useToggleWorkOrderItemCompleted() {
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_WO }),
   });
 }
+
+export function useAddWorkOrderItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      work_order_id,
+      product_id,
+      quantity_to_produce,
+    }: {
+      work_order_id: string;
+      product_id: string;
+      quantity_to_produce: number;
+    }) =>
+      api.post<WorkOrderItemRow>(`/work-orders/${work_order_id}/items`, {
+        product_id,
+        quantity_to_produce,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_WO }),
+  });
+}
+
+export function useRemoveWorkOrderItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete<{ ok: true }>(`/work-orders/items/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_WO }),
+  });
+}
+
+export function useUpdateWorkOrderItemQty() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, quantity_to_produce }: { id: string; quantity_to_produce: number }) =>
+      api.patch<WorkOrderItemRow>(`/work-orders/items/${id}`, { quantity_to_produce }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_WO }),
+  });
+}
