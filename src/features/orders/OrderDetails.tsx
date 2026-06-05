@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { StandardCombobox } from "@/components/shared/StandardCombobox";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,8 +13,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ORDER_STATUSES, PAYMENT_METHOD_LABEL, type OrderWithItems, type OrderStatus } from "./api";
+import {
+  ORDER_STATUSES,
+  PAYMENT_METHOD_LABEL,
+  useProductsForOrder,
+  useAssignOrderItemProduct,
+  type OrderWithItems,
+  type OrderItemWithProduct,
+  type OrderStatus,
+} from "./api";
 import { useGlobalConfigs } from "@/features/production/configApi";
+import { toast } from "@/hooks/use-toast";
 import { STATUS_LABEL, statusTone } from "./status";
 
 const currency = (n: number) =>
@@ -27,6 +38,23 @@ interface Props {
 
 export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: Props) {
   const { data: configs } = useGlobalConfigs();
+  const { data: products = [] } = useProductsForOrder();
+  const assign = useAssignOrderItemProduct();
+  const productOptions = useMemo(
+    () => products.map((p) => ({ value: p.id, label: `${p.name} · ${p.sku}` })),
+    [products],
+  );
+
+  const onAssignProduct = async (itemId: string, productId: string | null) => {
+    if (!productId) return;
+    try {
+      await assign.mutateAsync({ itemId, productId });
+      toast({ title: "Producto asignado" });
+    } catch (err: any) {
+      toast({ title: "Error al asignar", description: err.message, variant: "destructive" });
+    }
+  };
+
   const shopifyPct = Number(configs?.shopify_fee_percent ?? 0);
   const gatewayPct = Number(configs?.gateway_fee_percent ?? 0);
   const gatewayFixed = Number(configs?.gateway_fee_fixed ?? 0);
@@ -56,12 +84,37 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
         </span>
       </div>
 
+      {/* Tipo de pago prominente para que se detecte de un vistazo. */}
+      <div
+        className={`rounded-md border-2 p-3 ${
+          order.is_cod ? "border-amber-400 bg-amber-50" : "border-emerald-400 bg-emerald-50"
+        }`}
+      >
+        <div className="text-xs uppercase tracking-wide text-muted-foreground">Tipo de pago</div>
+        <div className="text-lg font-bold">
+          {order.is_cod ? "CONTRA ENTREGA (COD)" : "PREPAGO"}
+        </div>
+        {order.shopify_payment_gateway && (
+          <div className="text-sm text-muted-foreground">{order.shopify_payment_gateway}</div>
+        )}
+        {order.payment_method && (
+          <div className="text-sm text-muted-foreground">
+            Método: {PAYMENT_METHOD_LABEL[order.payment_method]}
+          </div>
+        )}
+      </div>
+
       <div className="rounded-md border p-3">
         <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Cliente</div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="font-medium">{order.customer_name}</div>
             <div className="text-muted-foreground">{order.customer_phone}</div>
+            {(order.customer_address || order.customer_city) && (
+              <div className="mt-1 text-muted-foreground">
+                {[order.customer_address, order.customer_city].filter(Boolean).join(", ")}
+              </div>
+            )}
           </div>
           <WhatsAppContactButton
             phone={order.customer_phone}
@@ -90,26 +143,23 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
                   </td>
                 </tr>
               ) : (
-                order.items.map((it) => {
-                  const isCodFee = !it.product_id && !it.product;
-                  return (
-                    <tr key={it.id} className="border-t">
-                      <td className="px-3 py-2">
-                        <div className="font-medium">
-                          {isCodFee ? "Comisión COD transportadora" : it.product?.name ?? "Producto eliminado"}
-                        </div>
-                        {it.product?.sku && (
-                          <div className="font-mono text-xs text-muted-foreground">{it.product.sku}</div>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {currency(it.quantity * Number(it.unit_price))}
-                      </td>
-                    </tr>
-                  );
-                })
+                order.items.map((it) => (
+                  <tr key={it.id} className="border-t">
+                    <td className="px-3 py-2">
+                      <ItemLabel
+                        item={it}
+                        productOptions={productOptions}
+                        onAssign={(pid) => onAssignProduct(it.id, pid)}
+                        assigning={assign.isPending}
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {currency(it.quantity * Number(it.unit_price))}
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
             <tfoot>
@@ -238,5 +288,51 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
         {new Date(order.updated_at).toLocaleString("es-MX")}
       </div>
     </div>
+  );
+}
+
+interface ItemLabelProps {
+  item: OrderItemWithProduct;
+  productOptions: { value: string; label: string }[];
+  onAssign: (productId: string | null) => void;
+  assigning: boolean;
+}
+
+/** Renders a line label by kind: product, fee, or an assignable "unknown" line. */
+function ItemLabel({ item, productOptions, onAssign, assigning }: ItemLabelProps) {
+  if (item.kind === "fee") {
+    return <div className="font-medium">{item.external_name ?? "Cargo"}</div>;
+  }
+
+  if (item.kind === "unknown" && !item.product_id) {
+    return (
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{item.external_name ?? "Producto desconocido"}</span>
+          <StatusBadge tone="red" label="Desconocido" />
+        </div>
+        {item.external_sku && (
+          <div className="font-mono text-xs text-muted-foreground">{item.external_sku}</div>
+        )}
+        <div className="max-w-xs">
+          <StandardCombobox
+            options={productOptions}
+            value={null}
+            onChange={onAssign}
+            placeholder={assigning ? "Asignando…" : "Asignar producto…"}
+            allowClear={false}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="font-medium">{item.product?.name ?? "Producto eliminado"}</div>
+      {item.product?.sku && (
+        <div className="font-mono text-xs text-muted-foreground">{item.product.sku}</div>
+      )}
+    </>
   );
 }

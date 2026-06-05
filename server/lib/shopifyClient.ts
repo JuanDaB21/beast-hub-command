@@ -54,6 +54,14 @@ interface ShopifyCustomer {
   email: string | null;
 }
 
+interface ShopifyAddress {
+  phone: string | null;
+  name: string | null;
+  address1: string | null;
+  address2: string | null;
+  city: string | null;
+}
+
 interface ShopifyOrder {
   id: number | string;
   name: string; // e.g. "#1001"
@@ -63,7 +71,8 @@ interface ShopifyOrder {
   total_price: string;
   shipping_lines: Array<{ price: string }>;
   customer: ShopifyCustomer | null;
-  billing_address: { phone: string | null; name: string | null } | null;
+  billing_address: ShopifyAddress | null;
+  shipping_address: ShopifyAddress | null;
   line_items: ShopifyLineItem[];
   created_at: string;
 }
@@ -290,7 +299,28 @@ function mapShopifyProduct(product: ShopifyProduct): MappedProduct {
 // Order mapping
 // ---------------------------------------------------------------------------
 
-const COD_GATEWAYS = new Set(['cash_on_delivery', 'cod', 'manual', 'contra_entrega', 'contraentrega']);
+// Robust COD detection: Shopify CSV exports use human labels like
+// "Cash on Delivery (COD)" while the API uses tokens like "cash_on_delivery".
+// Normalize (lowercase, non-alphanumeric → spaces) and match by keyword so both
+// formats are detected.
+export function isCodGateway(rawGateway: string | null | undefined): boolean {
+  const normalized = (rawGateway ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  if (!normalized) return false;
+  return (
+    /\bcod\b/.test(normalized) ||
+    normalized.includes('cash on delivery') ||
+    normalized.includes('contra entrega') ||
+    normalized.includes('contraentrega') ||
+    normalized.includes('manual')
+  );
+}
+
+/** Join address1 + address2 into a single readable string. */
+function joinAddress(addr: ShopifyAddress | null): string | null {
+  if (!addr) return null;
+  const parts = [addr.address1, addr.address2].map((p) => (p ?? '').trim()).filter(Boolean);
+  return parts.length ? parts.join(', ') : null;
+}
 
 function mapFulfillmentStatus(status: string | null): string {
   if (status === 'fulfilled') return 'shipped';
@@ -310,6 +340,9 @@ export interface MappedOrder {
   source: 'shopify';
   customer_name: string;
   customer_phone: string;
+  customer_address: string | null;
+  customer_city: string | null;
+  payment_gateway_raw: string | null;
   status: string;
   is_cod: boolean;
   shipping_cost: number;
@@ -328,7 +361,15 @@ export function mapShopifyOrder(order: ShopifyOrder): MappedOrder {
   const lastName = c?.last_name ?? '';
   const customer_name = [firstName, lastName].filter(Boolean).join(' ') || 'Cliente Shopify';
   const customer_phone =
-    c?.phone || order.billing_address?.phone || 'N/A';
+    c?.phone || order.shipping_address?.phone || order.billing_address?.phone || 'N/A';
+
+  // Prefer the shipping address (where the package goes), fall back to billing.
+  const customer_address =
+    joinAddress(order.shipping_address) ?? joinAddress(order.billing_address);
+  const customer_city =
+    (order.shipping_address?.city || order.billing_address?.city || '').trim() || null;
+
+  const payment_gateway_raw = (order.payment_gateway ?? '').trim() || null;
 
   return {
     shopify_order_id: String(order.id),
@@ -337,8 +378,11 @@ export function mapShopifyOrder(order: ShopifyOrder): MappedOrder {
     source: 'shopify',
     customer_name,
     customer_phone,
+    customer_address,
+    customer_city,
+    payment_gateway_raw,
     status: mapFulfillmentStatus(order.fulfillment_status),
-    is_cod: COD_GATEWAYS.has((order.payment_gateway ?? '').toLowerCase()),
+    is_cod: isCodGateway(order.payment_gateway),
     shipping_cost: parseFloat(order.shipping_lines?.[0]?.price ?? '0') || 0,
     items: order.line_items.map((li) => ({
       shopify_variant_id: li.variant_id ? String(li.variant_id) : null,
@@ -478,6 +522,20 @@ export function parseShopifyOrdersCsv(csvText: string): ShopifyOrder[] {
       const realId = row['Id'] || '';
       const billingPhone = row['Billing Phone'] || '';
       const shippingPhone = row['Shipping Phone'] || '';
+      const shippingAddr: ShopifyAddress = {
+        phone: shippingPhone || null,
+        name: row['Shipping Name'] || null,
+        address1: row['Shipping Address1'] || null,
+        address2: row['Shipping Address2'] || null,
+        city: row['Shipping City'] || null,
+      };
+      const billingAddr: ShopifyAddress = {
+        phone: billingPhone || null,
+        name: billingName || null,
+        address1: row['Billing Address1'] || null,
+        address2: row['Billing Address2'] || null,
+        city: row['Billing City'] || null,
+      };
       orderMap.set(name, {
         id: realId || `csv-${name}`,
         name,
@@ -494,15 +552,27 @@ export function parseShopifyOrdersCsv(csvText: string): ShopifyOrder[] {
           phone: row['Phone'] || billingPhone || shippingPhone || null,
           email: row['Email'] || null,
         },
-        billing_address: billingPhone
-          ? { phone: billingPhone, name: billingName || null }
-          : null,
+        billing_address: billingAddr,
+        shipping_address: shippingAddr,
         line_items: [],
         created_at: row['Created at'] || new Date().toISOString(),
       });
     }
 
     const order = orderMap.get(name)!;
+    // Order-level fields (payment, shipping, address) appear only on the first
+    // row of each order; later line-item rows leave them blank. Backfill from
+    // any row that carries a value in case the export orders rows differently.
+    if (!order.payment_gateway && row['Payment Method']) order.payment_gateway = row['Payment Method'];
+    if ((!order.shipping_lines[0] || order.shipping_lines[0].price === '0') && row['Shipping']) {
+      order.shipping_lines = [{ price: row['Shipping'] }];
+    }
+    if (order.shipping_address && !order.shipping_address.address1 && row['Shipping Address1']) {
+      order.shipping_address.address1 = row['Shipping Address1'];
+      order.shipping_address.address2 = row['Shipping Address2'] || order.shipping_address.address2;
+      order.shipping_address.city = row['Shipping City'] || order.shipping_address.city;
+    }
+
     const itemName = row['Lineitem name'];
     if (itemName) {
       order.line_items.push({
@@ -694,6 +764,23 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
     errors: [],
   };
 
+  // Preload a normalized-name → product map for best-effort name matching.
+  // SKU is the only 100%-reliable key; this is the fallback the user asked for.
+  // We auto-assign only when a normalized title maps to exactly one product.
+  const nameMap = new Map<string, string[]>();
+  {
+    const { rows } = await pool.query(
+      "SELECT id, name FROM products WHERE is_parent = false AND name IS NOT NULL"
+    );
+    for (const r of rows) {
+      const key = slugify(r.name);
+      if (!key) continue;
+      const arr = nameMap.get(key);
+      if (arr) arr.push(r.id);
+      else nameMap.set(key, [r.id]);
+    }
+  }
+
   for (const raw of shopifyOrders) {
     const mapped = mapShopifyOrder(raw);
 
@@ -722,19 +809,30 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
     try {
       await client.query('BEGIN');
 
+      // Shipping treatment (confirmed with user):
+      //   COD      → shipping is NOT our income; don't add it to the total.
+      //              Mark customer_pays_shipping=true, shipping_cost=0.
+      //   prepaid  → shipping IS money that comes in; add it to the total via a
+      //              virtual 'fee' line (same mechanism as the COD surcharge).
+      const isPrepaidWithShipping = !mapped.is_cod && mapped.shipping_cost > 0;
       const orderRes = await client.query(
         `INSERT INTO orders
-           (order_number, source, customer_name, customer_phone, status,
-            is_cod, shipping_cost, shopify_order_id, shopify_order_number)
-         VALUES ($1, 'shopify', $2, $3, $4, $5, $6, $7, $8)
+           (order_number, source, customer_name, customer_phone,
+            customer_address, customer_city, shopify_payment_gateway, status,
+            is_cod, shipping_cost, customer_pays_shipping,
+            shopify_order_id, shopify_order_number)
+         VALUES ($1, 'shopify', $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11)
          RETURNING id`,
         [
           orderNumber,
           mapped.customer_name,
           mapped.customer_phone,
+          mapped.customer_address,
+          mapped.customer_city,
+          mapped.payment_gateway_raw,
           mapped.status,
           mapped.is_cod,
-          mapped.shipping_cost,
+          mapped.is_cod, // customer_pays_shipping=true only for COD
           mapped.shopify_order_id,
           mapped.shopify_order_number,
         ]
@@ -743,7 +841,7 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
       const decrementedProductIds: string[] = [];
 
       for (const item of mapped.items) {
-        // Resolve product_id: first by shopify_variant_id, then by SKU
+        // Resolve product_id: (1) shopify_variant_id, (2) SKU, (3) normalized name.
         let productId: string | null = null;
         if (item.shopify_variant_id) {
           const pr = await client.query(
@@ -756,29 +854,50 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
           const pr = await client.query('SELECT id FROM products WHERE sku = $1', [item.sku]);
           productId = pr.rows[0]?.id ?? null;
         }
+        if (!productId && item.title) {
+          // Best-effort name match: auto-assign only on a unique normalized match.
+          const candidates = nameMap.get(slugify(item.title));
+          if (candidates && candidates.length === 1) productId = candidates[0];
+        }
 
-        await client.query(
-          `INSERT INTO order_items (order_id, product_id, quantity, unit_price)
-           VALUES ($1, $2, $3, $4)`,
-          [orderId, productId, item.quantity, item.unit_price]
-        );
-
-        // BH-dominant: Shopify already decremented its own stock when the order
-        // was placed. Mirror that in BH so the next push doesn't overwrite it.
         if (productId) {
+          await client.query(
+            `INSERT INTO order_items (order_id, product_id, quantity, unit_price, kind)
+             VALUES ($1, $2, $3, $4, 'product')`,
+            [orderId, productId, item.quantity, item.unit_price]
+          );
+          // BH-dominant: Shopify already decremented its own stock when the order
+          // was placed. Mirror that in BH so the next push doesn't overwrite it.
           await client.query(
             'UPDATE products SET stock = stock - $1 WHERE id = $2',
             [item.quantity, productId]
           );
           decrementedProductIds.push(productId);
         } else {
-          // CSV exports often ship empty Lineitem SKU — record so the user can act.
+          // Product not created in the system → keep it as an "unknown" line so
+          // the user can assign it by hand later (preserving the original name).
+          await client.query(
+            `INSERT INTO order_items
+               (order_id, product_id, quantity, unit_price, kind, external_name, external_sku)
+             VALUES ($1, NULL, $2, $3, 'unknown', $4, $5)`,
+            [orderId, item.quantity, item.unit_price, item.title || 'Producto desconocido', item.sku || null]
+          );
           result.unmatched_items++;
           if (result.unmatched_samples.length < 10) {
             const ref = item.sku ? `sku=${item.sku}` : `nombre="${item.title}"`;
             result.unmatched_samples.push(`${mapped.shopify_order_number}: ${ref}`);
           }
         }
+      }
+
+      // Prepaid shipping income → virtual fee line summed into the order total.
+      if (isPrepaidWithShipping) {
+        await client.query(
+          `INSERT INTO order_items
+             (order_id, product_id, quantity, unit_price, kind, external_name)
+           VALUES ($1, NULL, 1, $2, 'fee', 'Envío')`,
+          [orderId, mapped.shipping_cost]
+        );
       }
 
       await client.query('COMMIT');

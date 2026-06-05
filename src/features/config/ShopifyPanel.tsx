@@ -74,7 +74,7 @@ function SyncResultToast({
     `${count} ${label} sincronizadas`,
     `${result.skipped} omitidas`,
     synthesized > 0 ? `${synthesized} SKUs generados` : null,
-    unmatched > 0 ? `${unmatched} items sin producto` : null,
+    unmatched > 0 ? `${unmatched} items desconocidos (asignar en el pedido)` : null,
     result.errors.length > 0 ? `${result.errors.length} errores` : null,
   ].filter(Boolean);
   return <div className="text-sm">{lines.join(" · ")}</div>;
