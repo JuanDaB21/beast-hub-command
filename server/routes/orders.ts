@@ -39,6 +39,9 @@ const ITEMS_SUBQUERY = `
           'product_id', oi.product_id,
           'quantity', oi.quantity,
           'unit_price', oi.unit_price,
+          'kind', oi.kind,
+          'external_name', oi.external_name,
+          'external_sku', oi.external_sku,
           'product', CASE WHEN p.id IS NOT NULL
             THEN json_build_object('id', p.id, 'sku', p.sku, 'name', p.name)
             ELSE NULL END

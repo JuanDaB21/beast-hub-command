@@ -40,6 +40,7 @@ export interface Order {
   is_cod: boolean;
   cod_confirmed: boolean;
   payment_method: PaymentMethod | null;
+  shopify_payment_gateway: string | null;
   total: number;
   shipping_cost: number;
   customer_pays_shipping: boolean;
@@ -48,12 +49,17 @@ export interface Order {
   updated_at: string;
 }
 
+export type OrderItemKind = "product" | "unknown" | "fee";
+
 export interface OrderItem {
   id: string;
   order_id: string;
   product_id: string | null;
   quantity: number;
   unit_price: number;
+  kind: OrderItemKind;
+  external_name: string | null;
+  external_sku: string | null;
 }
 
 export interface OrderItemWithProduct extends OrderItem {
@@ -77,6 +83,8 @@ export interface NewOrderItemInput {
   product_id: string;
   quantity: number;
   unit_price: number;
+  kind?: OrderItemKind;
+  external_name?: string;
 }
 
 export interface NewOrderInput {
@@ -125,11 +133,23 @@ export function useCreateManualOrder() {
         product_id: it.product_id || null,
         quantity: it.quantity,
         unit_price: it.unit_price,
+        kind: it.kind ?? "product",
+        external_name: it.external_name ?? null,
       }));
       await api.post("/order-items", itemsPayload);
 
       return order;
     },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_ORDERS }),
+  });
+}
+
+/** Assign a product to an "unknown" line item (manual matching). */
+export function useAssignOrderItemProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, productId }: { itemId: string; productId: string }) =>
+      api.patch<OrderItem>(`/order-items/${itemId}`, { product_id: productId }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_ORDERS }),
   });
 }

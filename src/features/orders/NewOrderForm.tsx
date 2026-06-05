@@ -114,7 +114,13 @@ export function NewOrderForm({ onSuccess }: Props) {
       const itemsPayload: NewOrderItemInput[] = items.map(({ uid, ...rest }) => rest);
       // Inyecta línea virtual de comisión COD para que recalc_order_total la considere
       if (isCod && codSurcharge > 0) {
-        itemsPayload.push({ product_id: "", quantity: 1, unit_price: codSurcharge });
+        itemsPayload.push({
+          product_id: "",
+          quantity: 1,
+          unit_price: codSurcharge,
+          kind: "fee",
+          external_name: "Comisión COD transportadora",
+        });
       }
       await create.mutateAsync({
         customer_name: customerName.trim(),
