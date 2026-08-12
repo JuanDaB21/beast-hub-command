@@ -256,7 +256,7 @@ function WorkOrderItemRowView({
     return (
       <li className="flex items-center justify-between p-3 text-sm">
         <div className="min-w-0">
-          <p className="font-medium truncate">{item.product?.name ?? "—"}</p>
+          <p className="font-medium line-clamp-2">{item.product?.name ?? "—"}</p>
           <p className="text-xs text-muted-foreground">{item.product?.sku ?? ""}</p>
         </div>
         <p className="tabular-nums font-medium">×{item.quantity_to_produce}</p>
@@ -267,7 +267,7 @@ function WorkOrderItemRowView({
   return (
     <li className="flex items-center gap-2 p-3 text-sm">
       <div className="min-w-0 flex-1">
-        <p className="font-medium truncate">{item.product?.name ?? "—"}</p>
+        <p className="font-medium line-clamp-2">{item.product?.name ?? "—"}</p>
         <p className="text-xs text-muted-foreground">{item.product?.sku ?? ""}</p>
       </div>
       <Input

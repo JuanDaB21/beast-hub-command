@@ -1,11 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { StandardCombobox } from "@/components/shared/StandardCombobox";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
+import { Info, Plus, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,8 +17,12 @@ import {
 import {
   ORDER_STATUSES,
   PAYMENT_METHOD_LABEL,
+  isOrderEditable,
   useProductsForOrder,
   useAssignOrderItemProduct,
+  useAddOrderItem,
+  useUpdateOrderItem,
+  useRemoveOrderItem,
   type OrderWithItems,
   type OrderItemWithProduct,
   type OrderStatus,
@@ -40,6 +45,11 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
   const { data: configs } = useGlobalConfigs();
   const { data: products = [] } = useProductsForOrder();
   const assign = useAssignOrderItemProduct();
+  const addItem = useAddOrderItem();
+  const updateItem = useUpdateOrderItem();
+  const removeItem = useRemoveOrderItem();
+  const editable = isOrderEditable(order.status);
+  const colCount = editable ? 5 : 4;
   const productOptions = useMemo(
     () => products.map((p) => ({ value: p.id, label: `${p.name} · ${p.sku}` })),
     [products],
@@ -52,6 +62,39 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
       toast({ title: "Producto asignado" });
     } catch (err: any) {
       toast({ title: "Error al asignar", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const onUpdateItem = async (
+    itemId: string,
+    patch: { quantity?: number; unit_price?: number },
+  ) => {
+    try {
+      await updateItem.mutateAsync({ itemId, patch });
+    } catch (err: any) {
+      toast({ title: "Error al actualizar", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const onRemoveItem = async (itemId: string) => {
+    try {
+      await removeItem.mutateAsync(itemId);
+      toast({ title: "Línea eliminada" });
+    } catch (err: any) {
+      toast({ title: "Error al eliminar", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const onAddItem = async (input: {
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+  }) => {
+    try {
+      await addItem.mutateAsync({ order_id: order.id, ...input });
+      toast({ title: "Producto agregado" });
+    } catch (err: any) {
+      toast({ title: "Error al agregar", description: err.message, variant: "destructive" });
     }
   };
 
@@ -124,7 +167,14 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
       </div>
 
       <div>
-        <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Productos</div>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Productos</span>
+          {editable && (
+            <span className="text-[11px] text-muted-foreground">
+              Editable · pedido {STATUS_LABEL[order.status].toLowerCase()}
+            </span>
+          )}
+        </div>
         <div className="overflow-hidden rounded-md border">
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
@@ -133,38 +183,55 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
                 <th className="px-3 py-2 text-right">Cant.</th>
                 <th className="px-3 py-2 text-right">Precio</th>
                 <th className="px-3 py-2 text-right">Subtotal</th>
+                {editable && <th className="px-3 py-2" />}
               </tr>
             </thead>
             <tbody>
               {order.items.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-3 py-3 text-center text-muted-foreground">
+                  <td colSpan={colCount} className="px-3 py-3 text-center text-muted-foreground">
                     Sin líneas en este pedido.
                   </td>
                 </tr>
               ) : (
-                order.items.map((it) => (
-                  <tr key={it.id} className="border-t">
-                    <td className="px-3 py-2">
-                      <ItemLabel
-                        item={it}
-                        productOptions={productOptions}
-                        onAssign={(pid) => onAssignProduct(it.id, pid)}
-                        assigning={assign.isPending}
-                      />
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {currency(it.quantity * Number(it.unit_price))}
-                    </td>
-                  </tr>
-                ))
+                order.items.map((it) =>
+                  editable ? (
+                    <EditableItemRow
+                      key={it.id}
+                      item={it}
+                      productOptions={productOptions}
+                      onAssign={(pid) => onAssignProduct(it.id, pid)}
+                      assigning={assign.isPending}
+                      onUpdate={(patch) => onUpdateItem(it.id, patch)}
+                      onRemove={() => onRemoveItem(it.id)}
+                      busy={updateItem.isPending || removeItem.isPending}
+                    />
+                  ) : (
+                    <tr key={it.id} className="border-t">
+                      <td className="px-3 py-2">
+                        <ItemLabel
+                          item={it}
+                          productOptions={productOptions}
+                          onAssign={(pid) => onAssignProduct(it.id, pid)}
+                          assigning={assign.isPending}
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {currency(it.quantity * Number(it.unit_price))}
+                      </td>
+                    </tr>
+                  ),
+                )
+              )}
+              {editable && (
+                <AddItemRow products={products} onAdd={onAddItem} adding={addItem.isPending} />
               )}
             </tbody>
             <tfoot>
               <tr className="border-t bg-muted/30">
-                <td colSpan={3} className="px-3 py-2 text-right text-xs uppercase text-muted-foreground">
+                <td colSpan={colCount - 1} className="px-3 py-2 text-right text-xs uppercase text-muted-foreground">
                   Total
                 </td>
                 <td className="px-3 py-2 text-right text-base font-semibold tabular-nums">
@@ -173,7 +240,7 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
               </tr>
               {order.customer_pays_shipping ? (
                 <tr className="border-t bg-muted/10">
-                  <td colSpan={3} className="px-3 py-1.5 text-right text-xs uppercase text-muted-foreground">
+                  <td colSpan={colCount - 1} className="px-3 py-1.5 text-right text-xs uppercase text-muted-foreground">
                     Envío
                   </td>
                   <td className="px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
@@ -184,7 +251,7 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
                 Number(order.shipping_cost) > 0 && (
                   <>
                     <tr className="border-t bg-muted/10">
-                      <td colSpan={3} className="px-3 py-1.5 text-right text-xs uppercase text-muted-foreground">
+                      <td colSpan={colCount - 1} className="px-3 py-1.5 text-right text-xs uppercase text-muted-foreground">
                         Costo de envío
                       </td>
                       <td className="px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
@@ -192,7 +259,7 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
                       </td>
                     </tr>
                     <tr className="border-t bg-muted/30">
-                      <td colSpan={3} className="px-3 py-2 text-right text-xs uppercase text-muted-foreground">
+                      <td colSpan={colCount - 1} className="px-3 py-2 text-right text-xs uppercase text-muted-foreground">
                         Total - envío
                       </td>
                       <td className="px-3 py-2 text-right text-sm font-semibold tabular-nums">
@@ -334,5 +401,190 @@ function ItemLabel({ item, productOptions, onAssign, assigning }: ItemLabelProps
         <div className="font-mono text-xs text-muted-foreground">{item.product.sku}</div>
       )}
     </>
+  );
+}
+
+type ProductOption = { id: string; sku: string; name: string; price: number };
+
+interface EditableItemRowProps {
+  item: OrderItemWithProduct;
+  productOptions: { value: string; label: string }[];
+  onAssign: (productId: string | null) => void;
+  assigning: boolean;
+  onUpdate: (patch: { quantity?: number; unit_price?: number }) => void;
+  onRemove: () => void;
+  busy: boolean;
+}
+
+/** Fila editable: cantidad y precio inline (commit onBlur/Enter) + eliminar. */
+function EditableItemRow({
+  item,
+  productOptions,
+  onAssign,
+  assigning,
+  onUpdate,
+  onRemove,
+  busy,
+}: EditableItemRowProps) {
+  const [qty, setQty] = useState(String(item.quantity));
+  const [price, setPrice] = useState(String(item.unit_price));
+
+  const commitQty = () => {
+    const n = Number(qty);
+    if (!Number.isFinite(n) || n < 1) {
+      setQty(String(item.quantity));
+      return;
+    }
+    if (n !== item.quantity) onUpdate({ quantity: n });
+  };
+  const commitPrice = () => {
+    const n = Number(price);
+    if (!Number.isFinite(n) || n < 0) {
+      setPrice(String(item.unit_price));
+      return;
+    }
+    if (n !== Number(item.unit_price)) onUpdate({ unit_price: n });
+  };
+  const blurOnEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+  };
+
+  const subtotal = (Number(qty) || 0) * (Number(price) || 0);
+
+  return (
+    <tr className="border-t align-top">
+      <td className="px-3 py-2">
+        <ItemLabel
+          item={item}
+          productOptions={productOptions}
+          onAssign={onAssign}
+          assigning={assigning}
+        />
+      </td>
+      <td className="px-2 py-2 text-right">
+        <Input
+          type="number"
+          min={1}
+          value={qty}
+          disabled={busy}
+          onChange={(e) => setQty(e.target.value)}
+          onBlur={commitQty}
+          onKeyDown={blurOnEnter}
+          className="ml-auto h-8 w-16 text-right tabular-nums"
+        />
+      </td>
+      <td className="px-2 py-2 text-right">
+        <Input
+          type="number"
+          min={0}
+          step="0.01"
+          value={price}
+          disabled={busy}
+          onChange={(e) => setPrice(e.target.value)}
+          onBlur={commitPrice}
+          onKeyDown={blurOnEnter}
+          className="ml-auto h-8 w-24 text-right tabular-nums"
+        />
+      </td>
+      <td className="px-3 py-2 text-right tabular-nums">{currency(subtotal)}</td>
+      <td className="px-2 py-2 text-right">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={onRemove}
+          disabled={busy}
+          aria-label="Eliminar línea"
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </td>
+    </tr>
+  );
+}
+
+interface AddItemRowProps {
+  products: ProductOption[];
+  onAdd: (input: { product_id: string; quantity: number; unit_price: number }) => void;
+  adding: boolean;
+}
+
+/** Fila para agregar una línea de producto al pedido. */
+function AddItemRow({ products, onAdd, adding }: AddItemRowProps) {
+  const [productId, setProductId] = useState<string | null>(null);
+  const [qty, setQty] = useState("1");
+  const [price, setPrice] = useState("");
+
+  const options = useMemo(
+    () => products.map((p) => ({ value: p.id, label: `${p.name} · ${p.sku}` })),
+    [products],
+  );
+
+  const pick = (id: string | null) => {
+    setProductId(id);
+    const p = products.find((x) => x.id === id);
+    if (p) setPrice(String(p.price));
+  };
+
+  const canAdd =
+    !!productId && Number(qty) >= 1 && price !== "" && Number(price) >= 0 && !adding;
+
+  const submit = () => {
+    if (!canAdd || !productId) return;
+    onAdd({ product_id: productId, quantity: Number(qty), unit_price: Number(price) });
+    setProductId(null);
+    setQty("1");
+    setPrice("");
+  };
+
+  return (
+    <tr className="border-t bg-muted/10 align-top">
+      <td className="px-3 py-2">
+        <StandardCombobox
+          options={options}
+          value={productId}
+          onChange={pick}
+          placeholder="Agregar producto…"
+          allowClear={false}
+        />
+      </td>
+      <td className="px-2 py-2 text-right">
+        <Input
+          type="number"
+          min={1}
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+          className="ml-auto h-8 w-16 text-right tabular-nums"
+        />
+      </td>
+      <td className="px-2 py-2 text-right">
+        <Input
+          type="number"
+          min={0}
+          step="0.01"
+          value={price}
+          placeholder="0.00"
+          onChange={(e) => setPrice(e.target.value)}
+          className="ml-auto h-8 w-24 text-right tabular-nums"
+        />
+      </td>
+      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+        {price !== "" ? currency((Number(qty) || 0) * (Number(price) || 0)) : "—"}
+      </td>
+      <td className="px-2 py-2 text-right">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={submit}
+          disabled={!canAdd}
+          aria-label="Agregar línea"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </td>
+    </tr>
   );
 }

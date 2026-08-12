@@ -119,7 +119,7 @@ export function MaterialGroupCard({ group }: Props) {
               >
                 <div className="min-w-0 flex-1 space-y-2">
                   <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="truncate text-base font-semibold">{group.baseName}</h3>
+                    <h3 className="line-clamp-2 text-base font-semibold">{group.baseName}</h3>
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {group.variants.length} variante{group.variants.length === 1 ? "" : "s"}
                     </span>

@@ -109,7 +109,7 @@ function ParentCard({
               <ChevronRight className="h-4 w-4 mt-1 shrink-0" />
             )}
             <div className="flex-1 min-w-0">
-              <div className="font-medium truncate">{parent.name}</div>
+              <div className="font-medium line-clamp-2">{parent.name}</div>
               <div className="text-xs font-mono text-muted-foreground">{parent.sku}</div>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 <StatusBadge
@@ -143,7 +143,7 @@ function ParentCard({
                 <div key={c.id} className="rounded-md border bg-muted/20 p-2 space-y-1.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">
+                      <div className="text-sm font-medium line-clamp-2">
                         {c.base_color} · {c.size} {c.print_design ? `· ${c.print_design}` : ""}
                       </div>
                       <div className="text-[11px] font-mono text-muted-foreground">{c.sku}</div>
