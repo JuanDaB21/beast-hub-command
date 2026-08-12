@@ -27,6 +27,19 @@ export const ORDER_STATUSES: { value: OrderStatus; label: string }[] = [
   { value: "cancelled", label: "Cancelado" },
 ];
 
+/** Estados del pipeline activo (tablero Kanban). */
+export const BOARD_STATUSES = ORDER_STATUSES.filter((s) =>
+  ["pending", "processing", "shipped"].includes(s.value),
+);
+/** Estados terminales (tabla de historial paginada). */
+export const HISTORY_STATUSES = ORDER_STATUSES.filter((s) =>
+  ["delivered", "cancelled"].includes(s.value),
+);
+
+/** Un pedido solo admite edición de líneas mientras está en curso. */
+export const isOrderEditable = (status: OrderStatus) =>
+  status === "pending" || status === "processing";
+
 export interface Order {
   id: string;
   order_number: string;
@@ -150,7 +163,51 @@ export function useAssignOrderItemProduct() {
   return useMutation({
     mutationFn: ({ itemId, productId }: { itemId: string; productId: string }) =>
       api.patch<OrderItem>(`/order-items/${itemId}`, { product_id: productId }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QK_ORDERS }),
+    onSuccess: () => invalidateOrdersAndStock(qc),
+  });
+}
+
+/** Invalida pedidos y el selector de productos (para reflejar el stock ajustado). */
+function invalidateOrdersAndStock(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: QK_ORDERS });
+  qc.invalidateQueries({ queryKey: ["products-for-order"] });
+}
+
+/** Agrega una línea de producto a un pedido existente (pending/processing). */
+export function useAddOrderItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      order_id: string;
+      product_id: string;
+      quantity: number;
+      unit_price: number;
+    }) => api.post<OrderItem>("/order-items", { ...input, kind: "product" }),
+    onSuccess: () => invalidateOrdersAndStock(qc),
+  });
+}
+
+/** Edita cantidad y/o precio de una línea existente. */
+export function useUpdateOrderItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      itemId,
+      patch,
+    }: {
+      itemId: string;
+      patch: { quantity?: number; unit_price?: number };
+    }) => api.patch<OrderItem>(`/order-items/${itemId}`, patch),
+    onSuccess: () => invalidateOrdersAndStock(qc),
+  });
+}
+
+/** Elimina una línea de un pedido existente. */
+export function useRemoveOrderItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (itemId: string) => api.delete<{ ok: true }>(`/order-items/${itemId}`),
+    onSuccess: () => invalidateOrdersAndStock(qc),
   });
 }
 

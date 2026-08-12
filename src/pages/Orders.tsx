@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Search, Trash2 } from "lucide-react";
 import {
+  BOARD_STATUSES,
+  HISTORY_STATUSES,
   useConfirmCod,
   useDeleteAllOrders,
   useDeleteOrder,
@@ -33,13 +35,18 @@ import {
 } from "@/features/orders/api";
 import { NewOrderForm } from "@/features/orders/NewOrderForm";
 import { OrdersBoard } from "@/features/orders/OrdersBoard";
+import { OrdersHistoryTable } from "@/features/orders/OrdersHistoryTable";
 import { OrderDetails } from "@/features/orders/OrderDetails";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShipDialog } from "@/features/logistics/ShipDialog";
 import type { ShipmentOrder } from "@/features/logistics/api";
 import { toast } from "@/hooks/use-toast";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+
+const BOARD_SET = new Set(BOARD_STATUSES.map((s) => s.value));
+const HISTORY_SET = new Set(HISTORY_STATUSES.map((s) => s.value));
 
 export default function Orders() {
   const { data: orders = [], isLoading } = useOrders();
@@ -78,6 +85,15 @@ export default function Orders() {
     );
   }, [orders, filter]);
 
+  const activeOrders = useMemo(
+    () => filtered.filter((o) => BOARD_SET.has(o.status)),
+    [filtered],
+  );
+  const historyOrders = useMemo(
+    () => filtered.filter((o) => HISTORY_SET.has(o.status)),
+    [filtered],
+  );
+
   const stats = useMemo(() => {
     const total = orders.length;
     const pending = orders.filter((o) => o.status === "pending").length;
@@ -115,6 +131,25 @@ export default function Orders() {
       closeDeleteAll();
     }
   };
+
+  const renderDetails = (o: OrderWithItems) => (
+    <OrderDetails
+      order={o}
+      onChangeStatus={(status) =>
+        updateStatus
+          .mutateAsync({ id: o.id, status })
+          .then(() => toast({ title: "Estado actualizado" }))
+          .catch((e) => toast({ title: "Error", description: e.message, variant: "destructive" }))
+      }
+      onConfirmCod={(confirmed) =>
+        confirmCod
+          .mutateAsync({ id: o.id, confirmed })
+          .then(() => toast({ title: confirmed ? "COD confirmado" : "COD desmarcado" }))
+          .catch((e) => toast({ title: "Error", description: e.message, variant: "destructive" }))
+      }
+      onDelete={() => setConfirmDelete(o)}
+    />
+  );
 
   const headerActions = (
     <div className="flex items-center gap-2">
@@ -161,35 +196,31 @@ export default function Orders() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, i) => (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-40 w-full" />
           ))}
         </div>
       ) : (
-        <OrdersBoard
-          orders={filtered}
-          onChangeStatus={handleChangeStatus}
-          onRequestShip={(order, targetStatus) => setShipTarget({ order, targetStatus })}
-          renderDetails={(o) => (
-            <OrderDetails
-              order={o}
-              onChangeStatus={(status) =>
-                updateStatus
-                  .mutateAsync({ id: o.id, status })
-                  .then(() => toast({ title: "Estado actualizado" }))
-                  .catch((e) => toast({ title: "Error", description: e.message, variant: "destructive" }))
-              }
-              onConfirmCod={(confirmed) =>
-                confirmCod
-                  .mutateAsync({ id: o.id, confirmed })
-                  .then(() => toast({ title: confirmed ? "COD confirmado" : "COD desmarcado" }))
-                  .catch((e) => toast({ title: "Error", description: e.message, variant: "destructive" }))
-              }
-              onDelete={() => setConfirmDelete(o)}
+        <Tabs defaultValue="board">
+          <TabsList>
+            <TabsTrigger value="board">Tablero ({activeOrders.length})</TabsTrigger>
+            <TabsTrigger value="history">
+              Entregados / Historial ({historyOrders.length})
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="board" className="mt-4">
+            <OrdersBoard
+              orders={activeOrders}
+              onChangeStatus={handleChangeStatus}
+              onRequestShip={(order, targetStatus) => setShipTarget({ order, targetStatus })}
+              renderDetails={renderDetails}
             />
-          )}
-        />
+          </TabsContent>
+          <TabsContent value="history" className="mt-4">
+            <OrdersHistoryTable orders={historyOrders} renderDetails={renderDetails} />
+          </TabsContent>
+        </Tabs>
       )}
 
       <ShipDialog

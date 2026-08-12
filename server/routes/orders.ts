@@ -176,7 +176,47 @@ ordersRouter.delete(
 ordersRouter.delete(
   '/:id',
   asyncHandler(async (req, res) => {
-    await pool.query('DELETE FROM orders WHERE id = $1', [String(req.params.id)]);
+    const id = String(req.params.id);
+    const client = await pool.connect();
+    let touched: string[] = [];
+    try {
+      await client.query('BEGIN');
+      const { rows: ord } = await client.query(
+        'SELECT status FROM orders WHERE id = $1 FOR UPDATE',
+        [id]
+      );
+      // Solo se devuelve stock si el pedido seguía en curso (los productos vuelven al
+      // inventario). En shipped/delivered la mercancía ya salió físicamente.
+      if (ord[0] && ['pending', 'processing'].includes(ord[0].status)) {
+        const { rows: lines } = await client.query(
+          `SELECT product_id, SUM(quantity)::int AS qty
+             FROM order_items
+            WHERE order_id = $1 AND product_id IS NOT NULL AND kind = 'product'
+            GROUP BY product_id`,
+          [id]
+        );
+        for (const l of lines) {
+          await client.query('UPDATE products SET stock = stock + $1 WHERE id = $2', [
+            l.qty,
+            l.product_id,
+          ]);
+          touched.push(l.product_id);
+        }
+      }
+      // order_items caen por ON DELETE CASCADE.
+      await client.query('DELETE FROM orders WHERE id = $1', [id]);
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    if (touched.length) {
+      const { tryPushInventory } = await import('../lib/inventorySync');
+      for (const pid of touched) await tryPushInventory(pid);
+    }
     res.json({ ok: true });
   })
 );

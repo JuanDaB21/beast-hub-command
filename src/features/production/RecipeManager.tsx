@@ -123,7 +123,7 @@ export function RecipeManager() {
                 {bom.map((row) => (
                   <li key={row.id} className="flex items-center justify-between gap-2 p-3">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{row.raw_material?.name ?? "—"}</p>
+                      <p className="font-medium line-clamp-2">{row.raw_material?.name ?? "—"}</p>
                       <div className="mt-1">
                         {stockBadge(
                           Number(row.raw_material?.stock ?? 0),

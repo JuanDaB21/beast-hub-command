@@ -87,7 +87,7 @@ export function AvailableVariantsList({ parents, orphans }: Props) {
                 <Card key={r.id} className="p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{r.name}</p>
+                      <p className="font-medium line-clamp-2">{r.name}</p>
                       <p className="text-xs text-muted-foreground font-mono">{r.sku}</p>
                       {r.parentName && (
                         <p className="text-xs text-muted-foreground mt-0.5">

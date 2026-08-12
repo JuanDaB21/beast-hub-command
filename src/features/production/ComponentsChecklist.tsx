@@ -63,7 +63,7 @@ export function ComponentsChecklist({ wo }: Props) {
               />
               <label htmlFor={checkboxId} className="flex-1 min-w-0 cursor-pointer">
                 <p
-                  className={`font-medium truncate ${
+                  className={`font-medium line-clamp-2 ${
                     it.is_completed ? "line-through text-muted-foreground" : ""
                   }`}
                 >

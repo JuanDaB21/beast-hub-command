@@ -1,7 +1,7 @@
 import { EntityDetailCard } from "@/components/shared/EntityDetailCard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
-import { ORDER_STATUSES, type OrderStatus, type OrderWithItems } from "./api";
+import { BOARD_STATUSES, type OrderStatus, type OrderWithItems } from "./api";
 import { STATUS_LABEL, statusTone } from "./status";
 import { ReactNode } from "react";
 import {
@@ -28,7 +28,7 @@ interface Props {
 
 /** Board Kanban agrupado por status, con drag & drop entre columnas. */
 export function OrdersBoard({ orders, renderDetails, onChangeStatus, onRequestShip }: Props) {
-  const groups = ORDER_STATUSES.map((s) => ({
+  const groups = BOARD_STATUSES.map((s) => ({
     status: s.value,
     label: s.label,
     items: orders.filter((o) => o.status === s.value),
@@ -55,7 +55,7 @@ export function OrdersBoard({ orders, renderDetails, onChangeStatus, onRequestSh
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {groups.map((g) => (
           <DroppableColumn key={g.status} status={g.status} label={g.label} count={g.items.length}>
             {g.items.length === 0 ? (
