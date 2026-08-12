@@ -72,6 +72,7 @@ export function StandardCombobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
+          title={selected ? selected.label : undefined}
           className={cn(
             "w-full justify-between font-normal",
             !selected && "text-muted-foreground",
@@ -83,7 +84,7 @@ export function StandardCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0"
+        className="min-w-[--radix-popover-trigger-width] w-max max-w-[min(28rem,calc(100vw-1.5rem))] p-0"
         align="start"
         onOpenAutoFocus={(e) => {
           // Evitamos el autofocus por defecto para enfocar manualmente nuestro input
@@ -137,17 +138,17 @@ export function StandardCombobox({
                   aria-selected={isSelected}
                   onClick={() => handleSelect(opt.value)}
                   className={cn(
-                    "flex w-full items-center rounded-sm px-2 py-1.5 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                    "flex w-full items-start rounded-sm px-2 py-1.5 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                     isSelected && "bg-accent/50",
                   )}
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4 shrink-0",
+                      "mr-2 mt-0.5 h-4 w-4 shrink-0",
                       isSelected ? "opacity-100" : "opacity-0",
                     )}
                   />
-                  <span className="truncate">{opt.label}</span>
+                  <span className="whitespace-normal break-words">{opt.label}</span>
                 </button>
               );
             })
