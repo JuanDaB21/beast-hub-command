@@ -89,41 +89,6 @@ export function useDeleteSupplyRequest() {
   });
 }
 
-/* ---- Auto-supply for production shortages ---- */
-
-export interface ShortageInput {
-  raw_material_id: string;
-  raw_material_name: string;
-  supplier_id: string;
-  missing: number;
-}
-
-export interface AutoSupplyResult {
-  request_ids: string[];
-  created: number;
-  updated: number;
-  total_units: number;
-}
-
-/** El backend agrupa por proveedor y upserta items con margen del 20%. */
-export function useAutoSupplyShortages() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (shortages: ShortageInput[]) => {
-      if (!shortages.length) throw new Error("No hay faltantes que solicitar");
-      return api.post<AutoSupplyResult>(
-        "/supply-requests/auto-supply",
-        shortages.map((s) => ({
-          raw_material_id: s.raw_material_id,
-          supplier_id: s.supplier_id,
-          missing: s.missing,
-        })),
-      );
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
-  });
-}
-
 /* ---- Solicitud unificada desde todos los lotes activos ---- */
 
 export interface UnifiedSupplierGroup {

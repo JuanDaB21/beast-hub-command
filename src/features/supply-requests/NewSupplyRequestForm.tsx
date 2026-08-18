@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,19 @@ export function NewSupplyRequestForm({ onCreated }: Props) {
 
   const addItem = () =>
     setItems((prev) => [...prev, { raw_material_id: null, quantity_requested: "1" }]);
+
+  // Precarga una línea por cada base del proveedor con stock < 2 (media solicitud).
+  const autofillLowStock = () => {
+    if (!supplierId) return;
+    const low: DraftItem[] = materials
+      .filter((m) => m.supplier_id === supplierId && Number(m.stock) < 2)
+      .map((m) => ({ raw_material_id: m.id, quantity_requested: "1" }));
+    if (!low.length) {
+      toast.info("Ninguna base de este proveedor está por debajo de 2 unidades");
+      return;
+    }
+    setItems(low);
+  };
 
   const removeItem = (idx: number) =>
     setItems((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev));
@@ -105,9 +118,21 @@ export function NewSupplyRequestForm({ onCreated }: Props) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label>Bases solicitadas</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addItem}>
-            <Plus className="h-4 w-4 mr-1" /> Agregar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={autofillLowStock}
+              disabled={!supplierId}
+              title="Precargar bases del proveedor con stock menor a 2"
+            >
+              <Wand2 className="h-4 w-4 mr-1" /> Autocompletar bajo stock (&lt;2)
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addItem}>
+              <Plus className="h-4 w-4 mr-1" /> Agregar
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">
