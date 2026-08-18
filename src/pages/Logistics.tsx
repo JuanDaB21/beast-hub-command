@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import { slaFromCreatedAt, useShipmentOrders, type ShipmentOrder } from "@/features/logistics/api";
 import { FulfillmentBoard } from "@/features/logistics/FulfillmentBoard";
 import { ShipDialog } from "@/features/logistics/ShipDialog";
+import { matchesAllTokens } from "@/lib/textSearch";
 
 export default function Logistics() {
   const { data: orders = [], isLoading } = useShipmentOrders();
@@ -14,14 +15,12 @@ export default function Logistics() {
   const [shipTarget, setShipTarget] = useState<ShipmentOrder | null>(null);
 
   const filtered = useMemo(() => {
-    const v = filter.trim().toLowerCase();
-    if (!v) return orders;
-    return orders.filter(
-      (o) =>
-        o.order_number.toLowerCase().includes(v) ||
-        o.customer_name.toLowerCase().includes(v) ||
-        o.customer_phone.toLowerCase().includes(v) ||
-        (o.tracking_number ?? "").toLowerCase().includes(v),
+    if (!filter.trim()) return orders;
+    return orders.filter((o) =>
+      matchesAllTokens(
+        `${o.order_number} ${o.customer_name} ${o.customer_phone} ${o.tracking_number ?? ""}`,
+        filter,
+      ),
     );
   }, [orders, filter]);
 
