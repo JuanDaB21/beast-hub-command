@@ -123,3 +123,34 @@ export function useAutoSupplyShortages() {
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   });
 }
+
+/* ---- Solicitud unificada desde todos los lotes activos ---- */
+
+export interface UnifiedSupplierGroup {
+  supplier_id: string;
+  supplier_name: string | null;
+  total_units: number;
+  items: { raw_material_id: string; name: string; quantity_requested: number }[];
+}
+
+export interface UnifiedSupplyResult {
+  request_ids: string[];
+  created: number;
+  updated: number;
+  total_units: number;
+  suppliers: UnifiedSupplierGroup[];
+}
+
+/**
+ * Recalcula la necesidad total sumando todos los lotes activos (in_progress +
+ * pending) y genera una solicitud unificada por proveedor (margen 20%,
+ * idempotente). El backend hace todo el cálculo; no lleva payload.
+ */
+export function useGenerateUnifiedSupply() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api.post<UnifiedSupplyResult>("/supply-requests/from-active-lots"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+  });
+}

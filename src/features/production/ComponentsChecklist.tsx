@@ -99,6 +99,7 @@ export function ComponentsChecklist({ wo }: Props) {
               it.product ? `${it.product.sku} · ${it.product.name}` : it.product_id,
             ]),
           )}
+          enableAutoSupply={false}
         />
       </div>
     </div>
