@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import {
@@ -43,6 +43,7 @@ import {
 } from "@/features/sourcing/api";
 import { EditRawMaterialDialog } from "@/features/sourcing/EditRawMaterialDialog";
 import { EditGroupDialog } from "@/features/sourcing/EditGroupDialog";
+import { AddVariantToGroupDialog } from "@/features/sourcing/AddVariantToGroupDialog";
 import { type MaterialGroup, extractBaseName, groupMaterials } from "@/features/sourcing/groupHelpers";
 
 export { type MaterialGroup, extractBaseName, groupMaterials };
@@ -61,6 +62,7 @@ export function MaterialGroupCard({ group }: Props) {
   const [deleteVariant, setDeleteVariant] = useState<RawMaterialWithRelations | null>(null);
   const [editGroupOpen, setEditGroupOpen] = useState(false);
   const [deleteGroupOpen, setDeleteGroupOpen] = useState(false);
+  const [addVariantOpen, setAddVariantOpen] = useState(false);
   const deleteMut = useDeleteRawMaterial();
   const deleteGroupMut = useDeleteRawMaterialsGroup();
 
@@ -169,6 +171,15 @@ export function MaterialGroupCard({ group }: Props) {
               </button>
             </CollapsibleTrigger>
             <div className="flex shrink-0 flex-col gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setAddVariantOpen(true)}
+                aria-label="Agregar variante"
+                title="Agregar variante"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
               <Button
                 size="icon"
                 variant="ghost"
@@ -321,6 +332,13 @@ export function MaterialGroupCard({ group }: Props) {
         material={editVariant}
         open={!!editVariant}
         onOpenChange={(o) => !o && setEditVariant(null)}
+        siblings={group.variants}
+      />
+
+      <AddVariantToGroupDialog
+        group={addVariantOpen ? group : null}
+        open={addVariantOpen}
+        onOpenChange={setAddVariantOpen}
       />
 
       <AlertDialog
