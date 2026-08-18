@@ -17,6 +17,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useWorkOrders } from "@/features/production/api";
 import { NewWorkOrderForm } from "@/features/production/NewWorkOrderForm";
+import { NegativeStockBatchDialog } from "@/features/production/NegativeStockBatchDialog";
 import { WorkOrdersBoard } from "@/features/production/WorkOrdersBoard";
 import { RecipeManager } from "@/features/production/RecipeManager";
 import {
@@ -106,7 +107,7 @@ function UnifiedSupplyDialog({ workOrders }: { workOrders: WorkOrderWithItems[] 
             No hay lotes activos (En proceso o Pendientes) con productos.
           </div>
         ) : (
-          <ProductionRequirementsSummary items={activeItems} enableAutoSupply={false} />
+          <ProductionRequirementsSummary items={activeItems} />
         )}
 
         <DialogFooter className="flex-wrap gap-2 sm:justify-between">
@@ -158,6 +159,7 @@ export default function Production() {
       description="Gestiona lotes (Órdenes de Trabajo) y recetas (BOM) de tus productos."
       actions={
         <div className="flex flex-wrap items-center gap-2">
+          <NegativeStockBatchDialog />
           <UnifiedSupplyDialog workOrders={workOrders} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

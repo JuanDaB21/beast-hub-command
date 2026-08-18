@@ -63,6 +63,27 @@ export function useWorkOrders() {
   });
 }
 
+export interface NegativeStockRow {
+  product_id: string;
+  name: string;
+  sku: string | null;
+  stock: number;
+  in_production: number;
+  quantity_to_produce: number;
+}
+
+/**
+ * Productos con stock negativo cuyo faltante no se cubre ni sumando lo que ya
+ * está en producción. Alimenta el diálogo "Lote de faltantes".
+ */
+export function useNegativeStockPreview(enabled: boolean) {
+  return useQuery({
+    queryKey: ["negative_stock_preview"],
+    enabled,
+    queryFn: () => api.get<NegativeStockRow[]>("/work-orders/negative-stock-preview"),
+  });
+}
+
 export interface NewWorkOrderItemInput {
   product_id: string;
   quantity_to_produce: number;

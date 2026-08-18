@@ -42,6 +42,36 @@ workOrdersRouter.get(
   })
 );
 
+/**
+ * GET /negative-stock-preview — lista productos (variantes hijas u huérfanos) con
+ * stock negativo cuyo déficit NO se cubre ni sumando las unidades ya en producción
+ * (lotes pending/in_progress). `quantity_to_produce` es el faltante exacto para
+ * dejar el neto en 0. Alimenta el "Lote de faltantes" del frontend.
+ */
+workOrdersRouter.get(
+  '/negative-stock-preview',
+  asyncHandler(async (_req, res) => {
+    const { rows } = await pool.query(
+      `SELECT p.id AS product_id, p.name, p.sku, p.stock,
+              COALESCE(prod.in_production, 0)::int AS in_production,
+              (-(p.stock + COALESCE(prod.in_production, 0)))::int AS quantity_to_produce
+       FROM products p
+       LEFT JOIN (
+         SELECT woi.product_id, SUM(woi.quantity_to_produce) AS in_production
+         FROM work_order_items woi
+         JOIN work_orders wo ON wo.id = woi.work_order_id
+         WHERE wo.status IN ('in_progress','pending')
+         GROUP BY woi.product_id
+       ) prod ON prod.product_id = p.id
+       WHERE p.is_parent = false
+         AND p.stock < 0
+         AND (p.stock + COALESCE(prod.in_production, 0)) < 0
+       ORDER BY p.name`
+    );
+    res.json(rows);
+  })
+);
+
 function generateBatchNumber() {
   const now = new Date();
   const yyyymmdd = now.toISOString().slice(0, 10).replace(/-/g, '');
