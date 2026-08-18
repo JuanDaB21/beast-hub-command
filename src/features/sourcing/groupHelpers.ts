@@ -1,5 +1,30 @@
 import type { RawMaterialWithRelations } from "@/features/sourcing/api";
 
+/** Normaliza un SKU: sin espacios y en mayúsculas. */
+export function sanitizeSku(s: string): string {
+  return s.replace(/\s+/g, "").toUpperCase();
+}
+
+/** Nombre de variante = "Base - Color - Talla" (omite las partes vacías). */
+export function buildVariantName(
+  baseName: string,
+  colorName?: string | null,
+  sizeLabel?: string | null,
+): string {
+  return [baseName, colorName, sizeLabel].filter(Boolean).join(" - ");
+}
+
+/** SKU de variante a partir de un prefijo + color + talla; null si no hay prefijo. */
+export function buildVariantSku(
+  skuBase: string,
+  colorName?: string | null,
+  sizeLabel?: string | null,
+): string | null {
+  const base = skuBase.trim();
+  if (!base) return null;
+  return sanitizeSku(`${base}-${colorName ?? ""}${sizeLabel ?? ""}`);
+}
+
 export interface MaterialGroup {
   key: string;
   baseName: string;

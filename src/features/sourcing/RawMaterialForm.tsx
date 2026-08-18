@@ -20,12 +20,11 @@ import {
 } from "./api";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { buildVariantName, buildVariantSku } from "./groupHelpers";
 
 interface Props {
   onSuccess?: () => void;
 }
-
-const sanitizeSku = (s: string) => s.replace(/\s+/g, "").toUpperCase();
 
 export function RawMaterialForm({ onSuccess }: Props) {
   const { data: suppliers = [] } = useSuppliers();
@@ -131,10 +130,8 @@ export function RawMaterialForm({ onSuccess }: Props) {
     const out: { name: string; color_id: string | null; size_id: string | null; sku: string | null }[] = [];
     for (const c of cs) {
       for (const s of ss) {
-        const variantName = [trimmed, c?.name, s?.label].filter(Boolean).join(" - ");
-        const sku = skuBase.trim()
-          ? sanitizeSku(`${skuBase}-${c?.name ?? ""}${s?.label ?? ""}`)
-          : null;
+        const variantName = buildVariantName(trimmed, c?.name, s?.label);
+        const sku = buildVariantSku(skuBase, c?.name, s?.label);
         out.push({
           name: variantName,
           color_id: c?.id ?? null,
