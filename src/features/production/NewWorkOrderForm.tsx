@@ -97,6 +97,7 @@ export function NewWorkOrderForm({ onCreated }: Props) {
                   onChange={(v) => updateItem(idx, { product_id: v })}
                   placeholder="Producto"
                   searchPlaceholder="Buscar SKU o nombre..."
+                  wrapLabel
                 />
               </div>
               <div className="w-full sm:w-32">

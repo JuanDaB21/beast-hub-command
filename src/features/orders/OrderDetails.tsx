@@ -176,7 +176,14 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
           )}
         </div>
         <div className="overflow-hidden rounded-md border">
-          <table className="w-full text-sm">
+          <table className="w-full table-fixed text-sm">
+            <colgroup>
+              <col />
+              <col className="w-16" />
+              <col className="w-24" />
+              <col className="w-28" />
+              {editable && <col className="w-12" />}
+            </colgroup>
             <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left">Producto</th>
@@ -388,6 +395,7 @@ function ItemLabel({ item, productOptions, onAssign, assigning }: ItemLabelProps
             onChange={onAssign}
             placeholder={assigning ? "Asignando…" : "Asignar producto…"}
             allowClear={false}
+            wrapLabel
           />
         </div>
       </div>
@@ -396,7 +404,7 @@ function ItemLabel({ item, productOptions, onAssign, assigning }: ItemLabelProps
 
   return (
     <>
-      <div className="font-medium">{item.product?.name ?? "Producto eliminado"}</div>
+      <div className="font-medium break-words">{item.product?.name ?? "Producto eliminado"}</div>
       {item.product?.sku && (
         <div className="font-mono text-xs text-muted-foreground">{item.product.sku}</div>
       )}
@@ -547,6 +555,7 @@ function AddItemRow({ products, onAdd, adding }: AddItemRowProps) {
           onChange={pick}
           placeholder="Agregar producto…"
           allowClear={false}
+          wrapLabel
         />
       </td>
       <td className="px-2 py-2 text-right">

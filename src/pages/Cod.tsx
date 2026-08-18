@@ -21,6 +21,7 @@ import {
 } from "@/features/cod/api";
 import { CheckCircle2, ClipboardCheck, Truck } from "lucide-react";
 import { toast } from "sonner";
+import { matchesAllTokens } from "@/lib/textSearch";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
@@ -56,12 +57,11 @@ export default function Cod() {
     if (tab === "collected") list = list.filter((o) => o.cod_confirmed);
     if (carrier !== "all") list = list.filter((o) => (o.carrier ?? "") === carrier);
     if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (o) =>
-          o.order_number.toLowerCase().includes(q) ||
-          o.customer_name.toLowerCase().includes(q) ||
-          (o.tracking_number ?? "").toLowerCase().includes(q)
+      list = list.filter((o) =>
+        matchesAllTokens(
+          `${o.order_number} ${o.customer_name} ${o.tracking_number ?? ""}`,
+          search,
+        ),
       );
     }
     return list;

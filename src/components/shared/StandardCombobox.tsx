@@ -21,6 +21,8 @@ interface StandardComboboxProps {
   disabled?: boolean;
   className?: string;
   allowClear?: boolean;
+  /** Envuelve la etiqueta seleccionada en varias líneas en vez de truncarla. */
+  wrapLabel?: boolean;
 }
 
 /**
@@ -37,6 +39,7 @@ export function StandardCombobox({
   disabled,
   className,
   allowClear = true,
+  wrapLabel = false,
 }: StandardComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -75,11 +78,14 @@ export function StandardCombobox({
           title={selected ? selected.label : undefined}
           className={cn(
             "w-full justify-between font-normal",
+            wrapLabel && "h-auto min-h-10 items-start whitespace-normal py-2 text-left",
             !selected && "text-muted-foreground",
             className,
           )}
         >
-          <span className="truncate">{selected ? selected.label : placeholder}</span>
+          <span className={cn(wrapLabel ? "whitespace-normal break-words" : "truncate")}>
+            {selected ? selected.label : placeholder}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

@@ -172,6 +172,12 @@ export function useBiData(range: DateRange) {
         ),
       );
 
+      // Catálogo para rollear variantes → producto padre en el Top productos.
+      const allProducts = await api.get<{ id: string; name: string; parent_id: string | null }[]>(
+        "/products",
+      );
+      const productById = new Map(allProducts.map((p) => [p.id, p]));
+
       const costMap = new Map<string, number>();
       if (productIds.length > 0) {
         const pmRows = await api.get<ProductMaterialRow[]>("/product-materials", {
@@ -223,14 +229,16 @@ export function useBiData(range: DateRange) {
           const unitCost = costMap.get(it.product.id) ?? 0;
           cogs += unitCost * Number(it.quantity);
 
-          const cur2 = productBucket.get(it.product.id) ?? {
-            name: it.product.name,
+          const parentId = productById.get(it.product.id)?.parent_id ?? it.product.id;
+          const parentName = productById.get(parentId)?.name ?? it.product.name;
+          const cur2 = productBucket.get(parentId) ?? {
+            name: parentName,
             quantity: 0,
             revenue: 0,
           };
           cur2.quantity += Number(it.quantity);
           cur2.revenue += Number(it.quantity) * Number(it.unit_price);
-          productBucket.set(it.product.id, cur2);
+          productBucket.set(parentId, cur2);
         }
       }
 

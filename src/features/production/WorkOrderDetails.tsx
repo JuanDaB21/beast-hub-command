@@ -338,6 +338,7 @@ function AddItemRow({ workOrderId }: { workOrderId: string }) {
           onChange={setProductId}
           placeholder="Agregar producto..."
           searchPlaceholder="Buscar SKU o nombre..."
+          wrapLabel
         />
       </div>
       <Input

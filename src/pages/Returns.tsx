@@ -17,6 +17,7 @@ import { useReturns, type ReturnRow, type ReturnStatus } from "@/features/return
 import { ReturnsBoard } from "@/features/returns/ReturnsBoard";
 import { NewReturnForm } from "@/features/returns/NewReturnForm";
 import { ResolveReturnDialog } from "@/features/returns/ResolveReturnDialog";
+import { matchesAllTokens } from "@/lib/textSearch";
 
 type Tab = "all" | ReturnStatus;
 
@@ -30,15 +31,12 @@ export default function Returns() {
   const filtered = useMemo(() => {
     let out = returns;
     if (tab !== "all") out = out.filter((r) => r.resolution_status === tab);
-    const v = filter.trim().toLowerCase();
-    if (v) {
-      out = out.filter(
-        (r) =>
-          (r.order?.order_number ?? "").toLowerCase().includes(v) ||
-          (r.order?.customer_name ?? "").toLowerCase().includes(v) ||
-          (r.product?.name ?? "").toLowerCase().includes(v) ||
-          (r.product?.sku ?? "").toLowerCase().includes(v) ||
-          r.reason_category.toLowerCase().includes(v),
+    if (filter.trim()) {
+      out = out.filter((r) =>
+        matchesAllTokens(
+          `${r.order?.order_number ?? ""} ${r.order?.customer_name ?? ""} ${r.product?.name ?? ""} ${r.product?.sku ?? ""} ${r.reason_category}`,
+          filter,
+        ),
       );
     }
     return out;

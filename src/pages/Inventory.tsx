@@ -32,6 +32,7 @@ import {
 } from "@/features/inventory/api";
 import { ProductsTable } from "@/features/inventory/ProductsTable";
 import { ProductsMobileList } from "@/features/inventory/ProductsMobileList";
+import { matchesAllTokens } from "@/lib/textSearch";
 import { ProductForm } from "@/features/inventory/ProductForm";
 import { VariantEditDialog } from "@/features/inventory/VariantEditDialog";
 import { AvailableVariantsList } from "@/features/inventory/AvailableVariantsList";
@@ -150,19 +151,13 @@ export default function Inventory() {
                   parents={parents.filter(
                     (p) =>
                       !filter ||
-                      p.name.toLowerCase().includes(filter.toLowerCase()) ||
-                      p.sku.toLowerCase().includes(filter.toLowerCase()) ||
-                      p.children.some(
-                        (c) =>
-                          c.name.toLowerCase().includes(filter.toLowerCase()) ||
-                          c.sku.toLowerCase().includes(filter.toLowerCase()),
+                      matchesAllTokens(
+                        `${p.sku} ${p.name} ${p.children.map((c) => `${c.sku} ${c.name}`).join(" ")}`,
+                        filter,
                       ),
                   )}
                   orphans={orphans.filter(
-                    (p) =>
-                      !filter ||
-                      p.name.toLowerCase().includes(filter.toLowerCase()) ||
-                      p.sku.toLowerCase().includes(filter.toLowerCase()),
+                    (p) => !filter || matchesAllTokens(`${p.sku} ${p.name}`, filter),
                   )}
                   onEditParent={setEditingParent}
                   onDeleteParent={setConfirmDeleteTree}

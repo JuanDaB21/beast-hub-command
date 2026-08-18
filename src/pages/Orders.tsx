@@ -41,6 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShipDialog } from "@/features/logistics/ShipDialog";
 import type { ShipmentOrder } from "@/features/logistics/api";
 import { toast } from "@/hooks/use-toast";
+import { matchesAllTokens } from "@/lib/textSearch";
 
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
@@ -75,13 +76,12 @@ export default function Orders() {
   };
 
   const filtered = useMemo(() => {
-    const v = filter.trim().toLowerCase();
-    if (!v) return orders;
-    return orders.filter(
-      (o) =>
-        o.order_number.toLowerCase().includes(v) ||
-        o.customer_name.toLowerCase().includes(v) ||
-        o.customer_phone.toLowerCase().includes(v),
+    if (!filter.trim()) return orders;
+    return orders.filter((o) =>
+      matchesAllTokens(
+        `${o.order_number} ${o.customer_name} ${o.customer_phone}`,
+        filter,
+      ),
     );
   }, [orders, filter]);
 
