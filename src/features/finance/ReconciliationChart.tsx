@@ -2,17 +2,16 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { TrendingUp, Wallet, ArrowDownCircle, Scale } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { KpiCard } from "@/features/bi/KpiCard";
 import {
-  PAYMENT_CHANNEL_LABEL,
+  SALES_SOURCE_LABEL,
   useReconciliation,
   type Reconciliation,
 } from "./api";
@@ -24,11 +23,24 @@ const cop = (n: number) =>
     maximumFractionDigits: 0,
   });
 
-function buildChartData(rec: Reconciliation) {
-  return rec.by_method
+const kFormat = (v: number) => `$${Math.round(Number(v) / 1000)}k`;
+
+const EXPENSE_COLORS = [
+  "hsl(0 72% 51%)",
+  "hsl(24 80% 50%)",
+  "hsl(43 74% 49%)",
+  "hsl(280 55% 55%)",
+  "hsl(200 60% 45%)",
+  "hsl(160 55% 40%)",
+  "hsl(320 55% 52%)",
+  "hsl(220 15% 55%)",
+];
+
+function buildSourceData(rec: Reconciliation) {
+  return rec.by_source
     .filter((r) => r.sales > 0 || r.income > 0)
     .map((r) => ({
-      label: PAYMENT_CHANNEL_LABEL[r.method] ?? r.method,
+      label: SALES_SOURCE_LABEL[r.source] ?? r.source,
       sales: r.sales,
       income: r.income,
     }));
@@ -37,15 +49,20 @@ function buildChartData(rec: Reconciliation) {
 export function ReconciliationChart({ month }: { month: string }) {
   const { data, isLoading } = useReconciliation(month);
 
-  const chartData = data ? buildChartData(data) : [];
+  const sourceData = data ? buildSourceData(data) : [];
+  const expenseData = data
+    ? data.expenses_by_category.filter((r) => r.amount > 0)
+    : [];
+  const expensesTotal = data?.expenses_total ?? 0;
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4 lg:grid-cols-2">
+      {/* Ventas vs Ingresos por origen */}
       <Card className="flex flex-col gap-2 p-4">
         <div>
-          <h3 className="text-sm font-semibold">Ventas vs. Ingresos por método</h3>
+          <h3 className="text-sm font-semibold">Conciliación por origen</h3>
           <p className="text-xs text-muted-foreground">
-            Ventas de las órdenes del mes contra lo realmente registrado como ingreso.
+            Ventas de las órdenes contra lo registrado como ingreso, por canal.
           </p>
         </div>
         <div style={{ width: "100%", height: 300 }}>
@@ -53,23 +70,20 @@ export function ReconciliationChart({ month }: { month: string }) {
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               Cargando conciliación...
             </div>
-          ) : chartData.length === 0 ? (
+          ) : sourceData.length === 0 ? (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              Sin ventas ni ingresos en el mes seleccionado.
+              Sin ventas ni ingresos en el mes.
             </div>
           ) : (
             <ResponsiveContainer>
-              <BarChart data={chartData} margin={{ top: 5, right: 8, left: 8, bottom: 0 }}>
+              <BarChart data={sourceData} margin={{ top: 5, right: 8, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="label"
-                  fontSize={11}
-                  stroke="hsl(var(--muted-foreground))"
-                />
+                <XAxis dataKey="label" fontSize={11} stroke="hsl(var(--muted-foreground))" />
                 <YAxis
                   fontSize={11}
                   stroke="hsl(var(--muted-foreground))"
-                  tickFormatter={(v) => `$${Number(v) / 1000}k`}
+                  width={48}
+                  tickFormatter={kFormat}
                 />
                 <Tooltip
                   contentStyle={{
@@ -87,7 +101,7 @@ export function ReconciliationChart({ month }: { month: string }) {
                   wrapperStyle={{ fontSize: 11 }}
                   formatter={(v) => (v === "sales" ? "Ventas (órdenes)" : "Ingresado")}
                 />
-                <Bar dataKey="sales" fill="hsl(222 47% 40%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="sales" fill="hsl(222 47% 45%)" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="income" fill="hsl(142 71% 38%)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -95,36 +109,67 @@ export function ReconciliationChart({ month }: { month: string }) {
         </div>
       </Card>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="Ventas del mes"
-          value={cop(data?.sales_total ?? 0)}
-          hint="Total facturado en órdenes"
-          icon={TrendingUp}
-          tone="primary"
-        />
-        <KpiCard
-          label="Ingresado"
-          value={cop(data?.income_total ?? 0)}
-          hint="Ingresos registrados"
-          icon={Wallet}
-          tone="green"
-        />
-        <KpiCard
-          label="Gastado"
-          value={cop(data?.expenses_total ?? 0)}
-          hint="Gastos del mes"
-          icon={ArrowDownCircle}
-          tone="red"
-        />
-        <KpiCard
-          label="Neto"
-          value={cop(data?.net ?? 0)}
-          hint="Ingresado − gastado"
-          icon={Scale}
-          tone={(data?.net ?? 0) >= 0 ? "green" : "red"}
-        />
-      </div>
+      {/* Gastos del mes por categoría */}
+      <Card className="flex flex-col gap-2 p-4">
+        <div className="flex items-baseline justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold">Gastos por categoría</h3>
+            <p className="text-xs text-muted-foreground">Desglose de gastos del mes.</p>
+          </div>
+          <span className="shrink-0 text-sm font-semibold tabular-nums text-status-red">
+            {cop(expensesTotal)}
+          </span>
+        </div>
+        <div style={{ width: "100%", height: 300 }}>
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              Cargando gastos...
+            </div>
+          ) : expenseData.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              Sin gastos en el mes.
+            </div>
+          ) : (
+            <ResponsiveContainer>
+              <BarChart
+                layout="vertical"
+                data={expenseData}
+                margin={{ top: 5, right: 12, left: 8, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis
+                  type="number"
+                  fontSize={11}
+                  stroke="hsl(var(--muted-foreground))"
+                  tickFormatter={kFormat}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="category"
+                  fontSize={11}
+                  stroke="hsl(var(--muted-foreground))"
+                  width={110}
+                />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                  contentStyle={{
+                    background: "hsl(var(--popover))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                  formatter={(value: number) => [cop(Number(value)), "Gasto"]}
+                />
+                <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
+                  {expenseData.map((_, i) => (
+                    <Cell key={i} fill={EXPENSE_COLORS[i % EXPENSE_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

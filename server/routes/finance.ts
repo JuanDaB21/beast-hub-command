@@ -12,9 +12,21 @@ const INSERT_COLS = [
   'charged_to_staff_id',
   'occurred_at',
   'payment_method',
+  'source',
 ];
 
-const PAYMENT_METHODS = ['fisico', 'nequi', 'daviplata', 'bancolombia', 'cod'] as const;
+const SALES_SOURCES = ['shopify', 'manual'] as const;
+
+/** Convierte un YYYY-MM (o el mes actual si es inválido) al rango UTC [start, end). */
+function monthRange(month: string): { start: Date; end: Date; label: string } {
+  const m = /^(\d{4})-(\d{2})$/.exec(month.trim());
+  const start = m ? new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1)) : new Date();
+  if (!m) start.setUTCDate(1);
+  start.setUTCHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setUTCMonth(end.getUTCMonth() + 1);
+  return { start, end, label: start.toISOString().slice(0, 7) };
+}
 
 export const financeRouter = Router();
 
@@ -66,26 +78,139 @@ financeRouter.get(
 );
 
 /**
+ * GET /summary
+ * Totales acumulados de todo el tiempo: ventas (órdenes no canceladas), ingresos y
+ * gastos registrados. Independiente del mes seleccionado.
+ */
+financeRouter.get(
+  '/summary',
+  asyncHandler(async (_req, res) => {
+    const salesQ = pool.query(
+      `SELECT COALESCE(SUM(total), 0)::numeric AS amount
+       FROM orders WHERE status <> 'cancelled'`
+    );
+    const incomeQ = pool.query(
+      `SELECT COALESCE(SUM(amount), 0)::numeric AS amount
+       FROM financial_transactions WHERE transaction_type = 'income'`
+    );
+    const expenseQ = pool.query(
+      `SELECT COALESCE(SUM(amount), 0)::numeric AS amount
+       FROM financial_transactions WHERE transaction_type = 'expense'`
+    );
+    const [sales, income, expense] = await Promise.all([salesQ, incomeQ, expenseQ]);
+    res.json({
+      sales_total: Number(sales.rows[0]?.amount ?? 0),
+      income_total: Number(income.rows[0]?.amount ?? 0),
+      expenses_total: Number(expense.rows[0]?.amount ?? 0),
+    });
+  })
+);
+
+/**
  * GET /reconciliation?month=YYYY-MM
- * Conciliación mensual: por cada método de pago, ventas de las órdenes vs
- * ingresos realmente registrados. Más gastos totales y neto del mes.
+ * Conciliación mensual: por cada origen de venta (shopify/manual), ventas de las
+ * órdenes vs ingresos realmente registrados. Más gastos por categoría y neto del mes.
  */
 financeRouter.get(
   '/reconciliation',
   asyncHandler(async (req, res) => {
-    const month = String((req.query as Record<string, string | undefined>).month ?? '').trim();
-    const m = /^(\d{4})-(\d{2})$/.exec(month);
-    const start = m ? new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1)) : new Date();
-    if (!m) start.setUTCDate(1);
-    start.setUTCHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setUTCMonth(end.getUTCMonth() + 1);
+    const month = String((req.query as Record<string, string | undefined>).month ?? '');
+    const { start, end, label } = monthRange(month);
     const startIso = start.toISOString();
     const endIso = end.toISOString();
 
-    // Ventas por canal (COD tiene prioridad sobre payment_method).
+    // Ventas por origen de la orden.
     const salesQ = pool.query(
-      `SELECT CASE WHEN is_cod THEN 'cod' ELSE payment_method END AS method,
+      `SELECT source::text AS source, COALESCE(SUM(total), 0)::numeric AS amount
+       FROM orders
+       WHERE status <> 'cancelled'
+         AND created_at >= $1 AND created_at < $2
+       GROUP BY 1`,
+      [startIso, endIso]
+    );
+    // Ingresos registrados por canal de venta.
+    const incomeQ = pool.query(
+      `SELECT source AS source, COALESCE(SUM(amount), 0)::numeric AS amount
+       FROM financial_transactions
+       WHERE transaction_type = 'income'
+         AND occurred_at >= $1 AND occurred_at < $2
+       GROUP BY 1`,
+      [startIso, endIso]
+    );
+    // Gastos del mes por categoría (desc).
+    const expenseQ = pool.query(
+      `SELECT category, COALESCE(SUM(amount), 0)::numeric AS amount
+       FROM financial_transactions
+       WHERE transaction_type = 'expense'
+         AND occurred_at >= $1 AND occurred_at < $2
+       GROUP BY category
+       ORDER BY amount DESC`,
+      [startIso, endIso]
+    );
+
+    const [sales, income, expense] = await Promise.all([salesQ, incomeQ, expenseQ]);
+
+    const salesMap = new Map<string, number>();
+    for (const r of sales.rows) salesMap.set(r.source ?? 'sin_asignar', Number(r.amount));
+    const incomeMap = new Map<string, number>();
+    for (const r of income.rows) incomeMap.set(r.source ?? 'sin_asignar', Number(r.amount));
+
+    const sources = [...SALES_SOURCES] as string[];
+    // Incluir bucket sin_asignar solo si tiene algún monto.
+    if ((salesMap.get('sin_asignar') ?? 0) > 0 || (incomeMap.get('sin_asignar') ?? 0) > 0) {
+      sources.push('sin_asignar');
+    }
+
+    const by_source = sources.map((source) => {
+      const s = salesMap.get(source) ?? 0;
+      const i = incomeMap.get(source) ?? 0;
+      return { source, sales: s, income: i, diff: i - s };
+    });
+
+    const expenses_by_category = expense.rows.map((r) => ({
+      category: r.category as string,
+      amount: Number(r.amount),
+    }));
+
+    const sales_total = by_source.reduce((a, r) => a + r.sales, 0);
+    const income_total = by_source.reduce((a, r) => a + r.income, 0);
+    const expenses_total = expenses_by_category.reduce((a, r) => a + r.amount, 0);
+
+    res.json({
+      month: label,
+      by_source,
+      expenses_by_category,
+      sales_total,
+      income_total,
+      expenses_total,
+      net: income_total - expenses_total,
+    });
+  })
+);
+
+/**
+ * GET /trend?month=YYYY-MM&months=6
+ * Serie histórica mes a mes (comportamiento) de ventas, ingresos y gastos,
+ * terminando en `month` (inclusive) y retrocediendo `months` meses.
+ */
+financeRouter.get(
+  '/trend',
+  asyncHandler(async (req, res) => {
+    const q = req.query as Record<string, string | undefined>;
+    const { start: endMonthStart } = monthRange(String(q.month ?? ''));
+    const count = Math.min(Math.max(Number(q.months) || 6, 1), 24);
+
+    // Ventana [windowStart, windowEnd): primer día del mes más antiguo → primer día
+    // del mes siguiente al seleccionado.
+    const windowEnd = new Date(endMonthStart);
+    windowEnd.setUTCMonth(windowEnd.getUTCMonth() + 1);
+    const windowStart = new Date(endMonthStart);
+    windowStart.setUTCMonth(windowStart.getUTCMonth() - (count - 1));
+    const startIso = windowStart.toISOString();
+    const endIso = windowEnd.toISOString();
+
+    const salesQ = pool.query(
+      `SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') AS month,
               COALESCE(SUM(total), 0)::numeric AS amount
        FROM orders
        WHERE status <> 'cancelled'
@@ -93,55 +218,41 @@ financeRouter.get(
        GROUP BY 1`,
       [startIso, endIso]
     );
-    // Ingresos registrados por método de pago.
-    const incomeQ = pool.query(
-      `SELECT payment_method AS method, COALESCE(SUM(amount), 0)::numeric AS amount
+    const txQ = pool.query(
+      `SELECT to_char(date_trunc('month', occurred_at), 'YYYY-MM') AS month,
+              transaction_type,
+              COALESCE(SUM(amount), 0)::numeric AS amount
        FROM financial_transactions
-       WHERE transaction_type = 'income'
-         AND occurred_at >= $1 AND occurred_at < $2
-       GROUP BY 1`,
-      [startIso, endIso]
-    );
-    // Gastos totales del mes.
-    const expenseQ = pool.query(
-      `SELECT COALESCE(SUM(amount), 0)::numeric AS amount
-       FROM financial_transactions
-       WHERE transaction_type = 'expense'
-         AND occurred_at >= $1 AND occurred_at < $2`,
+       WHERE occurred_at >= $1 AND occurred_at < $2
+       GROUP BY 1, 2`,
       [startIso, endIso]
     );
 
-    const [sales, income, expense] = await Promise.all([salesQ, incomeQ, expenseQ]);
+    const [sales, tx] = await Promise.all([salesQ, txQ]);
 
     const salesMap = new Map<string, number>();
-    for (const r of sales.rows) salesMap.set(r.method ?? 'sin_asignar', Number(r.amount));
+    for (const r of sales.rows) salesMap.set(r.month, Number(r.amount));
     const incomeMap = new Map<string, number>();
-    for (const r of income.rows) incomeMap.set(r.method ?? 'sin_asignar', Number(r.amount));
-
-    const methods = [...PAYMENT_METHODS];
-    // Incluir bucket sin_asignar solo si tiene algún monto.
-    if ((salesMap.get('sin_asignar') ?? 0) > 0 || (incomeMap.get('sin_asignar') ?? 0) > 0) {
-      methods.push('sin_asignar' as (typeof PAYMENT_METHODS)[number]);
+    const expenseMap = new Map<string, number>();
+    for (const r of tx.rows) {
+      const target = r.transaction_type === 'income' ? incomeMap : expenseMap;
+      target.set(r.month, Number(r.amount));
     }
 
-    const by_method = methods.map((method) => {
-      const s = salesMap.get(method) ?? 0;
-      const i = incomeMap.get(method) ?? 0;
-      return { method, sales: s, income: i, diff: i - s };
-    });
+    const series: { month: string; sales: number; income: number; expenses: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const d = new Date(windowStart);
+      d.setUTCMonth(d.getUTCMonth() + i);
+      const key = d.toISOString().slice(0, 7);
+      series.push({
+        month: key,
+        sales: salesMap.get(key) ?? 0,
+        income: incomeMap.get(key) ?? 0,
+        expenses: expenseMap.get(key) ?? 0,
+      });
+    }
 
-    const sales_total = by_method.reduce((a, r) => a + r.sales, 0);
-    const income_total = by_method.reduce((a, r) => a + r.income, 0);
-    const expenses_total = Number(expense.rows[0]?.amount ?? 0);
-
-    res.json({
-      month: m ? month : startIso.slice(0, 7),
-      by_method,
-      sales_total,
-      income_total,
-      expenses_total,
-      net: income_total - expenses_total,
-    });
+    res.json(series);
   })
 );
 
@@ -204,6 +315,7 @@ financeRouter.patch(
       if (Object.prototype.hasOwnProperty.call(body, 'description')) push('description', body.description ?? null);
       if (Object.prototype.hasOwnProperty.call(body, 'occurred_at')) push('occurred_at', body.occurred_at);
       if (Object.prototype.hasOwnProperty.call(body, 'payment_method')) push('payment_method', body.payment_method ?? null);
+      if (Object.prototype.hasOwnProperty.call(body, 'source')) push('source', body.source ?? null);
     }
     if (Object.prototype.hasOwnProperty.call(body, 'charged_to_staff_id')) {
       push('charged_to_staff_id', body.charged_to_staff_id ?? null);

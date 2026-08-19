@@ -14,6 +14,7 @@ export interface FinancialTransaction {
   created_at: string;
   occurred_at: string;
   payment_method: string | null;
+  source: string | null;
   charged_to_staff_id: string | null;
   charged_to: { id: string; full_name: string | null } | null;
 }
@@ -28,6 +29,7 @@ export interface FinancialTransactionInput {
   charged_to_staff_id?: string | null;
   occurred_at?: string | null;
   payment_method?: string | null;
+  source?: string | null;
 }
 
 /** Canales de pago para etiquetar ingresos y conciliar contra las órdenes. */
@@ -41,6 +43,17 @@ export const PAYMENT_CHANNELS: { value: string; label: string }[] = [
 
 export const PAYMENT_CHANNEL_LABEL: Record<string, string> = {
   ...Object.fromEntries(PAYMENT_CHANNELS.map((c) => [c.value, c.label])),
+  sin_asignar: "Sin asignar",
+};
+
+/** Canal/origen de venta para conciliar ingresos contra las ventas de las órdenes. */
+export const SALES_SOURCES: { value: string; label: string }[] = [
+  { value: "shopify", label: "Shopify" },
+  { value: "manual", label: "Manual" },
+];
+
+export const SALES_SOURCE_LABEL: Record<string, string> = {
+  ...Object.fromEntries(SALES_SOURCES.map((s) => [s.value, s.label])),
   sin_asignar: "Sin asignar",
 };
 
@@ -91,6 +104,9 @@ export function useCreateTransaction() {
     mutationFn: (input: FinancialTransactionInput) => api.post<FinancialTransaction>("/finance", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["financial_transactions"] });
+      qc.invalidateQueries({ queryKey: ["finance_reconciliation"] });
+      qc.invalidateQueries({ queryKey: ["finance_trend"] });
+      qc.invalidateQueries({ queryKey: ["finance_summary"] });
       qc.invalidateQueries({ queryKey: ["bi"] });
     },
   });
@@ -105,6 +121,7 @@ export interface UpdateTransactionInput {
   charged_to_staff_id?: string | null;
   occurred_at?: string | null;
   payment_method?: string | null;
+  source?: string | null;
 }
 
 export function useUpdateTransaction() {
@@ -119,6 +136,7 @@ export function useUpdateTransaction() {
         if (input.description !== undefined) body.description = input.description ?? null;
         if (input.occurred_at !== undefined) body.occurred_at = input.occurred_at;
         if (input.payment_method !== undefined) body.payment_method = input.payment_method ?? null;
+        if (input.source !== undefined) body.source = input.source ?? null;
       }
       if (input.charged_to_staff_id !== undefined) {
         body.charged_to_staff_id = input.charged_to_staff_id ?? null;
@@ -127,6 +145,9 @@ export function useUpdateTransaction() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["financial_transactions"] });
+      qc.invalidateQueries({ queryKey: ["finance_reconciliation"] });
+      qc.invalidateQueries({ queryKey: ["finance_trend"] });
+      qc.invalidateQueries({ queryKey: ["finance_summary"] });
       qc.invalidateQueries({ queryKey: ["bi"] });
     },
   });
@@ -138,6 +159,9 @@ export function useDeleteTransaction() {
     mutationFn: (tx: FinancialTransaction) => api.delete<{ ok: true }>(`/finance/${tx.id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["financial_transactions"] });
+      qc.invalidateQueries({ queryKey: ["finance_reconciliation"] });
+      qc.invalidateQueries({ queryKey: ["finance_trend"] });
+      qc.invalidateQueries({ queryKey: ["finance_summary"] });
       qc.invalidateQueries({ queryKey: ["bi"] });
     },
   });
@@ -148,15 +172,21 @@ export async function insertTransaction(input: FinancialTransactionInput) {
 }
 
 export interface ReconciliationRow {
-  method: string;
+  source: string;
   sales: number;
   income: number;
   diff: number;
 }
 
+export interface ExpenseCategoryRow {
+  category: string;
+  amount: number;
+}
+
 export interface Reconciliation {
   month: string;
-  by_method: ReconciliationRow[];
+  by_source: ReconciliationRow[];
+  expenses_by_category: ExpenseCategoryRow[];
   sales_total: number;
   income_total: number;
   expenses_total: number;
@@ -168,6 +198,38 @@ export function useReconciliation(month: string) {
   return useQuery({
     queryKey: ["finance_reconciliation", month],
     queryFn: () => api.get<Reconciliation>("/finance/reconciliation", { month }),
+    enabled: !!month,
+  });
+}
+
+export interface FinanceSummary {
+  sales_total: number;
+  income_total: number;
+  expenses_total: number;
+}
+
+/** Totales acumulados de todo el tiempo (independiente del mes). */
+export function useFinanceSummary() {
+  return useQuery({
+    queryKey: ["finance_summary"],
+    queryFn: () => api.get<FinanceSummary>("/finance/summary"),
+    staleTime: 60_000,
+  });
+}
+
+export interface TrendPoint {
+  month: string;
+  sales: number;
+  income: number;
+  expenses: number;
+}
+
+/** Serie histórica de los últimos `months` meses terminando en `month` (YYYY-MM). */
+export function useFinanceTrend(month: string, months = 6) {
+  return useQuery({
+    queryKey: ["finance_trend", month, months],
+    queryFn: () =>
+      api.get<TrendPoint[]>("/finance/trend", { month, months: String(months) }),
     enabled: !!month,
   });
 }
