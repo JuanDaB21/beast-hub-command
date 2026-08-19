@@ -46,6 +46,18 @@ export function useMarkShipped() {
   });
 }
 
+/** Marca un pedido como entregado. Solo cambia el estado. */
+export function useMarkDelivered() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/orders/${id}`, { status: "delivered" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+}
+
 export function useUpdateTracking() {
   const qc = useQueryClient();
   return useMutation({
