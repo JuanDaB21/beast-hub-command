@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -7,6 +7,8 @@ import { FinanceKpis } from "@/features/finance/FinanceKpis";
 import { FinanceFilters } from "@/features/finance/FinanceFilters";
 import { FinanceLedgerTable } from "@/features/finance/FinanceLedgerTable";
 import { TransactionDialog } from "@/features/finance/TransactionDialog";
+import { MonthSelector } from "@/features/finance/MonthSelector";
+import { ReconciliationChart } from "@/features/finance/ReconciliationChart";
 import {
   useFinancialTransactions,
   type FinanceFilters as F,
@@ -16,17 +18,25 @@ import {
 const fmt = (n: number) =>
   n.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
 
-const defaultFilters = (): F => ({
+const monthFilters = (month: Date): F => ({
   type: "all",
   category: "all",
-  from: startOfMonth(new Date()).toISOString(),
-  to: endOfMonth(new Date()).toISOString(),
+  from: startOfMonth(month).toISOString(),
+  to: endOfMonth(month).toISOString(),
   search: "",
 });
 
 export default function Finance() {
-  const [filters, setFilters] = useState<F>(defaultFilters());
+  const [month, setMonth] = useState<Date>(startOfMonth(new Date()));
+  const [filters, setFilters] = useState<F>(monthFilters(new Date()));
   const [dialogMode, setDialogMode] = useState<FinancialTransactionType | null>(null);
+
+  const monthStr = format(month, "yyyy-MM");
+
+  const handleMonthChange = (m: Date) => {
+    setMonth(m);
+    setFilters(monthFilters(m));
+  };
 
   const { data: transactions = [], isLoading } = useFinancialTransactions(filters);
 
@@ -56,12 +66,16 @@ export default function Finance() {
       description="Registro unificado de ingresos y gastos del negocio."
     >
       <div className="space-y-4">
+        <MonthSelector month={month} onChange={handleMonthChange} />
+
+        <ReconciliationChart month={monthStr} />
+
         <FinanceKpis transactions={transactions} />
 
         <FinanceFilters
           filters={filters}
           onChange={setFilters}
-          onReset={() => setFilters(defaultFilters())}
+          onReset={() => setFilters(monthFilters(month))}
           onAddIncome={() => setDialogMode("income")}
           onAddExpense={() => setDialogMode("expense")}
           extraCategories={extraCategories}

@@ -12,6 +12,8 @@ export interface FinancialTransaction {
   reference_id: string | null;
   description: string | null;
   created_at: string;
+  occurred_at: string;
+  payment_method: string | null;
   charged_to_staff_id: string | null;
   charged_to: { id: string; full_name: string | null } | null;
 }
@@ -24,7 +26,23 @@ export interface FinancialTransactionInput {
   reference_id?: string | null;
   description?: string | null;
   charged_to_staff_id?: string | null;
+  occurred_at?: string | null;
+  payment_method?: string | null;
 }
+
+/** Canales de pago para etiquetar ingresos y conciliar contra las órdenes. */
+export const PAYMENT_CHANNELS: { value: string; label: string }[] = [
+  { value: "bancolombia", label: "Bancolombia" },
+  { value: "nequi", label: "Nequi" },
+  { value: "daviplata", label: "Daviplata" },
+  { value: "fisico", label: "Físico" },
+  { value: "cod", label: "COD (contra entrega)" },
+];
+
+export const PAYMENT_CHANNEL_LABEL: Record<string, string> = {
+  ...Object.fromEntries(PAYMENT_CHANNELS.map((c) => [c.value, c.label])),
+  sin_asignar: "Sin asignar",
+};
 
 export interface FinanceFilters {
   type?: FinancialTransactionType | "all";
@@ -85,6 +103,8 @@ export interface UpdateTransactionInput {
   category?: string;
   description?: string | null;
   charged_to_staff_id?: string | null;
+  occurred_at?: string | null;
+  payment_method?: string | null;
 }
 
 export function useUpdateTransaction() {
@@ -97,6 +117,8 @@ export function useUpdateTransaction() {
         if (input.amount !== undefined) body.amount = input.amount;
         if (input.category !== undefined) body.category = input.category;
         if (input.description !== undefined) body.description = input.description ?? null;
+        if (input.occurred_at !== undefined) body.occurred_at = input.occurred_at;
+        if (input.payment_method !== undefined) body.payment_method = input.payment_method ?? null;
       }
       if (input.charged_to_staff_id !== undefined) {
         body.charged_to_staff_id = input.charged_to_staff_id ?? null;
@@ -123,4 +145,29 @@ export function useDeleteTransaction() {
 
 export async function insertTransaction(input: FinancialTransactionInput) {
   await api.post<FinancialTransaction>("/finance", input);
+}
+
+export interface ReconciliationRow {
+  method: string;
+  sales: number;
+  income: number;
+  diff: number;
+}
+
+export interface Reconciliation {
+  month: string;
+  by_method: ReconciliationRow[];
+  sales_total: number;
+  income_total: number;
+  expenses_total: number;
+  net: number;
+}
+
+/** month en formato YYYY-MM. */
+export function useReconciliation(month: string) {
+  return useQuery({
+    queryKey: ["finance_reconciliation", month],
+    queryFn: () => api.get<Reconciliation>("/finance/reconciliation", { month }),
+    enabled: !!month,
+  });
 }

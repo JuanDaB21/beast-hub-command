@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
+  PAYMENT_CHANNEL_LABEL,
   useDeleteTransaction,
   type FinancialTransaction,
 } from "./api";
@@ -79,6 +80,7 @@ export function FinanceLedgerTable({
               <TableHead>Fecha</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Categoría</TableHead>
+              <TableHead>Método</TableHead>
               <TableHead>Cargado a</TableHead>
               <TableHead>Descripción</TableHead>
               <TableHead>Origen</TableHead>
@@ -89,7 +91,7 @@ export function FinanceLedgerTable({
           <TableBody>
             {transactions.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                   No hay transacciones para los filtros seleccionados.
                 </TableCell>
               </TableRow>
@@ -100,7 +102,7 @@ export function FinanceLedgerTable({
               return (
                 <TableRow key={t.id}>
                   <TableCell className="whitespace-nowrap text-sm">
-                    {format(new Date(t.created_at), "dd MMM yyyy · HH:mm", { locale: es })}
+                    {format(new Date(t.occurred_at ?? t.created_at), "dd MMM yyyy", { locale: es })}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -111,6 +113,9 @@ export function FinanceLedgerTable({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">{t.category}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {t.payment_method ? (PAYMENT_CHANNEL_LABEL[t.payment_method] ?? t.payment_method) : "—"}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {t.charged_to?.full_name ?? "—"}
                   </TableCell>
@@ -162,7 +167,7 @@ export function FinanceLedgerTable({
           {transactions.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={6} className="text-right text-xs text-muted-foreground">
+                <TableCell colSpan={7} className="text-right text-xs text-muted-foreground">
                   Totales del filtro
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold">

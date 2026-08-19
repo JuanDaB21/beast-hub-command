@@ -1,10 +1,11 @@
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
 import { PackageCheck, Truck, Clock, Hash } from "lucide-react";
-import { slaFromCreatedAt, type ShipmentOrder } from "./api";
+import { slaFromCreatedAt, useMarkDelivered, type ShipmentOrder } from "./api";
 import { STATUS_LABEL } from "@/features/orders/status";
 import { statusTone } from "@/features/orders/status";
 
@@ -48,6 +49,16 @@ function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: () => v
   const sla = slaFromCreatedAt(order.created_at);
   const itemCount = order.items.reduce((acc, it) => acc + it.quantity, 0);
   const isShipped = order.status === "shipped";
+  const markDelivered = useMarkDelivered();
+
+  const handleDelivered = async () => {
+    try {
+      await markDelivered.mutateAsync(order.id);
+      toast.success(`Pedido ${order.order_number} entregado`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "No se pudo marcar como entregado");
+    }
+  };
 
   return (
     <Card className="flex flex-col gap-3 p-4">
@@ -127,6 +138,18 @@ function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: () => v
             </>
           )}
         </Button>
+        {isShipped && (
+          <Button
+            size="sm"
+            variant="default"
+            className="gap-1.5"
+            onClick={handleDelivered}
+            disabled={markDelivered.isPending}
+          >
+            <PackageCheck className="h-4 w-4" />
+            {markDelivered.isPending ? "Guardando..." : "Entregado"}
+          </Button>
+        )}
       </div>
     </Card>
   );
