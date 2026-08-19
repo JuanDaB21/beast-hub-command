@@ -18,6 +18,7 @@ import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
   PAYMENT_CHANNELS,
+  SALES_SOURCES,
   useCreateTransaction,
   useUpdateTransaction,
   type FinancialTransaction,
@@ -56,6 +57,7 @@ export function TransactionDialog({ mode, open, onOpenChange, transaction }: Pro
   const [chargedToId, setChargedToId] = useState<string | null>(null);
   const [occurred, setOccurred] = useState<Date>(new Date());
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [source, setSource] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -67,6 +69,7 @@ export function TransactionDialog({ mode, open, onOpenChange, transaction }: Pro
         setChargedToId(transaction.charged_to_staff_id ?? null);
         setOccurred(new Date(transaction.occurred_at ?? transaction.created_at));
         setPaymentMethod(transaction.payment_method ?? null);
+        setSource(transaction.source ?? null);
       } else {
         setAmount("");
         setCategory(categories[0]);
@@ -74,6 +77,7 @@ export function TransactionDialog({ mode, open, onOpenChange, transaction }: Pro
         setChargedToId(null);
         setOccurred(new Date());
         setPaymentMethod(null);
+        setSource(null);
       }
     }
   }, [open, mode, transaction]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -102,6 +106,7 @@ export function TransactionDialog({ mode, open, onOpenChange, transaction }: Pro
             charged_to_staff_id: chargedToId,
             occurred_at: occurred.toISOString(),
             payment_method: isIncome ? paymentMethod : null,
+            source: isIncome ? source : null,
           });
         } else {
           await update.mutateAsync({
@@ -130,6 +135,7 @@ export function TransactionDialog({ mode, open, onOpenChange, transaction }: Pro
           charged_to_staff_id: chargedToId,
           occurred_at: occurred.toISOString(),
           payment_method: isIncome ? paymentMethod : null,
+          source: isIncome ? source : null,
         });
         toast.success(
           `${isIncome ? "Ingreso" : "Gasto"} registrado por ${amt.toLocaleString("es-CO", {
@@ -202,25 +208,47 @@ export function TransactionDialog({ mode, open, onOpenChange, transaction }: Pro
             </Popover>
           </div>
           {isIncome && (
-            <div className="space-y-2">
-              <Label>Método de pago</Label>
-              <Select
-                value={paymentMethod ?? "none"}
-                onValueChange={(v) => setPaymentMethod(v === "none" ? null : v)}
-                disabled={accountingDisabled}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sin asignar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin asignar</SelectItem>
-                  {PAYMENT_CHANNELS.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Canal de venta</Label>
+                <Select
+                  value={source ?? "none"}
+                  onValueChange={(v) => setSource(v === "none" ? null : v)}
+                  disabled={accountingDisabled}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sin asignar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin asignar</SelectItem>
+                    {SALES_SOURCES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Método de pago</Label>
+                <Select
+                  value={paymentMethod ?? "none"}
+                  onValueChange={(v) => setPaymentMethod(v === "none" ? null : v)}
+                  disabled={accountingDisabled}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sin asignar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin asignar</SelectItem>
+                    {PAYMENT_CHANNELS.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
           <div className="space-y-2">
