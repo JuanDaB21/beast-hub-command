@@ -52,6 +52,9 @@ export interface Order {
   status: OrderStatus;
   is_cod: boolean;
   cod_confirmed: boolean;
+  payment_status: "paid" | "pending_verification";
+  payment_verified_at: string | null;
+  shopify_financial_status: string | null;
   payment_method: PaymentMethod | null;
   shopify_payment_gateway: string | null;
   total: number;
@@ -225,6 +228,15 @@ export function useConfirmCod() {
   return useMutation({
     mutationFn: ({ id, confirmed }: { id: string; confirmed: boolean }) =>
       api.patch<Order>(`/orders/${id}`, { cod_confirmed: confirmed }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_ORDERS }),
+  });
+}
+
+/** Marca una transferencia (Nequi u otra) como verificada → pasa a prepago. */
+export function useVerifyPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.post<Order>(`/orders/${id}/verify-payment`, {}),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_ORDERS }),
   });
 }

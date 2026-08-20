@@ -159,6 +159,31 @@ ordersRouter.patch(
 );
 
 /**
+ * POST /api/orders/:id/verify-payment
+ * Marca una transferencia (Nequi u otra) como verificada → pasa a prepago.
+ * El staff que verifica se toma de req.user (no del cliente), como en COD.
+ */
+ordersRouter.post(
+  '/:id/verify-payment',
+  asyncHandler(async (req, res) => {
+    const staffId = req.user?.id ?? null;
+    const { rows } = await pool.query(
+      `UPDATE orders
+         SET payment_status = 'paid',
+             payment_verified_at = now(),
+             verified_by_staff_id = $1
+       WHERE id = $2 AND payment_status = 'pending_verification'
+       RETURNING *`,
+      [staffId, String(req.params.id)]
+    );
+    if (!rows[0]) {
+      return res.status(404).json({ error: 'Pedido no encontrado o ya verificado' });
+    }
+    res.json(rows[0]);
+  })
+);
+
+/**
  * DELETE /api/orders/all
  * Borra TODAS las órdenes. order_items y returns caen por ON DELETE CASCADE.
  * Nota: financial_transactions.reference_id no es FK; sus filas quedan huérfanas

@@ -12,6 +12,7 @@ export interface RevenueByChannel {
 interface OrderSnapshot {
   source: "manual" | "shopify";
   payment_method: PaymentMethod | null;
+  payment_status: "paid" | "pending_verification";
   total: number;
   status: string;
   created_at: string;
@@ -39,6 +40,9 @@ export function useRevenueByPaymentMethod(range: { from: Date | null; to: Date |
       ensure("shopify", "Shopify / Online");
 
       for (const row of orders) {
+        // Un pago por verificar (Nequi/transferencia sin confirmar) aún no es
+        // ingreso real; se contará cuando se verifique.
+        if (row.payment_status === "pending_verification") continue;
         const total = Number(row.total) || 0;
         if (row.source === "shopify" || !row.payment_method) {
           const b = ensure("shopify", "Shopify / Online");

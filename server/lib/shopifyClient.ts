@@ -345,6 +345,12 @@ export interface MappedOrder {
   payment_gateway_raw: string | null;
   status: string;
   is_cod: boolean;
+  // 'paid' = prepago confirmado (Wompi/manual). 'pending_verification' =
+  // transferencia (Nequi u otra) que aún debe verificarse manualmente.
+  payment_status: 'paid' | 'pending_verification';
+  shopify_financial_status: string | null;
+  // Fecha real del pedido en Shopify (created_at), no la de sincronización.
+  created_at: string | null;
   shipping_cost: number;
   items: Array<{
     shopify_variant_id: string | null;
@@ -359,7 +365,13 @@ export function mapShopifyOrder(order: ShopifyOrder): MappedOrder {
   const c = order.customer;
   const firstName = c?.first_name ?? '';
   const lastName = c?.last_name ?? '';
-  const customer_name = [firstName, lastName].filter(Boolean).join(' ') || 'Cliente Shopify';
+  // Sin el scope de "protected customer data" la API no trae el objeto customer;
+  // caer al nombre de la dirección de envío/facturación antes que al genérico.
+  const customer_name =
+    [firstName, lastName].filter(Boolean).join(' ') ||
+    order.shipping_address?.name?.trim() ||
+    order.billing_address?.name?.trim() ||
+    'Cliente Shopify';
   const customer_phone =
     c?.phone || order.shipping_address?.phone || order.billing_address?.phone || 'N/A';
 
@@ -370,6 +382,14 @@ export function mapShopifyOrder(order: ShopifyOrder): MappedOrder {
     (order.shipping_address?.city || order.billing_address?.city || '').trim() || null;
 
   const payment_gateway_raw = (order.payment_gateway ?? '').trim() || null;
+
+  // Señal de "ya pagado": el Financial Status de Shopify. Un pedido no-COD que
+  // no está 'paid' (p. ej. Nequi/transferencia en 'pending') queda por verificar
+  // en vez de darse por prepago. COD sigue su propio flujo (is_cod/cod_confirmed).
+  const financial_status = (order.financial_status ?? '').trim().toLowerCase();
+  const is_cod = isCodGateway(order.payment_gateway);
+  const payment_status: 'paid' | 'pending_verification' =
+    !is_cod && financial_status !== 'paid' ? 'pending_verification' : 'paid';
 
   return {
     shopify_order_id: String(order.id),
@@ -382,7 +402,10 @@ export function mapShopifyOrder(order: ShopifyOrder): MappedOrder {
     customer_city,
     payment_gateway_raw,
     status: mapFulfillmentStatus(order.fulfillment_status),
-    is_cod: isCodGateway(order.payment_gateway),
+    is_cod,
+    payment_status,
+    shopify_financial_status: financial_status || null,
+    created_at: (order.created_at ?? '').trim() || null,
     shipping_cost: parseFloat(order.shipping_lines?.[0]?.price ?? '0') || 0,
     items: order.line_items.map((li) => ({
       shopify_variant_id: li.variant_id ? String(li.variant_id) : null,
@@ -814,14 +837,19 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
       //              Mark customer_pays_shipping=true, shipping_cost=0.
       //   prepaid  → shipping IS money that comes in; add it to the total via a
       //              virtual 'fee' line (same mechanism as the COD surcharge).
-      const isPrepaidWithShipping = !mapped.is_cod && mapped.shipping_cost > 0;
+      // Solo el envío de un prepago CONFIRMADO cuenta como ingreso. Para un pago
+      // por verificar (Nequi) no se suma hasta confirmarlo.
+      const isPrepaidWithShipping =
+        !mapped.is_cod && mapped.payment_status === 'paid' && mapped.shipping_cost > 0;
       const orderRes = await client.query(
         `INSERT INTO orders
            (order_number, source, customer_name, customer_phone,
             customer_address, customer_city, shopify_payment_gateway, status,
             is_cod, shipping_cost, customer_pays_shipping,
-            shopify_order_id, shopify_order_number)
-         VALUES ($1, 'shopify', $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11)
+            shopify_order_id, shopify_order_number,
+            payment_status, shopify_financial_status, created_at)
+         VALUES ($1, 'shopify', $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11,
+                 $12, $13, COALESCE($14::timestamptz, now()))
          RETURNING id`,
         [
           orderNumber,
@@ -835,6 +863,9 @@ export async function syncOrders(shopifyOrders: ShopifyOrder[]): Promise<SyncOrd
           mapped.is_cod, // customer_pays_shipping=true only for COD
           mapped.shopify_order_id,
           mapped.shopify_order_number,
+          mapped.payment_status,
+          mapped.shopify_financial_status,
+          mapped.created_at,
         ]
       );
       const orderId = orderRes.rows[0].id;

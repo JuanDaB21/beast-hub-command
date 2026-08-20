@@ -160,6 +160,9 @@ function OrderCard({
             {order.is_cod && (
               <StatusBadge tone={codTone} label={order.cod_confirmed ? "COD ok" : "COD pend."} />
             )}
+            {!order.is_cod && order.payment_status === "pending_verification" && (
+              <StatusBadge tone="red" label="Pago por verificar" />
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">{order.items.length} ítem(s)</span>
