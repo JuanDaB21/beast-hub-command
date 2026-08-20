@@ -23,6 +23,7 @@ import {
   useAddOrderItem,
   useUpdateOrderItem,
   useRemoveOrderItem,
+  useVerifyPayment,
   type OrderWithItems,
   type OrderItemWithProduct,
   type OrderStatus,
@@ -48,6 +49,10 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
   const addItem = useAddOrderItem();
   const updateItem = useUpdateOrderItem();
   const removeItem = useRemoveOrderItem();
+  const verifyPayment = useVerifyPayment();
+  // Prepago (no COD) cuya transferencia aún no se verifica (Nequi u otra).
+  const pendingVerification =
+    !order.is_cod && order.payment_status === "pending_verification";
   const editable = isOrderEditable(order.status);
   const colCount = editable ? 5 : 4;
   const productOptions = useMemo(
@@ -85,6 +90,15 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
     }
   };
 
+  const onVerifyPayment = async () => {
+    try {
+      await verifyPayment.mutateAsync(order.id);
+      toast({ title: "Pago verificado", description: "El pedido queda como prepago." });
+    } catch (err: any) {
+      toast({ title: "Error al verificar", description: err.message, variant: "destructive" });
+    }
+  };
+
   const onAddItem = async (input: {
     product_id: string;
     quantity: number;
@@ -116,6 +130,9 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
             label={order.cod_confirmed ? "COD confirmado" : "COD pendiente"}
           />
         )}
+        {pendingVerification && (
+          <StatusBadge tone="red" label="Pago por verificar" />
+        )}
         {order.payment_method && (
           <StatusBadge tone="neutral" label={`Pago: ${PAYMENT_METHOD_LABEL[order.payment_method]}`} />
         )}
@@ -130,12 +147,20 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
       {/* Tipo de pago prominente para que se detecte de un vistazo. */}
       <div
         className={`rounded-md border-2 p-3 ${
-          order.is_cod ? "border-amber-400 bg-amber-50" : "border-emerald-400 bg-emerald-50"
+          order.is_cod
+            ? "border-amber-400 bg-amber-50"
+            : pendingVerification
+              ? "border-orange-400 bg-orange-50"
+              : "border-emerald-400 bg-emerald-50"
         }`}
       >
         <div className="text-xs uppercase tracking-wide text-muted-foreground">Tipo de pago</div>
         <div className="text-lg font-bold">
-          {order.is_cod ? "CONTRA ENTREGA (COD)" : "PREPAGO"}
+          {order.is_cod
+            ? "CONTRA ENTREGA (COD)"
+            : pendingVerification
+              ? "PAGO POR VERIFICAR"
+              : "PREPAGO"}
         </div>
         {order.shopify_payment_gateway && (
           <div className="text-sm text-muted-foreground">{order.shopify_payment_gateway}</div>
@@ -143,6 +168,21 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
         {order.payment_method && (
           <div className="text-sm text-muted-foreground">
             Método: {PAYMENT_METHOD_LABEL[order.payment_method]}
+          </div>
+        )}
+        {pendingVerification && (
+          <div className="mt-2">
+            <div className="mb-2 text-sm text-muted-foreground">
+              La transferencia debe verificarse antes de darla por pagada.
+            </div>
+            <Button
+              type="button"
+              className="w-full"
+              disabled={verifyPayment.isPending}
+              onClick={onVerifyPayment}
+            >
+              Verificar pago
+            </Button>
           </div>
         )}
       </div>

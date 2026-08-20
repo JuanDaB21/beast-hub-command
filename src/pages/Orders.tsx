@@ -98,10 +98,13 @@ export default function Orders() {
     const total = orders.length;
     const pending = orders.filter((o) => o.status === "pending").length;
     const codPending = orders.filter((o) => o.is_cod && !o.cod_confirmed).length;
+    const paymentPending = orders.filter(
+      (o) => !o.is_cod && o.payment_status === "pending_verification",
+    ).length;
     const revenue = orders
       .filter((o) => o.status === "delivered")
       .reduce((acc, o) => acc + Number(o.total), 0);
-    return { total, pending, codPending, revenue };
+    return { total, pending, codPending, paymentPending, revenue };
   }, [orders]);
 
   const handleDelete = async () => {
@@ -176,10 +179,11 @@ export default function Orders() {
       description="OMS omnicanal — pedidos manuales (WhatsApp) y Shopify."
       actions={headerActions}
     >
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <KPI label="Pedidos totales" value={String(stats.total)} />
         <KPI label="Pendientes" value={String(stats.pending)} tone="yellow" />
         <KPI label="COD por confirmar" value={String(stats.codPending)} tone="red" />
+        <KPI label="Pagos por verificar" value={String(stats.paymentPending)} tone="red" />
         <KPI label="Ingresos entregados" value={currency(stats.revenue)} />
       </div>
 
