@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ChevronDown, ChevronRight, LineChart, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils";
 import type { Product, ProductWithChildren } from "./api";
@@ -22,7 +22,7 @@ import { getStockStatus, isAgingFlagged } from "./status";
 import { matchesAllTokens } from "@/lib/textSearch";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 interface Props {
   parents: ProductWithChildren[];
@@ -32,6 +32,9 @@ interface Props {
   onDeleteParent: (p: ProductWithChildren) => void;
   onEditVariant: (p: Product) => void;
   onDeleteVariant: (p: Product) => void;
+  onShowProfit: (p: ProductWithChildren) => void;
+  onArchiveParent: (p: ProductWithChildren) => void;
+  archivedView: boolean;
 }
 
 export function ProductsTable({
@@ -42,6 +45,9 @@ export function ProductsTable({
   onDeleteParent,
   onEditVariant,
   onDeleteVariant,
+  onShowProfit,
+  onArchiveParent,
+  archivedView,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -133,6 +139,20 @@ export function ProductsTable({
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => onEditParent(parent)}>
                                 <Pencil className="mr-2 h-4 w-4" /> Editar padre
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onShowProfit(parent)}>
+                                <LineChart className="mr-2 h-4 w-4" /> Costo y rentabilidad
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onArchiveParent(parent)}>
+                                {archivedView ? (
+                                  <>
+                                    <ArchiveRestore className="mr-2 h-4 w-4" /> Restaurar
+                                  </>
+                                ) : (
+                                  <>
+                                    <Archive className="mr-2 h-4 w-4" /> Archivar
+                                  </>
+                                )}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => onDeleteParent(parent)}

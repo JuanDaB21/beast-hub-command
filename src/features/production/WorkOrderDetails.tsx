@@ -24,9 +24,11 @@ import {
   useRemoveWorkOrderItem,
   useUpdateWorkOrderItemQty,
   useUpdateWorkOrderStatus,
+  useToggleWorkOrderItemProcess,
   type WorkOrderItemRow,
   type WorkOrderWithItems,
 } from "./api";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useProducts } from "@/features/inventory/api";
 import { workOrderLabel, workOrderTone } from "./status";
 import { toast } from "sonner";
@@ -254,48 +256,80 @@ function WorkOrderItemRowView({
 
   if (!editable) {
     return (
-      <li className="flex items-center justify-between p-3 text-sm">
-        <div className="min-w-0">
-          <p className="font-medium line-clamp-2">{item.product?.name ?? "—"}</p>
-          <p className="text-xs text-muted-foreground">{item.product?.sku ?? ""}</p>
+      <li className="p-3 text-sm">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0">
+            <p className="font-medium line-clamp-2">{item.product?.name ?? "—"}</p>
+            <p className="text-xs text-muted-foreground">{item.product?.sku ?? ""}</p>
+          </div>
+          <p className="tabular-nums font-medium">×{item.quantity_to_produce}</p>
         </div>
-        <p className="tabular-nums font-medium">×{item.quantity_to_produce}</p>
+        <ProcessChecklist item={item} editable={false} />
       </li>
     );
   }
 
   return (
-    <li className="flex items-center gap-2 p-3 text-sm">
-      <div className="min-w-0 flex-1">
-        <p className="font-medium line-clamp-2">{item.product?.name ?? "—"}</p>
-        <p className="text-xs text-muted-foreground">{item.product?.sku ?? ""}</p>
+    <li className="p-3 text-sm">
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="font-medium line-clamp-2">{item.product?.name ?? "—"}</p>
+          <p className="text-xs text-muted-foreground">{item.product?.sku ?? ""}</p>
+        </div>
+        <Input
+          type="number"
+          min={1}
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+          disabled={updateQty.isPending}
+          className="w-20 text-right tabular-nums"
+        />
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          onClick={handleRemove}
+          disabled={remove.isPending}
+          aria-label="Eliminar del lote"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
-      <Input
-        type="number"
-        min={1}
-        value={qty}
-        onChange={(e) => setQty(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            (e.target as HTMLInputElement).blur();
-          }
-        }}
-        disabled={updateQty.isPending}
-        className="w-20 text-right tabular-nums"
-      />
-      <Button
-        type="button"
-        size="icon"
-        variant="ghost"
-        onClick={handleRemove}
-        disabled={remove.isPending}
-        aria-label="Eliminar del lote"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      <ProcessChecklist item={item} editable />
     </li>
+  );
+}
+
+function ProcessChecklist({ item, editable }: { item: WorkOrderItemRow; editable: boolean }) {
+  const toggle = useToggleWorkOrderItemProcess();
+  if (!item.processes || item.processes.length === 0) return null;
+  return (
+    <div className="mt-2 flex flex-wrap gap-2 pl-1">
+      {item.processes.map((proc) => (
+        <label
+          key={proc.id}
+          className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${
+            editable ? "cursor-pointer hover:bg-muted/50" : ""
+          } ${proc.is_completed ? "bg-status-green/10 border-status-green/30" : "bg-background"}`}
+        >
+          <Checkbox
+            checked={proc.is_completed}
+            disabled={!editable || toggle.isPending}
+            onCheckedChange={(v) => toggle.mutate({ id: proc.id, is_completed: !!v })}
+          />
+          <span className={proc.is_completed ? "line-through text-muted-foreground" : ""}>
+            {proc.name}
+          </span>
+        </label>
+      ))}
+    </div>
   );
 }
 

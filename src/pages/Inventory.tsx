@@ -22,10 +22,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search } from "lucide-react";
+import { Archive, Plus, Search } from "lucide-react";
 import {
   useDeleteProduct,
   useDeleteProductTree,
+  useSetProductTreeActive,
   useProductTree,
   type Product,
   type ProductWithChildren,
@@ -35,6 +36,7 @@ import { ProductsMobileList } from "@/features/inventory/ProductsMobileList";
 import { matchesAllTokens } from "@/lib/textSearch";
 import { ProductForm } from "@/features/inventory/ProductForm";
 import { VariantEditDialog } from "@/features/inventory/VariantEditDialog";
+import { ProductProfitPanel } from "@/features/inventory/ProductProfitPanel";
 import { AvailableVariantsList } from "@/features/inventory/AvailableVariantsList";
 import { getStockStatus, isAgingFlagged } from "@/features/inventory/status";
 import { toast } from "@/hooks/use-toast";
@@ -43,17 +45,23 @@ export default function Inventory() {
   const { parents, orphans, isLoading } = useProductTree();
   const delOne = useDeleteProduct();
   const delTree = useDeleteProductTree();
+  const setTreeActive = useSetProductTreeActive();
 
   const [filter, setFilter] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editingParent, setEditingParent] = useState<Product | null>(null);
   const [editingVariant, setEditingVariant] = useState<Product | null>(null);
+  const [profitParent, setProfitParent] = useState<ProductWithChildren | null>(null);
   const [confirmDeleteVariant, setConfirmDeleteVariant] = useState<Product | null>(null);
   const [confirmDeleteTree, setConfirmDeleteTree] = useState<ProductWithChildren | null>(null);
 
-  // KPIs sumando hijos + huérfanos
+  // KPIs sumando hijos + huérfanos (solo activos)
   const stats = useMemo(() => {
-    const allItems: Product[] = [...orphans, ...parents.flatMap((p) => p.children)];
+    const allItems: Product[] = [
+      ...orphans.filter((o) => o.active),
+      ...parents.filter((p) => p.active).flatMap((p) => p.children),
+    ];
     let outOfStock = 0;
     let critical = 0;
     let aging = 0;
@@ -96,6 +104,20 @@ export default function Inventory() {
     }
   };
 
+  const handleArchiveTree = async (p: ProductWithChildren) => {
+    try {
+      // En vista activa archiva (active=false); en vista de archivados restaura.
+      await setTreeActive.mutateAsync({ parentId: p.id, active: showArchived });
+      toast({ title: showArchived ? "Producto restaurado" : "Producto archivado" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // Vistas: activos (active !== false) vs archivados (active === false).
+  const shownParents = parents.filter((p) => (showArchived ? !p.active : p.active));
+  const shownOrphans = orphans.filter((o) => (showArchived ? !o.active : o.active));
+
   const headerActions = (
     <Button size="sm" className="gap-2" onClick={() => setCreateOpen(true)}>
       <Plus className="h-4 w-4" />
@@ -136,6 +158,15 @@ export default function Inventory() {
                 className="pl-8"
               />
             </div>
+            <Button
+              variant={showArchived ? "default" : "outline"}
+              size="sm"
+              className="gap-2"
+              onClick={() => setShowArchived((v) => !v)}
+            >
+              <Archive className="h-4 w-4" />
+              {showArchived ? "Ver activos" : "Ver archivados"}
+            </Button>
           </div>
 
           {isLoading ? (
@@ -148,7 +179,7 @@ export default function Inventory() {
             <>
               <div className="lg:hidden">
                 <ProductsMobileList
-                  parents={parents.filter(
+                  parents={shownParents.filter(
                     (p) =>
                       !filter ||
                       matchesAllTokens(
@@ -156,24 +187,30 @@ export default function Inventory() {
                         filter,
                       ),
                   )}
-                  orphans={orphans.filter(
+                  orphans={shownOrphans.filter(
                     (p) => !filter || matchesAllTokens(`${p.sku} ${p.name}`, filter),
                   )}
                   onEditParent={setEditingParent}
                   onDeleteParent={setConfirmDeleteTree}
                   onEditVariant={setEditingVariant}
                   onDeleteVariant={setConfirmDeleteVariant}
+                  onShowProfit={setProfitParent}
+                  onArchiveParent={handleArchiveTree}
+                  archivedView={showArchived}
                 />
               </div>
               <div className="hidden lg:block">
                 <ProductsTable
-                  parents={parents}
-                  orphans={orphans}
+                  parents={shownParents}
+                  orphans={shownOrphans}
                   globalFilter={filter}
                   onEditParent={setEditingParent}
                   onDeleteParent={setConfirmDeleteTree}
                   onEditVariant={setEditingVariant}
                   onDeleteVariant={setConfirmDeleteVariant}
+                  onShowProfit={setProfitParent}
+                  onArchiveParent={handleArchiveTree}
+                  archivedView={showArchived}
                 />
               </div>
             </>
@@ -224,6 +261,17 @@ export default function Inventory() {
         variant={editingVariant}
         open={!!editingVariant}
         onOpenChange={(o) => !o && setEditingVariant(null)}
+        onRequestDelete={(v) => {
+          setEditingVariant(null);
+          setConfirmDeleteVariant(v);
+        }}
+      />
+
+      {/* Costo y rentabilidad por producto */}
+      <ProductProfitPanel
+        parent={profitParent}
+        open={!!profitParent}
+        onOpenChange={(o) => !o && setProfitParent(null)}
       />
 
       {/* Confirmar borrar variante */}

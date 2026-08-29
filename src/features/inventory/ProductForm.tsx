@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Calculator, Loader2, AlertTriangle } from "lucide-react";
+import { Calculator, Loader2, AlertTriangle, Plus, Search, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,9 @@ import {
 import { useRawMaterials } from "@/features/sourcing/api";
 import { groupMaterials } from "@/features/sourcing/groupHelpers";
 import { useGlobalConfigs } from "@/features/production/configApi";
-import { usePrintDesigns, type PrintDesign } from "@/features/print-designs/api";
+import { usePrintDesignTree, type PrintDesign } from "@/features/print-designs/api";
+import { DesignDialog } from "@/features/print-designs/DesignDialog";
+import { useProductionProcesses } from "@/features/production-processes/api";
 import { toast } from "@/hooks/use-toast";
 import { VariantPreviewTable, type PreviewRow } from "./VariantPreviewTable";
 
@@ -60,6 +62,11 @@ export function ProductForm({ product, onSuccess }: Props) {
 
   // ── Estampados (selección desde catálogo) ────────────────────────
   const [selectedDesignIds, setSelectedDesignIds] = useState<Set<string>>(new Set());
+  const [designSearch, setDesignSearch] = useState("");
+  const [designDialogOpen, setDesignDialogOpen] = useState(false);
+
+  // ── Procesos adicionales (aplican a todas las variantes generadas) ──
+  const [selectedProcessIds, setSelectedProcessIds] = useState<Set<string>>(new Set());
 
   // ── Defaults aplicados a todas las variantes ─────────────────────
   const [defStock, setDefStock] = useState(0);
@@ -70,7 +77,8 @@ export function ProductForm({ product, onSuccess }: Props) {
 
   const { data: products = [] } = useProducts();
   const { data: rawMaterials = [] } = useRawMaterials();
-  const { data: printDesigns = [] } = usePrintDesigns({ active: true });
+  const { data: printDesigns = [], roots: designRoots } = usePrintDesignTree({ active: true });
+  const { data: processes = [] } = useProductionProcesses({ active: true });
   const { data: configs } = useGlobalConfigs();
   const createWithVariants = useCreateProductWithVariants();
   const addVariants = useAddVariantsToParent();
@@ -97,6 +105,7 @@ export function ProductForm({ product, onSuccess }: Props) {
     setSelectedColors(new Set());
     setSelectedSizes(new Set());
     setSelectedDesignIds(new Set());
+    setSelectedProcessIds(new Set());
     setDefStock(0);
     setDefSafety(0);
     setDefAging(30);
@@ -173,6 +182,30 @@ export function ProductForm({ product, onSuccess }: Props) {
       return next;
     });
   };
+
+  const toggleProcess = (id: string) => {
+    setSelectedProcessIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Árbol de estampados filtrado por el buscador (padre visible si él o algún hijo coincide).
+  const filteredDesignRoots = useMemo(() => {
+    const q = designSearch.trim().toLowerCase();
+    if (!q) return designRoots;
+    return designRoots
+      .map((root) => {
+        const rootMatch = root.name.toLowerCase().includes(q);
+        const kids = root.children.filter((c) => c.name.toLowerCase().includes(q));
+        if (rootMatch) return root; // muestra el padre completo
+        if (kids.length > 0) return { ...root, children: kids };
+        return null;
+      })
+      .filter((r): r is (typeof designRoots)[number] => r !== null);
+  }, [designRoots, designSearch]);
 
   // ── Vista previa de variantes ───────────────────────────────────
   const previewRows: PreviewRow[] = useMemo(() => {
@@ -338,6 +371,7 @@ export function ProductForm({ product, onSuccess }: Props) {
             parentUrl: productUrl.trim() || null,
             parentActive: active,
             variants: newVariants,
+            processIds: Array.from(selectedProcessIds),
           });
           toast({
             title: "Producto actualizado",
@@ -415,7 +449,11 @@ export function ProductForm({ product, onSuccess }: Props) {
     };
 
     try {
-      await createWithVariants.mutateAsync({ parent: parentInput, variants });
+      await createWithVariants.mutateAsync({
+        parent: parentInput,
+        variants,
+        processIds: Array.from(selectedProcessIds),
+      });
       toast({ title: "Producto creado", description: `${variants.length} variantes generadas.` });
       onSuccess?.();
     } catch (err) {
@@ -562,35 +600,53 @@ export function ProductForm({ product, onSuccess }: Props) {
 
       {/* 3. Estampados */}
       <section className="space-y-3 rounded-lg border p-4">
-        <h3 className="text-sm font-semibold">3. Estampados</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">3. Estampados</h3>
+          <Button type="button" size="sm" variant="outline" onClick={() => setDesignDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Nuevo estampado
+          </Button>
+        </div>
+
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar estampado por nombre..."
+            value={designSearch}
+            onChange={(e) => setDesignSearch(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+
         {printDesigns.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            No hay estampados activos. Créalos en{" "}
-            <span className="font-medium">Configuración → Estampados</span>.
+            No hay estampados activos. Crea uno con el botón{" "}
+            <span className="font-medium">Nuevo estampado</span>.
           </p>
+        ) : filteredDesignRoots.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Sin resultados para "{designSearch}".</p>
         ) : (
           <>
-            <div className="flex flex-wrap gap-2">
-              {printDesigns.map((d) => (
-                <label
-                  key={d.id}
-                  className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 cursor-pointer hover:bg-muted/50"
-                >
-                  <Checkbox
-                    checked={selectedDesignIds.has(d.id)}
-                    onCheckedChange={() => toggleDesign(d.id)}
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {filteredDesignRoots.map((root) => (
+                <div key={root.id} className="space-y-1.5">
+                  <DesignCheckbox
+                    d={root}
+                    checked={selectedDesignIds.has(root.id)}
+                    onToggle={() => toggleDesign(root.id)}
                   />
-                  <span
-                    className="inline-block h-3.5 w-3.5 rounded-full border border-border flex-shrink-0"
-                    style={{ backgroundColor: d.hex_code }}
-                  />
-                  <span className="text-sm">{d.name}</span>
-                  {d.ink_raw_material && (
-                    <Badge variant="secondary" className="text-xs py-0">
-                      tinta
-                    </Badge>
+                  {root.children.length > 0 && (
+                    <div className="ml-6 flex flex-wrap gap-2">
+                      {root.children.map((child) => (
+                        <DesignCheckbox
+                          key={child.id}
+                          d={child}
+                          checked={selectedDesignIds.has(child.id)}
+                          onToggle={() => toggleDesign(child.id)}
+                        />
+                      ))}
+                    </div>
                   )}
-                </label>
+                </div>
               ))}
             </div>
             {selectedDesignIds.size === 0 && (
@@ -598,6 +654,41 @@ export function ProductForm({ product, onSuccess }: Props) {
                 Sin selección: se crea una variante por color×talla sin estampado.
               </p>
             )}
+          </>
+        )}
+      </section>
+
+      {/* 3b. Procesos adicionales */}
+      <section className="space-y-3 rounded-lg border p-4">
+        <h3 className="text-sm font-semibold">Procesos adicionales</h3>
+        {processes.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            No hay procesos activos. Créalos en{" "}
+            <span className="font-medium">Configuración → Procesos</span>.
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {processes.map((p) => (
+                <label
+                  key={p.id}
+                  className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 cursor-pointer hover:bg-muted/50"
+                >
+                  <Checkbox
+                    checked={selectedProcessIds.has(p.id)}
+                    onCheckedChange={() => toggleProcess(p.id)}
+                  />
+                  <span className="text-sm">{p.name}</span>
+                  <Badge variant="secondary" className="text-xs py-0">
+                    {COP(Number(p.cost))}
+                  </Badge>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Se aplican a todas las variantes generadas y aparecen como checklist en las órdenes
+              de trabajo.
+            </p>
           </>
         )}
       </section>
@@ -667,7 +758,56 @@ export function ProductForm({ product, onSuccess }: Props) {
         {pending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
         {submitLabel}
       </Button>
+
+      {/* Crear estampado inline (+) */}
+      <DesignDialog
+        open={designDialogOpen}
+        onClose={() => setDesignDialogOpen(false)}
+        initial={null}
+        onCreated={(design) => {
+          setSelectedDesignIds((prev) => new Set(prev).add(design.id));
+          setDesignSearch("");
+        }}
+      />
     </form>
+  );
+}
+
+function DesignCheckbox({
+  d,
+  checked,
+  onToggle,
+}: {
+  d: PrintDesign;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <label className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 cursor-pointer hover:bg-muted/50">
+      <Checkbox checked={checked} onCheckedChange={onToggle} />
+      <span
+        className="inline-block h-3.5 w-3.5 rounded-full border border-border flex-shrink-0"
+        style={{ backgroundColor: d.hex_code }}
+      />
+      <span className="text-sm">{d.name}</span>
+      {d.ink_raw_material && (
+        <Badge variant="secondary" className="text-xs py-0">
+          tinta
+        </Badge>
+      )}
+      {d.drive_url && (
+        <a
+          href={d.drive_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-primary hover:text-primary/80"
+          title="Abrir archivo DTF"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      )}
+    </label>
   );
 }
 

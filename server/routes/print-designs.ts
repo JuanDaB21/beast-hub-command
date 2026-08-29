@@ -8,6 +8,8 @@ const COLS = [
   'ink_raw_material_id',
   'ink_grams_per_cm',
   'active',
+  'drive_url',
+  'parent_design_id',
 ] as const;
 
 const SELECT_WITH_RM = `
@@ -16,7 +18,8 @@ const SELECT_WITH_RM = `
     CASE WHEN rm.id IS NOT NULL
       THEN json_build_object(
         'id', rm.id, 'name', rm.name, 'sku', rm.sku,
-        'stock', rm.stock, 'unit_of_measure', rm.unit_of_measure
+        'stock', rm.stock, 'unit_of_measure', rm.unit_of_measure,
+        'unit_price', rm.unit_price
       )
       ELSE NULL END AS ink_raw_material
   FROM print_designs pd

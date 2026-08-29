@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ChevronDown, ChevronRight, LineChart, Pencil, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { getStockStatus, isAgingFlagged } from "./status";
 import type { Product, ProductWithChildren } from "./api";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 interface Props {
   parents: ProductWithChildren[];
@@ -17,6 +17,9 @@ interface Props {
   onDeleteParent: (p: ProductWithChildren) => void;
   onEditVariant: (p: Product) => void;
   onDeleteVariant: (p: Product) => void;
+  onShowProfit: (p: ProductWithChildren) => void;
+  onArchiveParent: (p: ProductWithChildren) => void;
+  archivedView: boolean;
 }
 
 export function ProductsMobileList({
@@ -26,6 +29,9 @@ export function ProductsMobileList({
   onDeleteParent,
   onEditVariant,
   onDeleteVariant,
+  onShowProfit,
+  onArchiveParent,
+  archivedView,
 }: Props) {
   if (parents.length === 0 && orphans.length === 0) {
     return (
@@ -44,6 +50,9 @@ export function ProductsMobileList({
           onDeleteParent={onDeleteParent}
           onEditVariant={onEditVariant}
           onDeleteVariant={onDeleteVariant}
+          onShowProfit={onShowProfit}
+          onArchiveParent={onArchiveParent}
+          archivedView={archivedView}
         />
       ))}
       {orphans.map((p) => {
@@ -88,12 +97,18 @@ function ParentCard({
   onDeleteParent,
   onEditVariant,
   onDeleteVariant,
+  onShowProfit,
+  onArchiveParent,
+  archivedView,
 }: {
   parent: ProductWithChildren;
   onEditParent: (p: Product) => void;
   onDeleteParent: (p: ProductWithChildren) => void;
   onEditVariant: (p: Product) => void;
   onDeleteVariant: (p: Product) => void;
+  onShowProfit: (p: ProductWithChildren) => void;
+  onArchiveParent: (p: ProductWithChildren) => void;
+  archivedView: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const totalStock = parent.children.reduce((a, c) => a + Number(c.stock), 0);
@@ -123,6 +138,20 @@ function ParentCard({
         <div className="mt-2 flex gap-2">
           <Button size="sm" variant="outline" className="flex-1" onClick={() => onEditParent(parent)}>
             <Pencil className="mr-1 h-3.5 w-3.5" /> Padre
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onShowProfit(parent)}>
+            <LineChart className="mr-1 h-3.5 w-3.5" /> Costo
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onArchiveParent(parent)}>
+            {archivedView ? (
+              <>
+                <ArchiveRestore className="mr-1 h-3.5 w-3.5" /> Restaurar
+              </>
+            ) : (
+              <>
+                <Archive className="mr-1 h-3.5 w-3.5" /> Archivar
+              </>
+            )}
           </Button>
           <Button
             size="sm"

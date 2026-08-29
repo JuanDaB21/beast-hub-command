@@ -149,9 +149,9 @@ export async function materializeBom(
 
   // Base row — always.
   await client.query(
-    `INSERT INTO product_materials (product_id, raw_material_id, quantity_required)
-     VALUES ($1, $2, 1)
-     ON CONFLICT (product_id, raw_material_id) DO UPDATE SET quantity_required = EXCLUDED.quantity_required`,
+    `INSERT INTO product_materials (product_id, raw_material_id, quantity_required, role)
+     VALUES ($1, $2, 1, 'base')
+     ON CONFLICT (product_id, raw_material_id) DO UPDATE SET quantity_required = EXCLUDED.quantity_required, role = 'base'`,
     [productId, spec.raw_material_id]
   );
 
@@ -177,9 +177,9 @@ export async function materializeBom(
         const inkQty = Number(design.ink_grams_per_cm) * spec.print_height_cm;
         if (inkQty > 0 && design.ink_raw_material_id !== spec.raw_material_id) {
           await client.query(
-            `INSERT INTO product_materials (product_id, raw_material_id, quantity_required)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (product_id, raw_material_id) DO UPDATE SET quantity_required = EXCLUDED.quantity_required`,
+            `INSERT INTO product_materials (product_id, raw_material_id, quantity_required, role)
+             VALUES ($1, $2, $3, 'ink')
+             ON CONFLICT (product_id, raw_material_id) DO UPDATE SET quantity_required = EXCLUDED.quantity_required, role = 'ink'`,
             [productId, design.ink_raw_material_id, inkQty]
           );
         }

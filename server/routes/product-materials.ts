@@ -4,7 +4,7 @@ import { asyncHandler } from '../util';
 
 const SELECT_WITH_RM = `
   SELECT
-    pm.id, pm.product_id, pm.raw_material_id, pm.quantity_required,
+    pm.id, pm.product_id, pm.raw_material_id, pm.quantity_required, pm.role,
     json_build_object(
       'id', rm.id, 'name', rm.name, 'sku', rm.sku,
       'stock', rm.stock, 'unit_of_measure', rm.unit_of_measure,
@@ -67,12 +67,12 @@ productMaterialsRouter.post(
         await client.query('BEGIN');
         for (const it of req.body) {
           const { rows } = await client.query(
-            `INSERT INTO product_materials (product_id, raw_material_id, quantity_required)
-             VALUES ($1, $2, $3)
+            `INSERT INTO product_materials (product_id, raw_material_id, quantity_required, role)
+             VALUES ($1, $2, $3, COALESCE($4, 'base'))
              ON CONFLICT (product_id, raw_material_id)
-             DO UPDATE SET quantity_required = EXCLUDED.quantity_required
+             DO UPDATE SET quantity_required = EXCLUDED.quantity_required, role = EXCLUDED.role
              RETURNING *`,
-            [it.product_id, it.raw_material_id, it.quantity_required]
+            [it.product_id, it.raw_material_id, it.quantity_required, it.role ?? null]
           );
           inserted.push(rows[0]);
         }
@@ -86,19 +86,19 @@ productMaterialsRouter.post(
       return res.status(201).json(inserted);
     }
 
-    const { product_id, raw_material_id, quantity_required } = req.body ?? {};
+    const { product_id, raw_material_id, quantity_required, role } = req.body ?? {};
     if (!product_id || !raw_material_id || quantity_required === undefined) {
       return res
         .status(400)
         .json({ error: 'product_id, raw_material_id, quantity_required requeridos' });
     }
     const { rows } = await pool.query(
-      `INSERT INTO product_materials (product_id, raw_material_id, quantity_required)
-       VALUES ($1, $2, $3)
+      `INSERT INTO product_materials (product_id, raw_material_id, quantity_required, role)
+       VALUES ($1, $2, $3, COALESCE($4, 'base'))
        ON CONFLICT (product_id, raw_material_id)
-       DO UPDATE SET quantity_required = EXCLUDED.quantity_required
+       DO UPDATE SET quantity_required = EXCLUDED.quantity_required, role = EXCLUDED.role
        RETURNING *`,
-      [product_id, raw_material_id, quantity_required]
+      [product_id, raw_material_id, quantity_required, role ?? null]
     );
     res.status(201).json(rows[0]);
   })

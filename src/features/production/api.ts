@@ -22,6 +22,13 @@ export interface WorkOrder {
   updated_at: string;
 }
 
+export interface WorkOrderItemProcess {
+  id: string;
+  process_id: string;
+  name: string;
+  is_completed: boolean;
+}
+
 export interface WorkOrderItemRow {
   id: string;
   work_order_id: string;
@@ -30,17 +37,21 @@ export interface WorkOrderItemRow {
   is_dtf_added: boolean;
   is_completed: boolean;
   product: { id: string; sku: string; name: string } | null;
+  processes: WorkOrderItemProcess[];
 }
 
 export interface WorkOrderWithItems extends WorkOrder {
   items: WorkOrderItemRow[];
 }
 
+export type BomRole = "base" | "ink" | "process";
+
 export interface ProductMaterial {
   id: string;
   product_id: string;
   raw_material_id: string;
   quantity_required: number;
+  role: BomRole;
   raw_material?: {
     id: string;
     name: string;
@@ -48,6 +59,7 @@ export interface ProductMaterial {
     stock: number;
     unit_of_measure: string;
     supplier_id?: string | null;
+    unit_price?: number;
   } | null;
 }
 
@@ -156,8 +168,12 @@ export function useProductMaterialsBatch(productIds: string[]) {
 export function useUpsertProductMaterial() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { product_id: string; raw_material_id: string; quantity_required: number }) =>
-      api.post<ProductMaterial>("/product-materials", input),
+    mutationFn: (input: {
+      product_id: string;
+      raw_material_id: string;
+      quantity_required: number;
+      role?: BomRole;
+    }) => api.post<ProductMaterial>("/product-materials", input),
     onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: QK_BOM(vars.product_id) }),
   });
 }
@@ -185,6 +201,15 @@ export function useToggleWorkOrderItemCompleted() {
   return useMutation({
     mutationFn: ({ id, is_completed }: { id: string; is_completed: boolean }) =>
       api.patch(`/work-orders/items/${id}`, { is_completed }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK_WO }),
+  });
+}
+
+export function useToggleWorkOrderItemProcess() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, is_completed }: { id: string; is_completed: boolean }) =>
+      api.patch(`/work-orders/item-processes/${id}`, { is_completed }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_WO }),
   });
 }
