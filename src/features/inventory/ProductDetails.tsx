@@ -5,7 +5,7 @@ import { getStockStatus, isAgingFlagged, AGING_THRESHOLD_DAYS } from "./status";
 import type { Product } from "./api";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 export function ProductDetails({ product }: { product: Product }) {
   const stock = getStockStatus(product);

@@ -46,6 +46,7 @@ export interface ProductInput {
   parent_id?: string | null;
   is_parent?: boolean;
   print_design?: string | null;
+  print_design_id?: string | null;
 }
 
 export interface ProductWithChildren extends Product {
@@ -117,6 +118,22 @@ export function useDeleteProduct() {
   });
 }
 
+/**
+ * Archiva (o restaura) un padre y todas sus variantes hijas poniendo `active`.
+ * No borra filas: las ventas conservan su producto (nombre/precio) intactos.
+ */
+export function useSetProductTreeActive() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ parentId, active }: { parentId: string; active: boolean }) => {
+      const kids = await api.get<Product[]>("/products", { parent_id: parentId });
+      const allIds = [parentId, ...kids.map((k) => k.id)];
+      await Promise.all(allIds.map((id) => api.patch(`/products/${id}`, { active })));
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+  });
+}
+
 /** Elimina un padre + todas sus variantes hijas y su BOM. */
 export function useDeleteProductTree() {
   const qc = useQueryClient();
@@ -157,9 +174,11 @@ export function useCreateProductWithVariants() {
     mutationFn: async ({
       parent,
       variants,
+      processIds = [],
     }: {
       parent: ProductInput;
       variants: VariantInput[];
+      processIds?: string[];
     }) => {
       const created = await api.post<Product>("/products", {
         ...parent,
@@ -194,20 +213,34 @@ export function useCreateProductWithVariants() {
 
       const bomRows = insertedChildren.flatMap((child, idx) => {
         const v = variants[idx];
-        const rows: Array<{ product_id: string; raw_material_id: string; quantity_required: number }> = [
-          { product_id: child.id, raw_material_id: v.raw_material_id, quantity_required: 1 },
+        const rows: Array<{
+          product_id: string;
+          raw_material_id: string;
+          quantity_required: number;
+          role: "base" | "ink" | "process";
+        }> = [
+          { product_id: child.id, raw_material_id: v.raw_material_id, quantity_required: 1, role: "base" },
         ];
         if (v.ink_raw_material_id && v.ink_quantity_required > 0) {
           rows.push({
             product_id: child.id,
             raw_material_id: v.ink_raw_material_id,
             quantity_required: v.ink_quantity_required,
+            role: "ink",
           });
         }
         return rows;
       });
       if (bomRows.length > 0) {
         await api.post("/product-materials", bomRows);
+      }
+
+      if (processIds.length > 0) {
+        await Promise.all(
+          insertedChildren.map((child) =>
+            api.put(`/production-processes/product/${child.id}`, { process_ids: processIds }),
+          ),
+        );
       }
 
       return created;
@@ -226,12 +259,14 @@ export function useAddVariantsToParent() {
       parentUrl,
       parentActive,
       variants,
+      processIds = [],
     }: {
       parentId: string;
       parentDescription: string | null;
       parentUrl: string | null;
       parentActive: boolean;
       variants: VariantInput[];
+      processIds?: string[];
     }) => {
       if (variants.length === 0) return [] as Product[];
 
@@ -260,20 +295,34 @@ export function useAddVariantsToParent() {
 
       const bomRows = insertedChildren.flatMap((child, idx) => {
         const v = variants[idx];
-        const rows: Array<{ product_id: string; raw_material_id: string; quantity_required: number }> = [
-          { product_id: child.id, raw_material_id: v.raw_material_id, quantity_required: 1 },
+        const rows: Array<{
+          product_id: string;
+          raw_material_id: string;
+          quantity_required: number;
+          role: "base" | "ink" | "process";
+        }> = [
+          { product_id: child.id, raw_material_id: v.raw_material_id, quantity_required: 1, role: "base" },
         ];
         if (v.ink_raw_material_id && v.ink_quantity_required > 0) {
           rows.push({
             product_id: child.id,
             raw_material_id: v.ink_raw_material_id,
             quantity_required: v.ink_quantity_required,
+            role: "ink",
           });
         }
         return rows;
       });
       if (bomRows.length > 0) {
         await api.post("/product-materials", bomRows);
+      }
+
+      if (processIds.length > 0) {
+        await Promise.all(
+          insertedChildren.map((child) =>
+            api.put(`/production-processes/product/${child.id}`, { process_ids: processIds }),
+          ),
+        );
       }
 
       return insertedChildren;

@@ -16,7 +16,24 @@ const ITEMS_SUBQUERY = `
           'is_completed', wi.is_completed,
           'product', CASE WHEN p.id IS NOT NULL
             THEN json_build_object('id', p.id, 'sku', p.sku, 'name', p.name)
-            ELSE NULL END
+            ELSE NULL END,
+          'processes', COALESCE(
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'id', woip.id,
+                  'process_id', woip.process_id,
+                  'name', pr.name,
+                  'is_completed', woip.is_completed
+                )
+                ORDER BY pr.name
+              )
+              FROM work_order_item_processes woip
+              JOIN production_processes pr ON pr.id = woip.process_id
+              WHERE woip.work_order_item_id = wi.id
+            ),
+            '[]'::json
+          )
         )
         ORDER BY wi.created_at
       )
@@ -72,6 +89,26 @@ workOrdersRouter.get(
   })
 );
 
+/**
+ * Siembra los pasos de proceso rastreables de un ítem de orden de trabajo a
+ * partir de los procesos activos asignados al producto. `q` es pool o client.
+ */
+async function seedItemProcesses(
+  q: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  workOrderItemId: string,
+  productId: string,
+) {
+  await q.query(
+    `INSERT INTO work_order_item_processes (work_order_item_id, process_id)
+     SELECT $1, pp.process_id
+     FROM product_processes pp
+     JOIN production_processes pr ON pr.id = pp.process_id AND pr.active = true
+     WHERE pp.product_id = $2
+     ON CONFLICT (work_order_item_id, process_id) DO NOTHING`,
+    [workOrderItemId, productId],
+  );
+}
+
 function generateBatchNumber() {
   const now = new Date();
   const yyyymmdd = now.toISOString().slice(0, 10).replace(/-/g, '');
@@ -105,11 +142,13 @@ workOrdersRouter.post(
       );
       const wo = woRows[0];
       for (const it of body.items) {
-        await client.query(
+        const { rows: itemRows } = await client.query(
           `INSERT INTO work_order_items (work_order_id, product_id, quantity_to_produce)
-           VALUES ($1, $2, $3)`,
+           VALUES ($1, $2, $3)
+           RETURNING id`,
           [wo.id, it.product_id, it.quantity_to_produce]
         );
+        await seedItemProcesses(client, itemRows[0].id, it.product_id);
       }
       await client.query('COMMIT');
       res.status(201).json(wo);
@@ -208,6 +247,7 @@ workOrdersRouter.post(
        FROM ins LEFT JOIN products p ON p.id = ins.product_id`,
       [id, product_id, quantity_to_produce]
     );
+    await seedItemProcesses(pool, rows[0].id, product_id);
     res.status(201).json(rows[0]);
   })
 );
@@ -228,6 +268,23 @@ workOrdersRouter.delete(
     }
     await pool.query('DELETE FROM work_order_items WHERE id = $1', [id]);
     res.json({ ok: true });
+  })
+);
+
+/** PATCH /item-processes/:id — toggle a tracked process step's completion. */
+workOrdersRouter.patch(
+  '/item-processes/:id',
+  asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
+    if (typeof req.body.is_completed !== 'boolean') {
+      return res.status(400).json({ error: 'is_completed requerido' });
+    }
+    const { rows } = await pool.query(
+      `UPDATE work_order_item_processes SET is_completed = $1 WHERE id = $2 RETURNING *`,
+      [req.body.is_completed, id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
   })
 );
 
