@@ -21,6 +21,7 @@ import {
   useProductsForOrder,
   useAssignOrderItemProduct,
   useAddOrderItem,
+  useAddOrderFee,
   useUpdateOrderItem,
   useRemoveOrderItem,
   useVerifyPayment,
@@ -35,6 +36,9 @@ import { STATUS_LABEL, statusTone } from "./status";
 const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 
+/** Nombre de la línea de cargo de envío estándar (kind='fee'). */
+const SHIPPING_FEE_NAME = "Envío estándar";
+
 interface Props {
   order: OrderWithItems;
   onChangeStatus: (status: OrderStatus) => void;
@@ -47,6 +51,7 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
   const { data: products = [] } = useProductsForOrder();
   const assign = useAssignOrderItemProduct();
   const addItem = useAddOrderItem();
+  const addFee = useAddOrderFee();
   const updateItem = useUpdateOrderItem();
   const removeItem = useRemoveOrderItem();
   const verifyPayment = useVerifyPayment();
@@ -109,6 +114,24 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
       toast({ title: "Producto agregado" });
     } catch (err: any) {
       toast({ title: "Error al agregar", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const standardShipping = Number(configs?.standard_shipping_cost ?? 19000);
+  const hasShippingFee = order.items.some(
+    (it) => it.kind === "fee" && it.external_name === SHIPPING_FEE_NAME,
+  );
+
+  const onAddShipping = async () => {
+    try {
+      await addFee.mutateAsync({
+        order_id: order.id,
+        unit_price: standardShipping,
+        external_name: SHIPPING_FEE_NAME,
+      });
+      toast({ title: "Envío estándar agregado" });
+    } catch (err: any) {
+      toast({ title: "Error al agregar envío", description: err.message, variant: "destructive" });
     }
   };
 
@@ -207,12 +230,26 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
       </div>
 
       <div>
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between gap-2">
           <span className="text-xs uppercase tracking-wide text-muted-foreground">Productos</span>
           {editable && (
-            <span className="text-[11px] text-muted-foreground">
-              Editable · pedido {STATUS_LABEL[order.status].toLowerCase()}
-            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+                onClick={onAddShipping}
+                disabled={hasShippingFee || addFee.isPending}
+                title={hasShippingFee ? "Este pedido ya tiene envío estándar" : undefined}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Envío estándar ({currency(standardShipping)})
+              </Button>
+              <span className="hidden text-[11px] text-muted-foreground sm:inline">
+                Editable · pedido {STATUS_LABEL[order.status].toLowerCase()}
+              </span>
+            </div>
           )}
         </div>
         <div className="overflow-hidden rounded-md border">

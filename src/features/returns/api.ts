@@ -55,7 +55,8 @@ export function useOrdersForReturns() {
 
 export interface NewReturnInput {
   order_id: string;
-  product_id: string;
+  /** Una devolución por producto; comparten pedido, motivo y notas. */
+  product_ids: string[];
   reason_category: ReturnReason;
   notes?: string;
 }
@@ -64,13 +65,16 @@ export function useCreateReturn() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: NewReturnInput) =>
-      api.post<ReturnRow>("/returns", {
-        order_id: input.order_id,
-        product_id: input.product_id,
-        reason_category: input.reason_category,
-        notes: input.notes ?? null,
-        resolution_status: "pending",
-      }),
+      api.post<ReturnRow[]>(
+        "/returns",
+        input.product_ids.map((pid) => ({
+          order_id: input.order_id,
+          product_id: pid,
+          reason_category: input.reason_category,
+          notes: input.notes ?? null,
+          resolution_status: "pending",
+        })),
+      ),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   });
 }

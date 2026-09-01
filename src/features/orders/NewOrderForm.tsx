@@ -42,6 +42,7 @@ export function NewOrderForm({ onSuccess }: Props) {
   const create = useCreateManualOrder();
   const { data: configs } = useGlobalConfigs();
   const codFeePct = Number(configs?.cod_transport_fee_percent ?? 0);
+  const standardShippingDefault = Number(configs?.standard_shipping_cost ?? 19000);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -49,6 +50,8 @@ export function NewOrderForm({ onSuccess }: Props) {
   const [selectedCity, setSelectedCity] = useState<DaneCity | null>(null);
   const [isCod, setIsCod] = useState(false);
   const [customerPaysShipping, setCustomerPaysShipping] = useState(false);
+  const [chargeShipping, setChargeShipping] = useState(false);
+  const [shippingAmount, setShippingAmount] = useState<number | "">("");
   const [status] = useState<OrderStatus>("pending");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
   const [items, setItems] = useState<DraftItem[]>([]);
@@ -89,7 +92,13 @@ export function NewOrderForm({ onSuccess }: Props) {
 
   const subtotal = items.reduce((acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.unit_price) || 0), 0);
   const codSurcharge = isCod && codFeePct > 0 ? Math.round(subtotal * (codFeePct / 100)) : 0;
-  const total = subtotal + codSurcharge;
+  const shippingCharge = chargeShipping ? Number(shippingAmount || 0) : 0;
+  const total = subtotal + codSurcharge + shippingCharge;
+
+  const toggleChargeShipping = (v: boolean) => {
+    setChargeShipping(v);
+    if (v && shippingAmount === "") setShippingAmount(standardShippingDefault);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +131,16 @@ export function NewOrderForm({ onSuccess }: Props) {
           external_name: "Comisión COD transportadora",
         });
       }
+      // Línea de envío cobrado al cliente (se suma al total).
+      if (shippingCharge > 0) {
+        itemsPayload.push({
+          product_id: "",
+          quantity: 1,
+          unit_price: shippingCharge,
+          kind: "fee",
+          external_name: "Envío estándar",
+        });
+      }
       await create.mutateAsync({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
@@ -141,6 +160,8 @@ export function NewOrderForm({ onSuccess }: Props) {
       setSelectedCity(null);
       setIsCod(false);
       setCustomerPaysShipping(false);
+      setChargeShipping(false);
+      setShippingAmount("");
       setPaymentMethod("");
       setItems([]);
       onSuccess?.();
@@ -204,6 +225,32 @@ export function NewOrderForm({ onSuccess }: Props) {
           <p className="text-xs text-muted-foreground">No se sumará como gasto al despachar.</p>
         </div>
         <Switch id="o-cps" checked={customerPaysShipping} onCheckedChange={setCustomerPaysShipping} />
+      </div>
+
+      <div className="rounded-md border p-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label htmlFor="o-ship" className="text-sm">Cobrar envío al cliente</Label>
+            <p className="text-xs text-muted-foreground">Agrega una línea "Envío estándar" que se suma al total.</p>
+          </div>
+          <Switch id="o-ship" checked={chargeShipping} onCheckedChange={toggleChargeShipping} />
+        </div>
+        {chargeShipping && (
+          <div className="mt-3 space-y-1">
+            <Label htmlFor="o-ship-amt" className="text-xs">Monto del envío</Label>
+            <Input
+              id="o-ship-amt"
+              type="number"
+              min="0"
+              step="1"
+              value={shippingAmount}
+              onChange={(e) =>
+                setShippingAmount(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              className="max-w-[160px]"
+            />
+          </div>
+        )}
       </div>
 
       <div className="space-y-1.5">
@@ -309,6 +356,12 @@ export function NewOrderForm({ onSuccess }: Props) {
               </Tooltip>
             </span>
             <span className="tabular-nums">{currency(codSurcharge)}</span>
+          </div>
+        )}
+        {shippingCharge > 0 && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Envío estándar</span>
+            <span className="tabular-nums">{currency(shippingCharge)}</span>
           </div>
         )}
         <div className="flex items-center justify-between border-t pt-2">

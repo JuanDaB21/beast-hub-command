@@ -34,12 +34,34 @@ returnsRouter.get(
   })
 );
 
+/**
+ * POST acepta un objeto o un array (inserción transaccional). Registrar varias
+ * devoluciones de un mismo pedido (una por producto) llega como array.
+ */
 returnsRouter.post(
   '/',
   asyncHandler(async (req, res) => {
-    const { sql, params } = buildInsert('returns', COLS, req.body);
-    const { rows } = await pool.query(sql, params);
-    res.status(201).json(rows[0]);
+    const isArray = Array.isArray(req.body);
+    const items = isArray ? req.body : [req.body];
+    if (items.length === 0) return res.status(201).json([]);
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const inserted: any[] = [];
+      for (const item of items) {
+        const { sql, params } = buildInsert('returns', COLS, item);
+        const { rows } = await client.query(sql, params);
+        inserted.push(rows[0]);
+      }
+      await client.query('COMMIT');
+      return res.status(201).json(isArray ? inserted : inserted[0]);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   })
 );
 

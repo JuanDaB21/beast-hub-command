@@ -57,6 +57,7 @@ export function CommissionsPanel() {
   const [gatewayPct, setGatewayPct] = useState(0);
   const [gatewayFixed, setGatewayFixed] = useState(0);
   const [codPct, setCodPct] = useState(0);
+  const [standardShipping, setStandardShipping] = useState(19000);
 
   useEffect(() => {
     if (configs) {
@@ -64,6 +65,7 @@ export function CommissionsPanel() {
       setGatewayPct(Number(configs.gateway_fee_percent ?? 0));
       setGatewayFixed(Number(configs.gateway_fee_fixed ?? 0));
       setCodPct(Number(configs.cod_transport_fee_percent ?? 0));
+      setStandardShipping(Number(configs.standard_shipping_cost ?? 19000));
     }
   }, [configs]);
 
@@ -74,6 +76,7 @@ export function CommissionsPanel() {
         update.mutateAsync({ id: "gateway_fee_percent", value: gatewayPct }),
         update.mutateAsync({ id: "gateway_fee_fixed", value: gatewayFixed }),
         update.mutateAsync({ id: "cod_transport_fee_percent", value: codPct }),
+        update.mutateAsync({ id: "standard_shipping_cost", value: standardShipping }),
       ]);
       toast({ title: "Comisiones guardadas" });
     } catch (e: any) {
@@ -128,6 +131,15 @@ export function CommissionsPanel() {
             value={codPct}
             onChange={setCodPct}
             hint="Este % se suma al cobro final del cliente en envíos contra entrega. La transportadora lo cobra al cliente."
+          />
+          <Field
+            id="standard_shipping_cost"
+            label="Envío estándar"
+            value={standardShipping}
+            onChange={setStandardShipping}
+            step="1"
+            suffix="$"
+            hint="Monto por defecto que se cobra al agregar 'Envío estándar' a un pedido (ej. pedidos por Nequi). Editable por pedido."
           />
         </div>
         <Button onClick={save} disabled={update.isPending}>

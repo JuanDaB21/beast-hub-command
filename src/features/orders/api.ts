@@ -190,6 +190,26 @@ export function useAddOrderItem() {
   });
 }
 
+/**
+ * Agrega una línea de cargo (kind='fee') a un pedido existente: p. ej. "Envío
+ * estándar". Suma al total (trigger recalc_order_total) sin tocar inventario.
+ */
+export function useAddOrderFee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { order_id: string; unit_price: number; external_name: string }) =>
+      api.post<OrderItem>("/order-items", {
+        order_id: input.order_id,
+        product_id: null,
+        quantity: 1,
+        unit_price: input.unit_price,
+        kind: "fee",
+        external_name: input.external_name,
+      }),
+    onSuccess: () => invalidateOrdersAndStock(qc),
+  });
+}
+
 /** Edita cantidad y/o precio de una línea existente. */
 export function useUpdateOrderItem() {
   const qc = useQueryClient();
