@@ -104,11 +104,11 @@ export default function Returns() {
       )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+        <DialogContent className="max-h-[90vh] w-[95vw] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registrar nueva devolución</DialogTitle>
             <DialogDescription>
-              Selecciona el pedido y el producto que el cliente está devolviendo.
+              Selecciona el pedido; se cargan todos sus productos. Desmarca los que el cliente no devolvió.
             </DialogDescription>
           </DialogHeader>
           <NewReturnForm onSuccess={() => setFormOpen(false)} />

@@ -9,7 +9,8 @@ export type GlobalConfigId =
   | "gateway_fee_fixed"
   | "cod_transport_fee_percent"
   | "estimated_iva_percent"
-  | "estimated_retention_percent";
+  | "estimated_retention_percent"
+  | "standard_shipping_cost";
 
 const QK = ["global_configs"] as const;
 
