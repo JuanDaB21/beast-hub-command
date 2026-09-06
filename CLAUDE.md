@@ -93,3 +93,24 @@ Rama: `claude/fix-railway-deployment-AE5PT`.
 - **Simplicity first**: mínimo código, sin abstracciones especulativas ni error handling imposible.
 - **Surgical changes**: tocar solo lo pedido; limpiar huérfanos propios, no dead code ajeno.
 - **Goal-driven**: criterio de éxito verificable antes de implementar.
+
+---
+
+# Ahorro de tokens y contexto
+
+Guía completa: [`docs/GUIA_AHORRO_TOKENS.md`](docs/GUIA_AHORRO_TOKENS.md). Reglas operativas para este repo (proyecto de CÓDIGO):
+
+- **Plugin base: `context-mode`** (único con hooks `PreToolUse/PostToolUse` — no instalar otro
+  que también los registre, se pisan). Declarado en `.claude/settings.json`; si no está en la
+  máquina: `/plugin marketplace add mksglu/context-mode` → `/plugin install context-mode@context-mode`.
+- **Salidas grandes de comandos** (tests, `git log`, builds, `npm ls`, respuestas de API):
+  procesarlas con `ctx_batch_execute` / `ctx_execute`, no con `Bash` + lectura cruda.
+  Bash queda para salidas cortas fijas y para mutar estado (git, mkdir, mv).
+- **Analizar un archivo** (resumir, extraer, contar): `ctx_execute_file`. `Read` sólo cuando el
+  siguiente paso es `Edit` (necesita los bytes exactos).
+- **Antes de leer un archivo completo**: `Grep`/`Glob` o leer sólo el rango necesario.
+- **Migraciones y `CLAUDE.md`**: este archivo es el contexto fijo del proyecto (decisiones,
+  cifras, rutas). Actualizarlo al cerrar una fase en vez de re-derivarlo cada sesión.
+- **Escrituras a disco**: siempre `Write`/`Edit`; los sandboxes de `ctx_*` descartan su FS.
+- Terceros adicionales (rtk, code-review-graph, token-optimizer-mcp): **solo con aprobación
+  explícita** — ver tabla de la guía.
