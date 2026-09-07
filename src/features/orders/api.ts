@@ -61,6 +61,7 @@ export interface Order {
   shipping_cost: number;
   customer_pays_shipping: boolean;
   tracking_number: string | null;
+  delivered_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -81,6 +82,17 @@ export interface OrderItem {
 export interface OrderItemWithProduct extends OrderItem {
   product: { id: string; sku: string; name: string } | null;
 }
+
+/**
+ * Qué cuenta como prenda. Espejo de server/lib/orderUnits.ts: solo kind='product'.
+ * Las líneas 'fee' (envío, comisión COD) son cargos y las 'unknown' son productos
+ * de Shopify sin crear en el catálogo, que no se pagan hasta asignarlos.
+ */
+export const isGarmentLine = (it: Pick<OrderItem, "kind">) => it.kind === "product";
+
+/** Prendas de un pedido, con la misma regla que usa el pago por prenda. */
+export const countGarments = (items: Pick<OrderItem, "kind" | "quantity">[]) =>
+  items.reduce((n, it) => (isGarmentLine(it) ? n + Number(it.quantity) : n), 0);
 
 export interface OrderWithItems extends Order {
   items: OrderItemWithProduct[];

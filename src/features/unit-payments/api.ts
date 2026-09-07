@@ -41,6 +41,26 @@ export function useUnitsInPeriod(from: Date | undefined, to: Date | undefined) {
   });
 }
 
+export interface UnitDetailRow {
+  order_number: string;
+  created_at: string;
+  delivered_at: string;
+  units: number;
+}
+
+/** Desglose pedido a pedido del número de prendas, para poder auditarlo. */
+export function useUnitsDetail(from: Date | undefined, to: Date | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ["unit_payment_units_detail", from?.toISOString(), to?.toISOString()],
+    enabled: enabled && !!from && !!to,
+    queryFn: () =>
+      api.get<UnitDetailRow[]>("/unit-payments/units/detail", {
+        from: from!.toISOString(),
+        to: to!.toISOString(),
+      }),
+  });
+}
+
 export function useUnitPaymentRuns() {
   return useQuery({
     queryKey: QK,
@@ -53,12 +73,15 @@ export interface NewUnitPaymentInput {
   period_to: string;
   rate_per_unit: number;
   notes?: string | null;
+  /** Genera el pago aunque el periodo se cruce con otro ya pagado (el server lo rechaza si no). */
+  force?: boolean;
 }
 
 /** El gasto de nómina que genera este pago también mueve el libro y los KPIs. */
 function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: QK });
   qc.invalidateQueries({ queryKey: ["unit_payment_units"] });
+  qc.invalidateQueries({ queryKey: ["unit_payment_units_detail"] });
   qc.invalidateQueries({ queryKey: ["financial_transactions"] });
   qc.invalidateQueries({ queryKey: ["finance_summary"] });
   qc.invalidateQueries({ queryKey: ["finance_reconciliation"] });
@@ -69,7 +92,8 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
 export function useCreateUnitPayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: NewUnitPaymentInput) => api.post<UnitPaymentRun>("/unit-payments", input),
+    mutationFn: ({ force, ...body }: NewUnitPaymentInput) =>
+      api.post<UnitPaymentRun>("/unit-payments", body, force ? { force: "true" } : undefined),
     onSuccess: () => invalidateAll(qc),
   });
 }

@@ -1,6 +1,6 @@
 import { api } from "@/integrations/api/client";
 import { useQuery } from "@tanstack/react-query";
-import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/features/orders/api";
+import { isGarmentLine, PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/features/orders/api";
 
 export interface RevenueByChannel {
   key: string;
@@ -291,9 +291,12 @@ export function useBiData(range: DateRange) {
         dayBucket.set(day, cur);
 
         for (const it of o.items) {
-          // Las líneas 'fee' (envío, comisión) no son prendas.
-          if (it.kind !== "fee") unitsSold += Number(it.quantity);
+          // Misma regla que el pago por prenda (isGarmentLine). Ojo: este KPI es
+          // "vendidas" — ventana por created_at y todo estado salvo cancelado —,
+          // no "entregadas a pagar", que va por delivered_at.
+          if (isGarmentLine(it)) unitsSold += Number(it.quantity);
           if (!it.product) {
+            // Cualquier línea que no sea un cargo y no tenga producto no aporta costo.
             if (it.kind !== "fee") unitsUnlinked += Number(it.quantity);
             continue;
           }

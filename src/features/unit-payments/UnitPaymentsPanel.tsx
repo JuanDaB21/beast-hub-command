@@ -33,6 +33,7 @@ import {
   useCreateUnitPayment,
   useDeleteUnitPayment,
   useUnitPaymentRuns,
+  useUnitsDetail,
   useUnitsInPeriod,
 } from "./api";
 
@@ -67,8 +68,10 @@ export function UnitPaymentsPanel() {
   const [rate, setRate] = useState("");
   const [notes, setNotes] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   const { data: period, isLoading: loadingUnits } = useUnitsInPeriod(from, to);
+  const { data: detail, isLoading: loadingDetail } = useUnitsDetail(from, to, showDetail);
   const { data: runs = [], isLoading: loadingRuns } = useUnitPaymentRuns();
   const create = useCreateUnitPayment();
   const remove = useDeleteUnitPayment();
@@ -83,7 +86,7 @@ export function UnitPaymentsPanel() {
     [runs],
   );
 
-  const generate = async () => {
+  const generate = async (force = false) => {
     if (!from || !to) return;
     try {
       await create.mutateAsync({
@@ -91,6 +94,7 @@ export function UnitPaymentsPanel() {
         period_to: to.toISOString(),
         rate_per_unit: rateNum,
         notes: notes.trim() || null,
+        force,
       });
       setRate("");
       setNotes("");
@@ -152,12 +156,68 @@ export function UnitPaymentsPanel() {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Prendas en el periodo</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Prendas en el periodo</Label>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground underline-offset-2 hover:underline disabled:opacity-50"
+                    disabled={units <= 0}
+                    onClick={() => setShowDetail((v) => !v)}
+                  >
+                    {showDetail ? "Ocultar detalle" : "Ver detalle"}
+                  </button>
+                </div>
                 <div className="flex h-10 items-center rounded-md border bg-muted/30 px-3 tabular-nums font-medium">
                   {loadingUnits ? <Skeleton className="h-4 w-10" /> : units.toLocaleString("es-CO")}
                 </div>
               </div>
             </div>
+
+            {/*
+              Desglose pedido a pedido: el conteo va por FECHA DE ENTREGA, así que
+              un pedido creado el mes anterior y entregado en este cuenta aquí.
+              Sin este detalle, cualquier diferencia contra el listado de pedidos
+              es una discusión sobre un total en vez de sobre pedidos concretos.
+            */}
+            {showDetail && (
+              <div className="max-h-64 overflow-y-auto rounded-md border md:col-span-2">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Pedido</TableHead>
+                      <TableHead>Creado</TableHead>
+                      <TableHead>Entregado</TableHead>
+                      <TableHead className="text-right">Prendas</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(detail ?? []).map((d) => {
+                      const crossesMonth =
+                        d.created_at.slice(0, 7) !== d.delivered_at.slice(0, 7);
+                      return (
+                        <TableRow key={d.order_number}>
+                          <TableCell className="font-mono text-xs">{d.order_number}</TableCell>
+                          <TableCell
+                            className={`whitespace-nowrap text-xs ${
+                              crossesMonth ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground"
+                            }`}
+                          >
+                            {format(new Date(d.created_at), "d MMM yy", { locale: es })}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-xs">
+                            {format(new Date(d.delivered_at), "d MMM yy", { locale: es })}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">{d.units}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+                {loadingDetail && (
+                  <div className="p-3 text-center text-xs text-muted-foreground">Cargando...</div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -182,7 +242,17 @@ export function UnitPaymentsPanel() {
                 {overlapping
                   .map((r) => `${shortDate(r.period_from)}–${shortDate(r.period_to)}`)
                   .join(", ")}
-                . Revisa antes de generar para no pagar dos veces.
+                . Generar aquí pagaría esas prendas dos veces, así que está bloqueado; ajusta
+                las fechas o confírmalo de forma explícita.
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  disabled={create.isPending || units <= 0 || rateNum <= 0}
+                  onClick={() => generate(true)}
+                >
+                  Generar de todos modos
+                </Button>
               </AlertDescription>
             </Alert>
           )}
@@ -192,7 +262,7 @@ export function UnitPaymentsPanel() {
               <span className="text-muted-foreground">Total a pagar</span>
               <p className="text-xl font-semibold tabular-nums">{COP(total)}</p>
             </div>
-            <Button onClick={generate} disabled={create.isPending || units <= 0 || rateNum <= 0}>
+            <Button onClick={() => generate()} disabled={create.isPending || units <= 0 || rateNum <= 0}>
               {create.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
               Generar solicitud de pago
             </Button>
