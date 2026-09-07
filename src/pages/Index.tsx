@@ -82,10 +82,21 @@ export default function Index() {
               tone="primary"
             />
             <KpiCard
-              label="Costo de insumos"
-              value={currency(data.cogs)}
-              hint="Suma BOM × unidades"
+              label="Prendas vendidas"
+              value={data.unitsSold.toLocaleString("es-CO")}
+              hint={
+                data.unitsUnlinked > 0
+                  ? `${data.unitsUnlinked} sin producto vinculado (no suman costo)`
+                  : "Unidades en pedidos no cancelados"
+              }
               icon={Package}
+              tone={data.unitsUnlinked > 0 ? "yellow" : "default"}
+            />
+            <KpiCard
+              label="Ticket promedio"
+              value={currency(data.avgTicket)}
+              hint={`${data.ordersCount} pedidos`}
+              icon={ShoppingCart}
             />
             <KpiCard
               label="Margen neto"
@@ -93,6 +104,34 @@ export default function Index() {
               hint={`${data.marginPct.toFixed(1)}% rentabilidad`}
               icon={TrendingUp}
               tone={data.margin >= 0 ? "green" : "red"}
+            />
+          </div>
+
+          {/* Secondary KPIs */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard
+              label="Margen por prenda"
+              value={currency(data.marginPerUnit)}
+              hint={`${data.marginPct.toFixed(1)}% sobre ingresos`}
+              icon={TrendingUp}
+              tone={data.marginPerUnit >= 0 ? "green" : "red"}
+            />
+            <KpiCard
+              label="Costo de insumos"
+              value={currency(data.cogs)}
+              hint="BOM + impresión + planchado + procesos"
+              icon={Package}
+            />
+            <KpiCard
+              label="Costos de envío"
+              value={currency(data.shippingCost)}
+              hint={
+                data.returnsCost > 0
+                  ? `+ ${currency(data.returnsCost)} en devoluciones`
+                  : "Restado del margen neto"
+              }
+              icon={Truck}
+              tone="default"
             />
             <KpiCard
               label="Tasa de devoluciones"
@@ -105,8 +144,8 @@ export default function Index() {
             />
           </div>
 
-          {/* Secondary KPIs */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Ingresos por origen */}
+          <div className="grid gap-3 sm:grid-cols-2">
             <KpiCard
               label="Ingresos WhatsApp"
               value={currency(data.revenueManual)}
@@ -117,13 +156,6 @@ export default function Index() {
               label="Ingresos Shopify"
               value={currency(data.revenueShopify)}
               icon={ShoppingCart}
-              tone="default"
-            />
-            <KpiCard
-              label="Costos de envío"
-              value={currency(data.shippingCost)}
-              hint="Restado del margen neto"
-              icon={Truck}
               tone="default"
             />
           </div>

@@ -115,6 +115,7 @@ interface OrderRow {
   customer_pays_shipping: boolean;
   created_at: string;
   items: {
+    kind: "product" | "unknown" | "fee";
     quantity: number;
     unit_price: number;
     product: { id: string; name: string; sku: string } | null;
@@ -132,7 +133,25 @@ interface ReturnRow {
 interface ProductMaterialRow {
   product_id: string;
   quantity_required: number;
+  role: "base" | "ink" | "process";
   raw_material: { unit_price: number } | null;
+}
+
+interface ProductCatalogRow {
+  id: string;
+  name: string;
+  parent_id: string | null;
+  print_height_cm: number | null;
+}
+
+interface ProcessLinkRow {
+  product_id: string;
+  process: { cost: number } | null;
+}
+
+interface ExpenseRow {
+  amount: number;
+  reference_type: string | null;
 }
 
 export interface BiData {
@@ -141,9 +160,14 @@ export interface BiData {
   revenueManual: number;
   cogs: number;
   shippingCost: number;
+  returnsCost: number;
   margin: number;
   marginPct: number;
   ordersCount: number;
+  unitsSold: number;
+  unitsUnlinked: number;
+  avgTicket: number;
+  marginPerUnit: number;
   returnsRate: number;
   scrapCount: number;
   salesByDay: { date: string; revenue: number; orders: number }[];
@@ -176,23 +200,57 @@ export function useBiData(range: DateRange) {
         ),
       );
 
-      // Catálogo para rollear variantes → producto padre en el Top productos.
-      const allProducts = await api.get<{ id: string; name: string; parent_id: string | null }[]>(
-        "/products",
-      );
+      // Catálogo para rollear variantes → producto padre en el Top productos, y
+      // para leer print_height_cm (entra en el costo de impresión).
+      const allProducts = await api.get<ProductCatalogRow[]>("/products");
       const productById = new Map(allProducts.map((p) => [p.id, p]));
 
+      // Configuración global de costos de proceso (impresión y planchado).
+      const configs = await api.get<Record<string, number>>("/config");
+      const printingPerMeter = Number(configs?.printing_cost_per_meter ?? 0);
+      const ironingCost = Number(configs?.ironing_cost ?? 0);
+
+      /*
+       * Costo unitario por variante. Replica la fórmula canónica de
+       * ProductProfitPanel: BOM (base + tinta) + impresión + planchado +
+       * procesos asignados. Sumar solo el BOM subestimaba el costo y por tanto
+       * inflaba el margen.
+       */
       const costMap = new Map<string, number>();
       if (productIds.length > 0) {
-        const pmRows = await api.get<ProductMaterialRow[]>("/product-materials", {
-          product_ids: productIds.join(","),
-        });
+        const idsCsv = productIds.join(",");
+        const [pmRows, processRows] = await Promise.all([
+          api.get<ProductMaterialRow[]>("/product-materials", { product_ids: idsCsv }),
+          api.get<ProcessLinkRow[]>("/production-processes/by-products", { product_ids: idsCsv }),
+        ]);
+
         for (const row of pmRows) {
           const unit = Number(row.raw_material?.unit_price ?? 0);
           const qty = Number(row.quantity_required ?? 0);
           costMap.set(row.product_id, (costMap.get(row.product_id) ?? 0) + unit * qty);
         }
+        for (const link of processRows) {
+          costMap.set(
+            link.product_id,
+            (costMap.get(link.product_id) ?? 0) + Number(link.process?.cost ?? 0),
+          );
+        }
+        for (const id of productIds) {
+          const heightCm = Number(productById.get(id)?.print_height_cm ?? 0);
+          const printing = (heightCm / 100) * printingPerMeter;
+          costMap.set(id, (costMap.get(id) ?? 0) + printing + ironingCost);
+        }
       }
+
+      // Gastos de devolución (merma y flete RMA) que el margen ignoraba.
+      const expenses = await api.get<ExpenseRow[]>("/finance", {
+        type: "expense",
+        from: range.from?.toISOString(),
+        to: range.to?.toISOString(),
+      });
+      const returnsCost = expenses
+        .filter((e) => e.reference_type === "return")
+        .reduce((s, e) => s + (Number(e.amount) || 0), 0);
 
       const returns = await api.get<ReturnRow[]>("/returns");
       const filteredReturns = returns.filter((r) => {
@@ -210,6 +268,8 @@ export function useBiData(range: DateRange) {
       let revenueManual = 0;
       let cogs = 0;
       let shippingCost = 0;
+      let unitsSold = 0;
+      let unitsUnlinked = 0;
 
       const dayBucket = new Map<string, { revenue: number; orders: number }>();
       const productBucket = new Map<string, { name: string; quantity: number; revenue: number }>();
@@ -217,8 +277,10 @@ export function useBiData(range: DateRange) {
       for (const o of validOrders) {
         const total = Number(o.total);
         revenue += total;
-        const orderShipping = o.customer_pays_shipping ? 0 : Number(o.shipping_cost) || 0;
-        shippingCost += orderShipping;
+        // shipping_cost es SIEMPRE lo que la empresa paga a la transportadora,
+        // independiente de a quién se le haya cobrado el envío (el cobro al
+        // cliente viaja como línea kind='fee' dentro de total).
+        shippingCost += Number(o.shipping_cost) || 0;
         if (o.source === "shopify") revenueShopify += total;
         else revenueManual += total;
 
@@ -229,7 +291,12 @@ export function useBiData(range: DateRange) {
         dayBucket.set(day, cur);
 
         for (const it of o.items) {
-          if (!it.product) continue;
+          // Las líneas 'fee' (envío, comisión) no son prendas.
+          if (it.kind !== "fee") unitsSold += Number(it.quantity);
+          if (!it.product) {
+            if (it.kind !== "fee") unitsUnlinked += Number(it.quantity);
+            continue;
+          }
           const unitCost = costMap.get(it.product.id) ?? 0;
           cogs += unitCost * Number(it.quantity);
 
@@ -246,8 +313,10 @@ export function useBiData(range: DateRange) {
         }
       }
 
-      const margin = revenue - cogs - shippingCost;
+      const margin = revenue - cogs - shippingCost - returnsCost;
       const marginPct = revenue > 0 ? (margin / revenue) * 100 : 0;
+      const avgTicket = validOrders.length > 0 ? revenue / validOrders.length : 0;
+      const marginPerUnit = unitsSold > 0 ? margin / unitsSold : 0;
 
       const distinctReturnedOrders = new Set(filteredReturns.map((r) => r.order_id).filter(Boolean));
       const returnsRate = validOrders.length > 0 ? distinctReturnedOrders.size / validOrders.length : 0;
@@ -285,7 +354,7 @@ export function useBiData(range: DateRange) {
         const total = Number(o.total);
         if (o.source === "shopify") cur.shopify += total;
         else cur.manual += total;
-        cur.shipping += o.customer_pays_shipping ? 0 : Number(o.shipping_cost) || 0;
+        cur.shipping += Number(o.shipping_cost) || 0;
         for (const it of o.items) {
           if (!it.product) continue;
           cur.cogs += (costMap.get(it.product.id) ?? 0) * Number(it.quantity);
@@ -310,9 +379,14 @@ export function useBiData(range: DateRange) {
         revenueManual,
         cogs,
         shippingCost,
+        returnsCost,
         margin,
         marginPct,
         ordersCount: validOrders.length,
+        unitsSold,
+        unitsUnlinked,
+        avgTicket,
+        marginPerUnit,
         returnsRate,
         scrapCount,
         salesByDay,

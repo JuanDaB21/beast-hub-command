@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { Calendar as CalendarIcon, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { DateRangePicker } from "@/components/shared/DateRangePicker";
+import { StandardCombobox } from "@/components/shared/StandardCombobox";
+import { useStaff } from "@/features/staff/api";
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -43,6 +41,15 @@ export function FinanceFilters({
   const [to, setTo] = useState<Date | undefined>(filters.to ? new Date(filters.to) : undefined);
 
   const categories = Array.from(new Set([...ALL_CATS, ...extraCategories])).sort();
+
+  const { data: staff = [] } = useStaff();
+  const chargedToOptions = [
+    { value: "all", label: "Todos" },
+    { value: "none", label: "Sin asignar" },
+    ...staff
+      .filter((s) => s.active)
+      .map((s) => ({ value: s.id, label: s.full_name ?? s.email ?? s.id })),
+  ];
 
   const update = (patch: Partial<F>) => onChange({ ...filters, ...patch });
 
@@ -86,67 +93,33 @@ export function FinanceFilters({
           </Select>
         </div>
 
-        <div className="md:col-span-2 space-y-1">
-          <Label className="text-xs">Desde</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !from && "text-muted-foreground",
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {from ? format(from, "dd MMM yyyy", { locale: es }) : "—"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={from}
-                onSelect={(d) => {
-                  setFrom(d);
-                  update({ from: d ? d.toISOString() : null });
-                }}
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div className="md:col-span-2 space-y-1">
-          <Label className="text-xs">Hasta</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !to && "text-muted-foreground",
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {to ? format(to, "dd MMM yyyy", { locale: es }) : "—"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={to}
-                onSelect={(d) => {
-                  // Set to end of day
-                  const end = d ? new Date(d.setHours(23, 59, 59, 999)) : undefined;
-                  setTo(end);
-                  update({ to: end ? end.toISOString() : null });
-                }}
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
         <div className="md:col-span-3 space-y-1">
+          <Label className="text-xs">Cargado a</Label>
+          <StandardCombobox
+            value={filters.charged_to ?? "all"}
+            onChange={(v) => update({ charged_to: v || "all" })}
+            options={chargedToOptions}
+            placeholder="Todos"
+            searchPlaceholder="Buscar staff..."
+          />
+        </div>
+
+        <div className="md:col-span-4">
+          <DateRangePicker
+            from={from}
+            to={to}
+            onChange={(r) => {
+              setFrom(r.from);
+              setTo(r.to);
+              update({
+                from: r.from ? r.from.toISOString() : null,
+                to: r.to ? r.to.toISOString() : null,
+              });
+            }}
+          />
+        </div>
+
+        <div className="md:col-span-12 space-y-1">
           <Label className="text-xs">Buscar descripción</Label>
           <Input
             value={filters.search ?? ""}

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UnitPaymentsPanel } from "@/features/unit-payments/UnitPaymentsPanel";
 import { FinanceFilters } from "@/features/finance/FinanceFilters";
 import { FinanceLedgerTable } from "@/features/finance/FinanceLedgerTable";
 import { TransactionDialog } from "@/features/finance/TransactionDialog";
@@ -19,6 +21,7 @@ import {
 const monthFilters = (month: Date): F => ({
   type: "all",
   category: "all",
+  charged_to: "all",
   from: startOfMonth(month).toISOString(),
   to: endOfMonth(month).toISOString(),
   search: "",
@@ -45,42 +48,53 @@ export default function Finance() {
       title="Libro Mayor · Finanzas"
       description="Registro unificado de ingresos y gastos del negocio."
     >
-      <div className="space-y-4">
-        <FinanceGlobalKpis />
+      <Tabs defaultValue="ledger" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="ledger">Libro</TabsTrigger>
+          <TabsTrigger value="unit-payments">Pago prendas vendidas</TabsTrigger>
+        </TabsList>
 
-        <MonthSelector month={month} onChange={handleMonthChange} />
+        <TabsContent value="ledger" className="space-y-4">
+          <FinanceGlobalKpis />
 
-        <FinanceKpiRow month={monthStr} />
+          <MonthSelector month={month} onChange={handleMonthChange} />
 
-        <TrendChart month={monthStr} months={6} />
+          <FinanceKpiRow month={monthStr} />
 
-        <ReconciliationChart month={monthStr} />
+          <TrendChart month={monthStr} months={6} />
 
-        <FinanceFilters
-          filters={filters}
-          onChange={setFilters}
-          onReset={() => setFilters(monthFilters(month))}
-          onAddIncome={() => setDialogMode("income")}
-          onAddExpense={() => setDialogMode("expense")}
-          extraCategories={extraCategories}
-        />
+          <ReconciliationChart month={monthStr} />
 
-        {isLoading ? (
-          <Card>
-            <CardContent className="p-6 text-sm text-muted-foreground">
-              Cargando transacciones...
-            </CardContent>
-          </Card>
-        ) : (
-          <FinanceLedgerTable transactions={transactions} />
-        )}
+          <FinanceFilters
+            filters={filters}
+            onChange={setFilters}
+            onReset={() => setFilters(monthFilters(month))}
+            onAddIncome={() => setDialogMode("income")}
+            onAddExpense={() => setDialogMode("expense")}
+            extraCategories={extraCategories}
+          />
 
-        <p className="text-xs text-muted-foreground">
-          Los movimientos automáticos (RMA, mermas, fletes asumidos) se registran al
-          resolverse en cada módulo. Los pagos a proveedores e ingresos extra-orden se
-          capturan aquí.
-        </p>
-      </div>
+          {isLoading ? (
+            <Card>
+              <CardContent className="p-6 text-sm text-muted-foreground">
+                Cargando transacciones...
+              </CardContent>
+            </Card>
+          ) : (
+            <FinanceLedgerTable transactions={transactions} />
+          )}
+
+          <p className="text-xs text-muted-foreground">
+            Los movimientos automáticos (RMA, mermas, fletes asumidos) se registran al
+            resolverse en cada módulo. Los pagos a proveedores e ingresos extra-orden se
+            capturan aquí.
+          </p>
+        </TabsContent>
+
+        <TabsContent value="unit-payments">
+          <UnitPaymentsPanel />
+        </TabsContent>
+      </Tabs>
 
       <TransactionDialog
         mode={dialogMode ?? "income"}

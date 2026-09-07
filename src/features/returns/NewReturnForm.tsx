@@ -84,17 +84,21 @@ export function NewReturnForm({ onSuccess }: Props) {
     }
     try {
       const productIds = [...selectedProductIds];
-      await create.mutateAsync({
+      const result = await create.mutateAsync({
         order_id: orderId,
         product_ids: productIds,
         reason_category: reason,
         notes: notes.trim() || undefined,
       });
+      const cancelled = result?.cancelled_orders ?? [];
       toast({
         title:
           productIds.length === 1
             ? "Devolución registrada"
             : `${productIds.length} devoluciones registradas`,
+        description: cancelled.length
+          ? `Pedido ${cancelled.map((o) => o.order_number).join(", ")} cancelado: se devolvió completo y aún no estaba cobrado.`
+          : undefined,
       });
       onSuccess?.();
     } catch (e: any) {

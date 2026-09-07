@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { PoolClient } from 'pg';
 import { pool } from '../db';
 import { asyncHandler } from '../util';
 
@@ -19,6 +20,8 @@ const ITEMS_SUBQUERY = `
           'raw_material_id', si.raw_material_id,
           'quantity_requested', si.quantity_requested,
           'quantity_confirmed', si.quantity_confirmed,
+          'quantity_received', si.quantity_received,
+          'received_at', si.received_at,
           'is_available', si.is_available,
           'raw_material', CASE WHEN rm.id IS NOT NULL
             THEN json_build_object(
@@ -117,17 +120,128 @@ supplyRequestsRouter.patch(
 supplyRequestsRouter.delete(
   '/:id',
   asyncHandler(async (req, res) => {
-    await pool.query('DELETE FROM supply_requests WHERE id = $1', [String(req.params.id)]);
+    const id = String(req.params.id);
+    const { rows } = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM supply_request_items
+        WHERE supply_request_id = $1 AND quantity_received > 0`,
+      [id]
+    );
+    if (rows[0]?.n > 0) {
+      return res.status(409).json({
+        error: 'No se puede eliminar: ya hay mercancía recibida cargada al inventario',
+      });
+    }
+    await pool.query('DELETE FROM supply_requests WHERE id = $1', [id]);
     res.json({ ok: true });
   })
 );
 
-/** POST /:id/complete — runs complete_supply_request(_request_id) stored function. */
+/** POST /:id/complete — carga el remanente pendiente y cierra la solicitud. */
 supplyRequestsRouter.post(
   '/:id/complete',
   asyncHandler(async (req, res) => {
     await pool.query('SELECT complete_supply_request($1)', [String(req.params.id)]);
     res.json({ ok: true });
+  })
+);
+
+/**
+ * Recalcula el estado de la solicitud a partir de sus ítems.
+ *
+ * `receiving` / `delivered` describen la recepción física (la marca el equipo);
+ * `pending` / `partial` / `confirmed` describen la confirmación del proveedor.
+ * Al desmarcar todo lo recibido se vuelve a la etapa del proveedor.
+ */
+async function recomputeStatus(client: PoolClient, requestId: string): Promise<string> {
+  const { rows: items } = await client.query(
+    `SELECT quantity_requested, quantity_confirmed, quantity_received, is_available
+       FROM supply_request_items WHERE supply_request_id = $1`,
+    [requestId]
+  );
+
+  const available = items.filter((i) => i.is_available);
+  const anyReceived = items.some((i) => Number(i.quantity_received) > 0);
+  const anyConfirmed = available.some((i) => Number(i.quantity_confirmed) > 0);
+  const allReceived = available.every(
+    (i) => Number(i.quantity_received) >= Number(i.quantity_confirmed)
+  );
+
+  let status: string;
+  if (anyConfirmed && allReceived) status = 'delivered';
+  else if (anyReceived) status = 'receiving';
+  else if (
+    available.length === items.length &&
+    items.length > 0 &&
+    items.every(
+      (i) => Number(i.quantity_confirmed) >= Number(i.quantity_requested) && Number(i.quantity_requested) > 0
+    )
+  )
+    status = 'confirmed';
+  else if (anyConfirmed) status = 'partial';
+  else status = 'pending';
+
+  await client.query('UPDATE supply_requests SET status = $1, updated_at = now() WHERE id = $2', [
+    status,
+    requestId,
+  ]);
+  return status;
+}
+
+/**
+ * PATCH /items/:itemId/receive — registra cuánto llegó realmente de un ítem.
+ *
+ * Aplica la DIFERENCIA contra lo ya recibido, nunca un valor absoluto: así
+ * desmarcar devuelve el stock y reenviar el mismo valor es un no-op.
+ */
+supplyRequestsRouter.patch(
+  '/items/:itemId/receive',
+  asyncHandler(async (req, res) => {
+    const itemId = String(req.params.itemId);
+    const received = Number((req.body as { quantity_received?: unknown }).quantity_received);
+    if (!Number.isFinite(received) || received < 0) {
+      return res.status(400).json({ error: 'quantity_received inválido' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const { rows } = await client.query(
+        `SELECT id, supply_request_id, raw_material_id, quantity_received
+           FROM supply_request_items WHERE id = $1 FOR UPDATE`,
+        [itemId]
+      );
+      const item = rows[0];
+      if (!item) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Ítem no encontrado' });
+      }
+
+      const delta = received - Number(item.quantity_received);
+      if (delta !== 0) {
+        await client.query(
+          'UPDATE raw_materials SET stock = stock + $1, updated_at = now() WHERE id = $2',
+          [delta, item.raw_material_id]
+        );
+      }
+
+      await client.query(
+        `UPDATE supply_request_items
+            SET quantity_received = $1,
+                received_at = CASE WHEN $1 > 0 THEN now() ELSE NULL END,
+                received_by_staff_id = CASE WHEN $1 > 0 THEN $2::uuid ELSE NULL END
+          WHERE id = $3`,
+        [received, req.user?.id ?? null, itemId]
+      );
+
+      const status = await recomputeStatus(client, item.supply_request_id);
+      await client.query('COMMIT');
+      res.json({ ok: true, status, quantity_received: received });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   })
 );
 
