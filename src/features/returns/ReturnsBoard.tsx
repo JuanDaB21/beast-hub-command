@@ -1,9 +1,21 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { CheckCircle2, PackageX, ShieldCheck } from "lucide-react";
-import { type ReturnRow } from "./api";
+import { CheckCircle2, PackageX, ShieldCheck, X } from "lucide-react";
+import { toast } from "sonner";
+import { useDeleteReturn, type ReturnRow } from "./api";
 import { RETURN_STATUS_LABEL, returnStatusTone } from "./status";
 
 interface Props {
@@ -40,6 +52,22 @@ export function ReturnsBoard({ returns, onResolve }: Props) {
 function ReturnCard({ ret, onResolve }: { ret: ReturnRow; onResolve: () => void }) {
   const isPending = ret.resolution_status === "pending";
   const date = new Date(ret.created_at);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const remove = useDeleteReturn();
+
+  const handleDelete = async () => {
+    try {
+      const res = await remove.mutateAsync(ret.id);
+      toast.success("Devolución eliminada", {
+        description: res?.restored_order
+          ? `Se reactivó el pedido ${res.restored_order}.`
+          : undefined,
+      });
+      setConfirmOpen(false);
+    } catch (err) {
+      toast.error("No se pudo eliminar", { description: (err as Error).message });
+    }
+  };
 
   return (
     <Card className="flex flex-col gap-3 p-4">
@@ -55,11 +83,40 @@ function ReturnCard({ ret, onResolve }: { ret: ReturnRow; onResolve: () => void 
             <div className="font-mono text-xs text-muted-foreground">SKU {ret.product.sku}</div>
           )}
         </div>
-        <StatusBadge
-          tone={returnStatusTone(ret.resolution_status)}
-          label={RETURN_STATUS_LABEL[ret.resolution_status]}
-        />
+        <div className="flex shrink-0 items-center gap-1">
+          <StatusBadge
+            tone={returnStatusTone(ret.resolution_status)}
+            label={RETURN_STATUS_LABEL[ret.resolution_status]}
+          />
+          {isPending && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={() => setConfirmOpen(true)}
+              aria-label="Eliminar devolución"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta devolución?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Úsalo cuando la devolución se registró pero al final se canceló. Si esta
+              devolución había cancelado su pedido, el pedido vuelve a quedar pendiente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <Badge variant="outline" className={reasonTone[ret.reason_category] ?? ""}>

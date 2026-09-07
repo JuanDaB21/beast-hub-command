@@ -60,6 +60,8 @@ export const SALES_SOURCE_LABEL: Record<string, string> = {
 export interface FinanceFilters {
   type?: FinancialTransactionType | "all";
   category?: string | "all";
+  /** Id del responsable, "none" para los sin asignar, "all" para no filtrar. */
+  charged_to?: string | "all" | "none";
   from?: string | null;
   to?: string | null;
   search?: string;
@@ -91,6 +93,8 @@ export function useFinancialTransactions(filters: FinanceFilters = {}) {
       api.get<FinancialTransaction[]>("/finance", {
         type: filters.type && filters.type !== "all" ? filters.type : undefined,
         category: filters.category && filters.category !== "all" ? filters.category : undefined,
+        charged_to:
+          filters.charged_to && filters.charged_to !== "all" ? filters.charged_to : undefined,
         from: filters.from ?? undefined,
         to: filters.to ?? undefined,
         search: filters.search?.trim() || undefined,

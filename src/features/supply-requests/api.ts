@@ -1,12 +1,18 @@
 import { api } from "@/integrations/api/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export type SupplyRequestStatus = "pending" | "partial" | "confirmed" | "delivered";
+export type SupplyRequestStatus =
+  | "pending"
+  | "partial"
+  | "confirmed"
+  | "receiving"
+  | "delivered";
 
 export const SUPPLY_REQUEST_STATUSES: { value: SupplyRequestStatus; label: string }[] = [
   { value: "pending", label: "Pendiente" },
   { value: "partial", label: "Parcial" },
   { value: "confirmed", label: "Confirmado" },
+  { value: "receiving", label: "En recepción" },
   { value: "delivered", label: "Entregado" },
 ];
 
@@ -16,6 +22,8 @@ export interface SupplyRequestItem {
   raw_material_id: string;
   quantity_requested: number;
   quantity_confirmed: number;
+  quantity_received: number;
+  received_at: string | null;
   is_available: boolean;
   raw_material: {
     id: string;
@@ -61,12 +69,22 @@ export function useCreateSupplyRequest() {
   });
 }
 
-export function useUpdateSupplyRequestStatus() {
+/**
+ * Registra cuánto llegó realmente de un ítem. El backend aplica la diferencia
+ * contra lo ya recibido y recalcula el estado de la solicitud.
+ */
+export function useReceiveSupplyItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: SupplyRequestStatus }) =>
-      api.patch<SupplyRequest>(`/supply-requests/${id}`, { status }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+    mutationFn: ({ itemId, quantity_received }: { itemId: string; quantity_received: number }) =>
+      api.patch<{ ok: true; status: SupplyRequestStatus; quantity_received: number }>(
+        `/supply-requests/items/${itemId}/receive`,
+        { quantity_received },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK });
+      qc.invalidateQueries({ queryKey: ["raw_materials"] });
+    },
   });
 }
 

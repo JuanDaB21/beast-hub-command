@@ -84,9 +84,11 @@ supplierPortalRouter.post(
         await client.query('ROLLBACK');
         return res.status(404).json({ error: 'Solicitud no encontrada' });
       }
-      if (request.status === 'delivered') {
+      // Una vez el equipo empieza a recibir mercancía, el proveedor ya no puede
+      // reescribir cantidades ni devolver el estado a la etapa de confirmación.
+      if (request.status === 'delivered' || request.status === 'receiving') {
         await client.query('ROLLBACK');
-        return res.status(409).json({ error: 'Esta solicitud ya fue entregada' });
+        return res.status(409).json({ error: 'Esta solicitud ya está en recepción' });
       }
 
       const { rows: existing } = await client.query(

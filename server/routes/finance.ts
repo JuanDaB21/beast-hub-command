@@ -33,7 +33,10 @@ export const financeRouter = Router();
 financeRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    const { type, category, from, to, search } = req.query as Record<string, string | undefined>;
+    const { type, category, from, to, search, charged_to } = req.query as Record<
+      string,
+      string | undefined
+    >;
 
     const where: string[] = [];
     const params: unknown[] = [];
@@ -57,6 +60,13 @@ financeRouter.get(
     if (search && search.trim()) {
       params.push(`%${search.trim()}%`);
       where.push(`ft.description ILIKE $${params.length}`);
+    }
+    // 'none' filtra los movimientos que no se cargaron a nadie.
+    if (charged_to === 'none') {
+      where.push('ft.charged_to_staff_id IS NULL');
+    } else if (charged_to && charged_to !== 'all') {
+      params.push(charged_to);
+      where.push(`ft.charged_to_staff_id = $${params.length}`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 

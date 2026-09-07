@@ -9,6 +9,8 @@ export function supplyRequestTone(status: SupplyRequestStatus): StatusTone {
       return "yellow";
     case "confirmed":
       return "green";
+    case "receiving":
+      return "yellow";
     case "delivered":
       return "neutral";
     default:
@@ -24,6 +26,8 @@ export function supplyRequestLabel(status: SupplyRequestStatus): string {
       return "Parcial";
     case "confirmed":
       return "Confirmado";
+    case "receiving":
+      return "En recepción";
     case "delivered":
       return "Entregado";
     default:

@@ -61,11 +61,17 @@ export interface NewReturnInput {
   notes?: string;
 }
 
+export interface CreateReturnResult {
+  returns: ReturnRow[];
+  /** Pedidos que el backend canceló por haberse devuelto completos. */
+  cancelled_orders: { id: string; order_number: string }[];
+}
+
 export function useCreateReturn() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: NewReturnInput) =>
-      api.post<ReturnRow[]>(
+      api.post<CreateReturnResult>(
         "/returns",
         input.product_ids.map((pid) => ({
           order_id: input.order_id,
@@ -75,7 +81,11 @@ export function useCreateReturn() {
           resolution_status: "pending",
         })),
       ),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["bi"] });
+    },
   });
 }
 
@@ -120,7 +130,13 @@ export function useResolveReturn() {
 export function useDeleteReturn() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete<{ ok: true }>(`/returns/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+    mutationFn: (id: string) =>
+      api.delete<{ ok: true; restored_order: string | null }>(`/returns/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK });
+      // Borrar la devolución puede reactivar el pedido que había cancelado.
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["bi"] });
+    },
   });
 }

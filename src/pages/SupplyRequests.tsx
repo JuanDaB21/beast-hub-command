@@ -29,8 +29,9 @@ export default function SupplyRequests() {
     return {
       total: list.length,
       pending: list.filter((r) => r.status === "pending").length,
-      partial: list.filter((r) => r.status === "partial").length,
-      confirmed: list.filter((r) => r.status === "confirmed").length,
+      confirmed: list.filter((r) => r.status === "partial" || r.status === "confirmed").length,
+      receiving: list.filter((r) => r.status === "receiving").length,
+      delivered: list.filter((r) => r.status === "delivered").length,
     };
   }, [requests]);
 
@@ -60,11 +61,12 @@ export default function SupplyRequests() {
       description="Genera enlaces seguros para que tus proveedores confirmen disponibilidad."
       actions={headerActions}
     >
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 mb-4">
         <Kpi label="Total" value={kpis.total} />
         <Kpi label="Pendientes" value={kpis.pending} tone="yellow" />
-        <Kpi label="Parciales" value={kpis.partial} tone="yellow" />
         <Kpi label="Confirmadas" value={kpis.confirmed} tone="green" />
+        <Kpi label="En recepción" value={kpis.receiving} tone="yellow" />
+        <Kpi label="Entregadas" value={kpis.delivered} />
       </div>
 
       {isLoading ? (

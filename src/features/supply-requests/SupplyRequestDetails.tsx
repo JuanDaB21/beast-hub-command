@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy, ExternalLink, Trash2, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,8 +19,9 @@ import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton
 import {
   useCompleteSupplyRequest,
   useDeleteSupplyRequest,
-  useUpdateSupplyRequestStatus,
+  useReceiveSupplyItem,
   type SupplyRequest,
+  type SupplyRequestItem,
 } from "./api";
 import { supplyRequestLabel, supplyRequestTone } from "./status";
 import { toast } from "sonner";
@@ -32,8 +36,89 @@ function buildPortalUrl(token: string) {
   return `${window.location.origin}/supplier/${token}`;
 }
 
+/**
+ * Una línea de recepción: el operario marca el check (recibe todo lo confirmado)
+ * o escribe la cantidad exacta que llegó. Cada cambio carga el delta al
+ * inventario en el servidor, así que una recepción parcial queda registrada.
+ */
+function ReceptionRow({ item }: { item: SupplyRequestItem }) {
+  const receive = useReceiveSupplyItem();
+  const reqQ = Number(item.quantity_requested);
+  const confQ = Number(item.quantity_confirmed);
+  const recQ = Number(item.quantity_received);
+  const [draft, setDraft] = useState(String(recQ));
+
+  // El servidor es la fuente de verdad: si otro usuario recibe, se re-sincroniza.
+  useEffect(() => setDraft(String(recQ)), [recQ]);
+
+  const submit = async (value: number) => {
+    if (value === recQ) return;
+    try {
+      await receive.mutateAsync({ itemId: item.id, quantity_received: value });
+    } catch (err) {
+      setDraft(String(recQ));
+      toast.error("No se pudo registrar la recepción", {
+        description: (err as Error).message,
+      });
+    }
+  };
+
+  const toggle = (checked: boolean) => submit(checked ? confQ : 0);
+
+  const commitDraft = () => {
+    const parsed = Number(draft);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      setDraft(String(recQ));
+      return;
+    }
+    submit(parsed);
+  };
+
+  const complete = recQ >= confQ && confQ > 0;
+
+  return (
+    <li className="flex items-center justify-between gap-3 p-3 text-sm">
+      <div className="flex items-start gap-3 min-w-0">
+        <Checkbox
+          checked={complete}
+          disabled={!item.is_available || confQ <= 0 || receive.isPending}
+          onCheckedChange={(v) => toggle(v === true)}
+          className="mt-1"
+          aria-label={`Recibir ${item.raw_material?.name ?? "insumo"}`}
+        />
+        <div className="min-w-0">
+          <p className="font-medium truncate">{item.raw_material?.name ?? "—"}</p>
+          <p className="text-xs text-muted-foreground">
+            Pedido {reqQ} · confirmado {confQ} {item.raw_material?.unit_of_measure ?? ""}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {!item.is_available ? (
+          <StatusBadge tone="red" label="No disp." />
+        ) : (
+          <>
+            <Input
+              type="number"
+              min={0}
+              step="any"
+              value={draft}
+              disabled={receive.isPending}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={commitDraft}
+              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+              className="h-8 w-20 text-right tabular-nums"
+              aria-label="Cantidad recibida"
+            />
+            {receive.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </>
+        )}
+      </div>
+    </li>
+  );
+}
+
 export function SupplyRequestDetails({ request, onClose }: Props) {
-  const updateStatus = useUpdateSupplyRequestStatus();
   const complete = useCompleteSupplyRequest();
   const remove = useDeleteSupplyRequest();
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -44,6 +129,8 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
     (s, it) => s + (it.is_available ? Number(it.quantity_confirmed) : 0),
     0,
   );
+  const totalReceived = request.items.reduce((s, it) => s + Number(it.quantity_received), 0);
+  const pendingToReceive = Math.max(0, totalConfirmed - totalReceived);
 
   const copyUrl = async () => {
     try {
@@ -62,8 +149,13 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
     try {
       await complete.mutateAsync(request.id);
       const summaryLines = request.items
-        .filter((it) => it.is_available && Number(it.quantity_confirmed) > 0)
-        .map((it) => `+${it.quantity_confirmed} ${it.raw_material?.name ?? ""}`)
+        .filter(
+          (it) => it.is_available && Number(it.quantity_confirmed) > Number(it.quantity_received),
+        )
+        .map(
+          (it) =>
+            `+${Number(it.quantity_confirmed) - Number(it.quantity_received)} ${it.raw_material?.name ?? ""}`,
+        )
         .join(", ");
       toast.success("Inventario actualizado", {
         description: summaryLines
@@ -102,9 +194,9 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
           <p className="tabular-nums">{request.items.length}</p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Solicitado / Confirmado</p>
+          <p className="text-xs text-muted-foreground">Pedido / Confirmado / Recibido</p>
           <p className="tabular-nums">
-            {totalRequested} / {totalConfirmed}
+            {totalRequested} / {totalConfirmed} / {totalReceived}
           </p>
         </div>
         <div>
@@ -151,45 +243,31 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
       )}
 
       <div className="rounded-md border">
-        <div className="p-3 border-b bg-muted/30 text-sm font-medium">Bases solicitadas</div>
+        <div className="p-3 border-b bg-muted/30 flex items-center justify-between gap-3">
+          <span className="text-sm font-medium">Recepción</span>
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {totalReceived} / {totalConfirmed} recibido
+          </span>
+        </div>
+        {totalConfirmed > 0 && (
+          <Progress value={(totalReceived / totalConfirmed) * 100} className="h-1 rounded-none" />
+        )}
         <ul className="divide-y">
-          {request.items.map((it) => {
-            const reqQ = Number(it.quantity_requested);
-            const confQ = Number(it.quantity_confirmed);
-            const fully = it.is_available && confQ >= reqQ && reqQ > 0;
-            const partial = it.is_available && confQ > 0 && confQ < reqQ;
-            const unavailable = !it.is_available;
-            return (
-              <li key={it.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                <div className="min-w-0">
-                  <p className="font-medium truncate">{it.raw_material?.name ?? "—"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {it.raw_material?.sku ?? ""} · {it.raw_material?.unit_of_measure ?? ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    {confQ} / {reqQ}
-                  </span>
-                  {unavailable && <StatusBadge tone="red" label="No disp." />}
-                  {fully && <StatusBadge tone="green" label="OK" />}
-                  {partial && <StatusBadge tone="yellow" label="Parcial" />}
-                </div>
-              </li>
-            );
-          })}
+          {request.items.map((it) => (
+            <ReceptionRow key={it.id} item={it} />
+          ))}
         </ul>
       </div>
 
       <div className="flex flex-wrap gap-2 pt-2">
-        {request.status !== "delivered" && (
+        {pendingToReceive > 0 && (
           <Button onClick={markDelivered} disabled={complete.isPending}>
             {complete.isPending ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
             ) : (
               <CheckCircle2 className="h-4 w-4 mr-1" />
             )}
-            Marcar entregado
+            Recibir todo lo pendiente ({pendingToReceive})
           </Button>
         )}
         <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)}>

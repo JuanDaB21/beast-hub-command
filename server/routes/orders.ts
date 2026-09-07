@@ -141,16 +141,12 @@ ordersRouter.post(
 ordersRouter.patch(
   '/:id',
   asyncHandler(async (req, res) => {
+    // shipping_cost es SIEMPRE lo que la empresa le paga a la transportadora.
+    // Quién asumió el envío de cara al cliente lo dice customer_pays_shipping, y
+    // el cobro al cliente viaja como línea order_items.kind='fee' dentro de
+    // total. Forzar el costo a 0 cuando el cliente pagaba hacía que el flete
+    // real nunca se restara del margen.
     const body = { ...req.body };
-    // Business rule: if the order has customer_pays_shipping=true and the
-    // client tries to set a shipping_cost, coerce it to 0.
-    if (typeof body.shipping_cost === 'number') {
-      const { rows: cur } = await pool.query(
-        'SELECT customer_pays_shipping FROM orders WHERE id = $1',
-        [String(req.params.id)]
-      );
-      if (cur[0]?.customer_pays_shipping) body.shipping_cost = 0;
-    }
     const { sql, params } = buildUpdate('orders', COLS, body, String(req.params.id));
     const { rows } = await pool.query(sql, params);
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });

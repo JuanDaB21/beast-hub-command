@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { PoolClient } from 'pg';
 import { pool } from '../db';
 import { asyncHandler, buildInsert } from '../util';
 import { tryPushInventory } from '../lib/inventorySync';
@@ -54,8 +55,21 @@ returnsRouter.post(
         const { rows } = await client.query(sql, params);
         inserted.push(rows[0]);
       }
+
+      const orderIds = Array.from(
+        new Set(inserted.map((r) => r.order_id).filter((id): id is string => !!id))
+      );
+      const cancelled: { id: string; order_number: string }[] = [];
+      for (const orderId of orderIds) {
+        const order = await cancelIfFullyReturned(client, orderId);
+        if (order) cancelled.push(order);
+      }
+
       await client.query('COMMIT');
-      return res.status(201).json(isArray ? inserted : inserted[0]);
+      const payload = isArray ? inserted : inserted[0];
+      return res.status(201).json(
+        isArray ? { returns: payload, cancelled_orders: cancelled } : { ...payload, cancelled_orders: cancelled }
+      );
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -64,6 +78,50 @@ returnsRouter.post(
     }
   })
 );
+
+/**
+ * Un pedido devuelto por completo no se va a entregar, así que deja de ser una
+ * venta: se cancela solo. La excepción es el pedido ya cobrado — ahí el dinero
+ * sí entró y la salida se registra a mano en el libro de finanzas.
+ *
+ * OJO: cancelar NO devuelve stock en este sistema. La reposición la hace la
+ * resolución 'restocked' de cada devolución; duplicarla aquí inflaría el
+ * inventario.
+ */
+async function cancelIfFullyReturned(
+  client: PoolClient,
+  orderId: string
+): Promise<{ id: string; order_number: string } | null> {
+  const { rows: orderRows } = await client.query(
+    `SELECT id, order_number, status, is_cod, cod_confirmed, payment_status
+       FROM orders WHERE id = $1 FOR UPDATE`,
+    [orderId]
+  );
+  const order = orderRows[0];
+  if (!order || order.status === 'cancelled') return null;
+
+  const isPaid = order.is_cod ? !!order.cod_confirmed : order.payment_status === 'paid';
+  if (isPaid) return null;
+
+  const { rows: coverage } = await client.query(
+    `SELECT
+       COUNT(DISTINCT oi.product_id)::int AS ordered,
+       COUNT(DISTINCT r.product_id)::int AS returned
+     FROM order_items oi
+     LEFT JOIN returns r
+       ON r.order_id = oi.order_id AND r.product_id = oi.product_id
+     WHERE oi.order_id = $1 AND oi.kind = 'product' AND oi.product_id IS NOT NULL`,
+    [orderId]
+  );
+  const { ordered, returned } = coverage[0] ?? { ordered: 0, returned: 0 };
+  if (ordered === 0 || returned < ordered) return null;
+
+  await client.query(
+    `UPDATE orders SET status = 'cancelled', cancelled_by_return = true WHERE id = $1`,
+    [orderId]
+  );
+  return { id: order.id, order_number: order.order_number };
+}
 
 interface ResolveBody {
   resolution: 'restocked' | 'scrapped';
@@ -149,10 +207,62 @@ returnsRouter.post(
   })
 );
 
+/**
+ * DELETE /:id — para una devolución registrada que al final se canceló.
+ *
+ * Solo se permite mientras esté 'pending': una vez resuelta ya movió stock y
+ * asientos contables, y revertir eso a ciegas desajustaría el inventario.
+ * Si la devolución había cancelado su pedido automáticamente, se restaura.
+ */
 returnsRouter.delete(
   '/:id',
   asyncHandler(async (req, res) => {
-    await pool.query('DELETE FROM returns WHERE id = $1', [String(req.params.id)]);
-    res.json({ ok: true });
+    const id = String(req.params.id);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const { rows } = await client.query(
+        'SELECT id, order_id, resolution_status FROM returns WHERE id = $1 FOR UPDATE',
+        [id]
+      );
+      const ret = rows[0];
+      if (!ret) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Devolución no encontrada' });
+      }
+      if (ret.resolution_status !== 'pending') {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          error: 'Solo se pueden eliminar devoluciones pendientes; esta ya fue resuelta',
+        });
+      }
+
+      await client.query('DELETE FROM returns WHERE id = $1', [id]);
+
+      let restoredOrder: string | null = null;
+      if (ret.order_id) {
+        const { rows: orderRows } = await client.query(
+          `SELECT id, order_number, status, cancelled_by_return
+             FROM orders WHERE id = $1 FOR UPDATE`,
+          [ret.order_id]
+        );
+        const order = orderRows[0];
+        if (order?.cancelled_by_return && order.status === 'cancelled') {
+          await client.query(
+            `UPDATE orders SET status = 'pending', cancelled_by_return = false WHERE id = $1`,
+            [order.id]
+          );
+          restoredOrder = order.order_number;
+        }
+      }
+
+      await client.query('COMMIT');
+      res.json({ ok: true, restored_order: restoredOrder });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   })
 );
