@@ -18,10 +18,14 @@ import {
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { STATUS_LABEL, statusTone } from "./status";
-import type { OrderWithItems } from "./api";
+import { countGarments, type OrderWithItems } from "./api";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 const PAGE_SIZE = 25;
 
@@ -46,6 +50,12 @@ export function OrdersHistoryTable({ orders, renderDetails }: Props) {
     [orders, safePage],
   );
 
+  // Total de prendas con la misma regla que el pago por prenda (kind='product').
+  const totalGarments = useMemo(
+    () => orders.reduce((n, o) => n + countGarments(o.items), 0),
+    [orders],
+  );
+
   // Refresca el detalle abierto con la copia viva de la lista (tras cambios de estado).
   const selected = selectedId ? orders.find((o) => o.id === selectedId) ?? null : null;
 
@@ -65,7 +75,8 @@ export function OrdersHistoryTable({ orders, renderDetails }: Props) {
             <TableRow>
               <TableHead>Pedido</TableHead>
               <TableHead>Cliente</TableHead>
-              <TableHead>Fecha</TableHead>
+              <TableHead>Fecha entrega</TableHead>
+              <TableHead className="text-right">Prendas</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acción</TableHead>
@@ -81,7 +92,17 @@ export function OrdersHistoryTable({ orders, renderDetails }: Props) {
                 <TableCell className="font-mono text-xs">{o.order_number}</TableCell>
                 <TableCell className="max-w-[200px] truncate">{o.customer_name}</TableCell>
                 <TableCell className="whitespace-nowrap text-muted-foreground">
-                  {new Date(o.created_at).toLocaleDateString("es-MX")}
+                  {/*
+                    Fecha de ENTREGA, que es la que usa el pago por prenda. Antes se
+                    mostraba created_at, y los pedidos que cruzan de mes hacían que
+                    este listado y el panel de pago nunca cuadraran.
+                  */}
+                  {o.delivered_at
+                    ? new Date(o.delivered_at).toLocaleDateString("es-CO")
+                    : `Creado ${new Date(o.created_at).toLocaleDateString("es-CO")}`}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {countGarments(o.items)}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {currency(Number(o.total))}
@@ -109,7 +130,8 @@ export function OrdersHistoryTable({ orders, renderDetails }: Props) {
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span className="tabular-nums">
-          {orders.length} pedido(s) · página {safePage + 1} de {pageCount}
+          {orders.length} pedido(s) · {totalGarments} prenda(s) · página {safePage + 1} de{" "}
+          {pageCount}
         </span>
         <div className="flex gap-1">
           <Button

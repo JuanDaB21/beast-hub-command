@@ -2,27 +2,43 @@ import { Router } from 'express';
 import type { PoolClient } from 'pg';
 import { pool } from '../db';
 import { asyncHandler } from '../util';
+import { deliveredInRangeSql, garmentLineSql } from '../lib/orderUnits';
 
 export const unitPaymentsRouter = Router();
 
 /**
  * Unidades a pagar en un periodo: prendas de pedidos EFECTIVAMENTE entregados.
- * Se cuenta por delivered_at (no por created_at) para que un pedido creado en
- * un mes y entregado en el siguiente se pague en el periodo correcto.
- * Las líneas kind='fee' (envío, comisiones) no son prendas.
+ * La regla vive en ../lib/orderUnits para que el listado de pedidos y el KPI de
+ * prendas vendidas cuenten exactamente lo mismo.
  */
 async function countUnits(client: PoolClient | typeof pool, from: string, to: string) {
   const { rows } = await client.query(
     `SELECT COALESCE(SUM(oi.quantity), 0)::int AS units
        FROM order_items oi
        JOIN orders o ON o.id = oi.order_id
-      WHERE oi.kind = 'product'
-        AND o.status = 'delivered'
-        AND o.delivered_at >= $1
-        AND o.delivered_at < $2`,
+      WHERE ${garmentLineSql('oi')}
+        AND ${deliveredInRangeSql('o', 1)}`,
     [from, to]
   );
   return Number(rows[0]?.units ?? 0);
+}
+
+/** Desglose por pedido del mismo número, para poder auditar de dónde sale. */
+async function listUnitDetail(from: string, to: string) {
+  const { rows } = await pool.query(
+    `SELECT o.order_number,
+            o.created_at,
+            o.delivered_at,
+            SUM(oi.quantity)::int AS units
+       FROM order_items oi
+       JOIN orders o ON o.id = oi.order_id
+      WHERE ${garmentLineSql('oi')}
+        AND ${deliveredInRangeSql('o', 1)}
+      GROUP BY o.id, o.order_number, o.created_at, o.delivered_at
+      ORDER BY o.delivered_at DESC`,
+    [from, to]
+  );
+  return rows;
 }
 
 function parseRange(req: { query: Record<string, unknown> }) {
@@ -50,6 +66,20 @@ unitPaymentsRouter.get(
       [from, to]
     );
     res.json({ units, overlapping_runs: overlapping });
+  })
+);
+
+/**
+ * GET /units/detail?from&to — los pedidos que componen ese número. Existe para
+ * que una diferencia contra el listado de pedidos sea rastreable pedido a pedido
+ * en vez de una discusión sobre el total.
+ */
+unitPaymentsRouter.get(
+  '/units/detail',
+  asyncHandler(async (req, res) => {
+    const { from, to } = parseRange(req);
+    if (!from || !to) return res.status(400).json({ error: 'from y to son requeridos' });
+    res.json(await listUnitDetail(from, to));
   })
 );
 
@@ -100,6 +130,26 @@ unitPaymentsRouter.post(
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+
+      // Solape de periodos: pagar dos veces las mismas prendas. La UI ya avisa,
+      // pero el aviso no bloqueaba; se exige ?force=true para pasar por encima.
+      if (req.query.force !== 'true') {
+        const { rows: overlap } = await client.query(
+          `SELECT period_from, period_to FROM unit_payment_runs
+            WHERE period_from < $2 AND period_to > $1
+            ORDER BY period_to DESC LIMIT 1`,
+          [b.period_from, b.period_to]
+        );
+        if (overlap[0]) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({
+            error:
+              'El periodo se cruza con un pago ya generado. Ajusta las fechas o confirma para generarlo de todos modos.',
+            overlapping_run: overlap[0],
+          });
+        }
+      }
+
       const units = await countUnits(client, b.period_from, b.period_to);
       if (units <= 0) {
         await client.query('ROLLBACK');
@@ -119,12 +169,15 @@ unitPaymentsRouter.post(
       const { rows: txRows } = await client.query(
         `INSERT INTO financial_transactions
            (transaction_type, amount, category, reference_type, reference_id, description, occurred_at)
-         VALUES ('expense', $1, 'Nómina', 'unit_payment', $2, $3, now())
+         VALUES ('expense', $1, 'Nómina', 'unit_payment', $2, $3, $4)
          RETURNING id`,
         [
           total,
           run.id,
           `Pago por ${units} prendas vendidas · ${new Date(b.period_from).toLocaleDateString('es-CO')} a ${new Date(b.period_to).toLocaleDateString('es-CO')}`,
+          // El gasto se imputa al periodo trabajado, no al día en que se generó:
+          // un pago de enero creado en febrero debe pesar en enero.
+          b.period_to,
         ]
       );
 

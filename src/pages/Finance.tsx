@@ -11,6 +11,7 @@ import { MonthSelector } from "@/features/finance/MonthSelector";
 import { FinanceGlobalKpis } from "@/features/finance/FinanceGlobalKpis";
 import { FinanceKpiRow } from "@/features/finance/FinanceKpiRow";
 import { TrendChart } from "@/features/finance/TrendChart";
+import { ProfitabilityChart } from "@/features/finance/ProfitabilityChart";
 import { ReconciliationChart } from "@/features/finance/ReconciliationChart";
 import {
   useFinancialTransactions,
@@ -62,6 +63,8 @@ export default function Finance() {
           <FinanceKpiRow month={monthStr} />
 
           <TrendChart month={monthStr} months={6} />
+
+          <ProfitabilityChart month={monthStr} months={6} />
 
           <ReconciliationChart month={monthStr} />
 

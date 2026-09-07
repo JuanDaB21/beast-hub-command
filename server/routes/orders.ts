@@ -11,6 +11,9 @@ const COLS = [
   'customer_city',
   'customer_city_dane_code',
   'status',
+  // Editable para poder corregir una fecha de entrega mal registrada: es la base
+  // del pago por prenda. El trigger la sigue poniendo sola en la transición.
+  'delivered_at',
   'is_cod',
   'cod_confirmed',
   'payment_method',
