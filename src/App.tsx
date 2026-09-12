@@ -16,7 +16,6 @@ import Returns from "./pages/Returns.tsx";
 import SupplyRequests from "./pages/SupplyRequests.tsx";
 import SupplierPortal from "./pages/SupplierPortal.tsx";
 import ModulePlaceholder from "./pages/ModulePlaceholder.tsx";
-import Cod from "./pages/Cod.tsx";
 import Config from "./pages/Config.tsx";
 import Finance from "./pages/Finance.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -48,7 +47,6 @@ const App = () => (
             <Route path="/solicitudes" element={protect(<SupplyRequests />)} />
             <Route path="/almacen" element={protect(<ModulePlaceholder slug="almacen" />)} />
             <Route path="/alertas" element={protect(<ModulePlaceholder slug="alertas" />)} />
-            <Route path="/cod" element={protect(<Cod />)} />
             <Route path="/finanzas" element={protect(<Finance />)} />
             <Route path="/analitica" element={protect(<Index />)} />
             <Route path="/config" element={protect(<Config />)} />

@@ -1,6 +1,11 @@
 import { api } from "@/integrations/api/client";
 import { useQuery } from "@tanstack/react-query";
-import { isGarmentLine, PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/features/orders/api";
+import {
+  isGarmentLine,
+  isShippingFeeLine,
+  PAYMENT_METHOD_LABEL,
+  type PaymentMethod,
+} from "@/features/orders/api";
 
 export interface RevenueByChannel {
   key: string;
@@ -116,6 +121,7 @@ interface OrderRow {
   created_at: string;
   items: {
     kind: "product" | "unknown" | "fee";
+    external_name: string | null;
     quantity: number;
     unit_price: number;
     product: { id: string; name: string; sku: string } | null;
@@ -160,6 +166,12 @@ export interface BiData {
   revenueManual: number;
   cogs: number;
   shippingCost: number;
+  /** Lo que el cliente pagó por envío (líneas kind=fee). Ya está en revenue. */
+  shippingCharged: number;
+  /** shippingCharged - shippingCost: cuánto subsidia o gana la empresa por envío. */
+  shippingNet: number;
+  /** Despachados sin flete capturado: inflan el margen hasta registrarlo. */
+  ordersMissingShippingCost: number;
   returnsCost: number;
   margin: number;
   marginPct: number;
@@ -248,6 +260,11 @@ export function useBiData(range: DateRange) {
         from: range.from?.toISOString(),
         to: range.to?.toISOString(),
       });
+      // Solo los gastos de devolución (merma y flete RMA). NO ampliar este
+      // filtro a 'shipping': ese asiento espeja orders.shipping_cost, que ya se
+      // resta abajo como shippingCost — contarlo aquí descontaría el flete dos
+      // veces. Los manuales tampoco entran: el margen se calcula desde las
+      // órdenes, no desde el libro.
       const returnsCost = expenses
         .filter((e) => e.reference_type === "return")
         .reduce((s, e) => s + (Number(e.amount) || 0), 0);
@@ -268,6 +285,8 @@ export function useBiData(range: DateRange) {
       let revenueManual = 0;
       let cogs = 0;
       let shippingCost = 0;
+      let shippingCharged = 0;
+      let ordersMissingShippingCost = 0;
       let unitsSold = 0;
       let unitsUnlinked = 0;
 
@@ -281,6 +300,14 @@ export function useBiData(range: DateRange) {
         // independiente de a quién se le haya cobrado el envío (el cobro al
         // cliente viaja como línea kind='fee' dentro de total).
         shippingCost += Number(o.shipping_cost) || 0;
+        // Los pedidos ya despachados sin flete capturado inflan el margen: el
+        // import de Shopify los inserta con shipping_cost=0 aunque cobren envío.
+        if (
+          (o.status === "shipped" || o.status === "delivered") &&
+          !(Number(o.shipping_cost) > 0)
+        ) {
+          ordersMissingShippingCost += 1;
+        }
         if (o.source === "shopify") revenueShopify += total;
         else revenueManual += total;
 
@@ -295,6 +322,12 @@ export function useBiData(range: DateRange) {
           // "vendidas" — ventana por created_at y todo estado salvo cancelado —,
           // no "entregadas a pagar", que va por delivered_at.
           if (isGarmentLine(it)) unitsSold += Number(it.quantity);
+          // Lo que el cliente pagó por envío. Ya está dentro de revenue (vía
+          // orders.total); se acumula aparte para poder mostrar el neto contra
+          // el flete real, que es lo único que importa vigilar aquí.
+          if (isShippingFeeLine(it)) {
+            shippingCharged += Number(it.quantity) * Number(it.unit_price);
+          }
           if (!it.product) {
             // Cualquier línea que no sea un cargo y no tenga producto no aporta costo.
             if (it.kind !== "fee") unitsUnlinked += Number(it.quantity);
@@ -382,6 +415,9 @@ export function useBiData(range: DateRange) {
         revenueManual,
         cogs,
         shippingCost,
+        shippingCharged,
+        shippingNet: shippingCharged - shippingCost,
+        ordersMissingShippingCost,
         returnsCost,
         margin,
         marginPct,

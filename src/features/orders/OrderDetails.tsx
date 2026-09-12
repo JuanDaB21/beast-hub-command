@@ -16,18 +16,24 @@ import {
 } from "@/components/ui/select";
 import {
   ORDER_STATUSES,
+  PAYMENT_METHODS,
   PAYMENT_METHOD_LABEL,
+  SHIPPING_FEE_NAME,
   isOrderEditable,
+  isShippingFeeLine,
+  requiresTracking,
   useProductsForOrder,
   useAssignOrderItemProduct,
   useAddOrderItem,
   useAddOrderFee,
   useUpdateOrderItem,
   useRemoveOrderItem,
+  useUpdatePaymentMethod,
   useVerifyPayment,
   type OrderWithItems,
   type OrderItemWithProduct,
   type OrderStatus,
+  type PaymentMethod,
 } from "./api";
 import { useGlobalConfigs } from "@/features/production/configApi";
 import { toast } from "@/hooks/use-toast";
@@ -37,16 +43,20 @@ const currency = (n: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 
 /** Nombre de la línea de cargo de envío estándar (kind='fee'). */
-const SHIPPING_FEE_NAME = "Envío estándar";
-
 interface Props {
   order: OrderWithItems;
   onChangeStatus: (status: OrderStatus) => void;
-  onConfirmCod: (confirmed: boolean) => void;
+  /**
+   * Se llama en vez de onChangeStatus cuando el destino exige guía y el pedido
+   * no la tiene: el contenedor abre el ShipDialog para capturarla. Sin esto el
+   * desplegable dejaba pedidos despachados sin guía (el servidor ahora responde
+   * 409, así que además fallaría).
+   */
+  onRequestShip?: (targetStatus: "shipped" | "delivered") => void;
   onDelete: () => void;
 }
 
-export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: Props) {
+export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }: Props) {
   const { data: configs } = useGlobalConfigs();
   const { data: products = [] } = useProductsForOrder();
   const assign = useAssignOrderItemProduct();
@@ -55,6 +65,10 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
   const updateItem = useUpdateOrderItem();
   const removeItem = useRemoveOrderItem();
   const verifyPayment = useVerifyPayment();
+  const updatePaymentMethod = useUpdatePaymentMethod();
+  // Vía por la que entró la plata. Se captura al verificar el pago; este estado
+  // alimenta ese selector.
+  const [verifyMethod, setVerifyMethod] = useState<PaymentMethod | "">("");
   // Prepago (no COD) cuya transferencia aún no se verifica (Nequi u otra).
   const pendingVerification =
     !order.is_cod && order.payment_status === "pending_verification";
@@ -96,12 +110,41 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
   };
 
   const onVerifyPayment = async () => {
+    if (!verifyMethod) {
+      toast({
+        title: "Falta el método de pago",
+        description: "Indica por dónde entró la plata para poder conciliarla.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
-      await verifyPayment.mutateAsync(order.id);
+      await verifyPayment.mutateAsync({ id: order.id, payment_method: verifyMethod });
       toast({ title: "Pago verificado", description: "El pedido queda como prepago." });
     } catch (err: any) {
       toast({ title: "Error al verificar", description: err.message, variant: "destructive" });
     }
+  };
+
+  const onChangePaymentMethod = async (payment_method: PaymentMethod) => {
+    try {
+      await updatePaymentMethod.mutateAsync({ id: order.id, payment_method });
+      toast({ title: "Método de pago actualizado" });
+    } catch (err: any) {
+      toast({ title: "Error al actualizar", description: err.message, variant: "destructive" });
+    }
+  };
+
+  /**
+   * El desplegable de estado no puede mandar 'shipped' a secas: hay que capturar
+   * la guía. Misma regla que el drag & drop del tablero.
+   */
+  const onSelectStatus = (next: OrderStatus) => {
+    if (onRequestShip && requiresTracking(next, order.tracking_number)) {
+      onRequestShip(next);
+      return;
+    }
+    onChangeStatus(next);
   };
 
   const onAddItem = async (input: {
@@ -118,9 +161,7 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
   };
 
   const standardShipping = Number(configs?.standard_shipping_cost ?? 19000);
-  const hasShippingFee = order.items.some(
-    (it) => it.kind === "fee" && it.external_name === SHIPPING_FEE_NAME,
-  );
+  const hasShippingFee = order.items.some(isShippingFeeLine);
 
   const onAddShipping = async () => {
     try {
@@ -150,7 +191,7 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
         {order.is_cod && (
           <StatusBadge
             tone={order.cod_confirmed ? "green" : "red"}
-            label={order.cod_confirmed ? "COD confirmado" : "COD pendiente"}
+            label={order.cod_confirmed ? "COD cobrado" : "COD por cobrar"}
           />
         )}
         {pendingVerification && (
@@ -194,14 +235,30 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
           </div>
         )}
         {pendingVerification && (
-          <div className="mt-2">
-            <div className="mb-2 text-sm text-muted-foreground">
-              La transferencia debe verificarse antes de darla por pagada.
+          <div className="mt-2 space-y-2">
+            <div className="text-sm text-muted-foreground">
+              La transferencia debe verificarse antes de darla por pagada. Indica por
+              dónde entró la plata: es lo que permite conciliarla en Finanzas.
             </div>
+            <Select
+              value={verifyMethod}
+              onValueChange={(v) => setVerifyMethod(v as PaymentMethod)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="¿Por dónde entró el pago?" />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_METHODS.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               type="button"
               className="w-full"
-              disabled={verifyPayment.isPending}
+              disabled={verifyPayment.isPending || !verifyMethod}
               onClick={onVerifyPayment}
             >
               Verificar pago
@@ -395,7 +452,7 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
           <div className="text-xs uppercase text-muted-foreground">Cambiar estado</div>
-          <Select value={order.status} onValueChange={(v) => onChangeStatus(v as OrderStatus)}>
+          <Select value={order.status} onValueChange={(v) => onSelectStatus(v as OrderStatus)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -408,17 +465,30 @@ export function OrderDetails({ order, onChangeStatus, onConfirmCod, onDelete }: 
             </SelectContent>
           </Select>
         </div>
-        {order.is_cod && (
+        {/*
+          El recaudo COD ya no se togglea aquí: es consecuencia de entregar, y se
+          sigue desde la pestaña de recaudo de Logística. Lo que sí se corrige a
+          mano es la vía de cobro de un prepago, porque los pedidos de Shopify
+          anteriores a la captura obligatoria quedaron sin método.
+        */}
+        {!order.is_cod && order.payment_status === "paid" && (
           <div className="space-y-1">
-            <div className="text-xs uppercase text-muted-foreground">Confirmación COD</div>
-            <Button
-              type="button"
-              variant={order.cod_confirmed ? "outline" : "default"}
-              className="w-full"
-              onClick={() => onConfirmCod(!order.cod_confirmed)}
+            <div className="text-xs uppercase text-muted-foreground">Vía de cobro</div>
+            <Select
+              value={order.payment_method ?? ""}
+              onValueChange={(v) => onChangePaymentMethod(v as PaymentMethod)}
             >
-              {order.cod_confirmed ? "Marcar como no confirmado" : "Confirmar COD"}
-            </Button>
+              <SelectTrigger>
+                <SelectValue placeholder="Sin asignar" />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_METHODS.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
       </div>

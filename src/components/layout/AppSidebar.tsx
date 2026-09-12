@@ -22,7 +22,7 @@ const SECTIONS: { label: string | null; slugs: string[] }[] = [
   { label: null, slugs: ["dashboard"] },
   {
     label: "Envíos",
-    slugs: ["inventario", "ordenes", "logistica", "devoluciones", "cod"],
+    slugs: ["inventario", "ordenes", "logistica", "devoluciones"],
   },
   { label: "Lotes y producción", slugs: ["produccion", "solicitudes"] },
   { label: "Finanzas", slugs: ["finanzas"] },

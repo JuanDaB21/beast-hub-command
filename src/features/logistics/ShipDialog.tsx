@@ -29,7 +29,7 @@ interface Props {
 }
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 export function ShipDialog({ order, open, onOpenChange, targetStatus = "shipped" }: Props) {
   const ship = useMarkShipped();
@@ -60,7 +60,10 @@ export function ShipDialog({ order, open, onOpenChange, targetStatus = "shipped"
 
   const sla = slaFromCreatedAt(order.created_at);
   const requiresReason = sla.tone === "red";
-  const isShipped = order.status === "shipped";
+  // Un pedido ya despachado (o entregado, como los COD que siguen en el tablero
+  // de recaudo) solo corrige guía y costo: reenviarle el status lo haría
+  // retroceder de estado.
+  const isShipped = order.status === "shipped" || order.status === "delivered";
 
   const handleSubmit = async () => {
     const tn = tracking.trim();

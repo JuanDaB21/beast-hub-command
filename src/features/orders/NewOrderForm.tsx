@@ -19,6 +19,7 @@ import {
   useCreateManualOrder,
   useProductsForOrder,
   PAYMENT_METHODS,
+  SHIPPING_FEE_NAME,
   type NewOrderItemInput,
   type OrderStatus,
   type PaymentMethod,
@@ -138,7 +139,7 @@ export function NewOrderForm({ onSuccess }: Props) {
           quantity: 1,
           unit_price: shippingCharge,
           kind: "fee",
-          external_name: "Envío estándar",
+          external_name: SHIPPING_FEE_NAME,
         });
       }
       await create.mutateAsync({

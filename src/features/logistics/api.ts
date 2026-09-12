@@ -2,21 +2,57 @@ import { api } from "@/integrations/api/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { OrderWithItems } from "@/features/orders/api";
 
-export interface ShipmentOrder extends OrderWithItems {
-  tracking_number: string | null;
-  shipped_at: string | null;
-  delay_reason: string | null;
-  shipping_cost: number;
-  customer_pays_shipping: boolean;
-}
+/**
+ * El feed de Logística devuelve la orden completa (o.* + items), así que no hay
+ * nada que añadir sobre OrderWithItems. Se conserva el nombre porque los
+ * componentes del módulo hablan de "envíos".
+ */
+export type ShipmentOrder = OrderWithItems;
 
 const QK = ["logistics-orders"] as const;
 
-/** Pedidos en flujo logístico: pending, processing, shipped. */
+/**
+ * Pedidos del flujo logístico: pending, processing y shipped, más los COD ya
+ * entregados mientras su recaudo siga abierto (son la plata que la
+ * transportadora todavía no ha girado).
+ */
 export function useShipmentOrders() {
   return useQuery({
     queryKey: QK,
     queryFn: () => api.get<ShipmentOrder[]>("/logistics/orders"),
+  });
+}
+
+/* ---- COD ----
+ * El recaudo se cierra solo al entregar (el servidor lo deriva del status), así
+ * que la única acción COD que queda es la confirmación previa al despacho.
+ */
+
+/** Etapas del ciclo COD, para agrupar el tablero de recaudo. */
+export type CodStage = "to_confirm" | "to_collect" | "collected";
+
+/**
+ * Solo los COD de Shopify pasan por confirmación telefónica: los manuales se
+ * toman por teléfono, así que ya nacen confirmados de hecho.
+ */
+export function needsOrderConfirmation(o: ShipmentOrder) {
+  return o.is_cod && o.source === "shopify" && !o.order_confirmed && !o.cod_confirmed;
+}
+
+export function codStage(o: ShipmentOrder): CodStage {
+  if (o.cod_confirmed) return "collected";
+  return needsOrderConfirmation(o) ? "to_confirm" : "to_collect";
+}
+
+/** Hito 1: el cliente confirmó que sí quiere el pedido. Previo al despacho. */
+export function useConfirmCodOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.post(`/cod/orders/${id}/confirm`, {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+    },
   });
 }
 
@@ -46,7 +82,11 @@ export function useMarkShipped() {
   });
 }
 
-/** Marca un pedido como entregado. Solo cambia el estado. */
+/**
+ * Marca un pedido como entregado. En los COD esto además cierra el recaudo: el
+ * servidor setea cod_confirmed y su timestamp, porque si la transportadora
+ * entregó, cobró.
+ */
 export function useMarkDelivered() {
   const qc = useQueryClient();
   return useMutation({
@@ -54,6 +94,7 @@ export function useMarkDelivered() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK });
       qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["finance_reconciliation"] });
     },
   });
 }

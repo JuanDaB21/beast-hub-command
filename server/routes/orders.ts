@@ -1,7 +1,18 @@
 import { Router } from 'express';
 import { pool } from '../db';
-import { asyncHandler, buildInsert, buildUpdate } from '../util';
+import { asyncHandler, buildInsert, buildUpdate, pickBody } from '../util';
 
+/**
+ * Métodos de pago que admite orders.payment_method (trigger
+ * validate_order_payment_method). 'cod' NO cabe aquí: el contra-entrega se
+ * identifica con is_cod.
+ */
+export const ORDER_PAYMENT_METHODS = ['fisico', 'nequi', 'daviplata', 'bancolombia'] as const;
+
+/** Categoría del gasto de flete que se espeja en el libro al capturar el costo. */
+const SHIPPING_EXPENSE_CATEGORY = 'Logística — Envío a cliente';
+
+/** Columnas que el cliente puede escribir directamente. */
 const COLS = [
   'order_number',
   'source',
@@ -15,20 +26,27 @@ const COLS = [
   // del pago por prenda. El trigger la sigue poniendo sola en la transición.
   'delivered_at',
   'is_cod',
-  'cod_confirmed',
+  // cod_confirmed / cod_received_at / received_by_staff_id NO son escribibles por
+  // el cliente: el recaudo es consecuencia de entregar (ver PATCH /:id), para que
+  // siempre queden el timestamp y el staff que lo produjo.
   'payment_method',
   'total',
   'tracking_number',
   'shipped_at',
   'delay_reason',
-  'cod_received_at',
-  'received_by_staff_id',
-  'carrier',
   'order_confirmed',
   'order_confirmed_at',
   'confirmed_by_staff_id',
   'shipping_cost',
   'customer_pays_shipping',
+] as const;
+
+/** COLS más las columnas derivadas que solo escribe el servidor. */
+const UPDATE_COLS = [
+  ...COLS,
+  'cod_confirmed',
+  'cod_received_at',
+  'received_by_staff_id',
 ] as const;
 
 /** Build nested items JSON subquery (matching Supabase select shape). */
@@ -149,11 +167,106 @@ ordersRouter.patch(
     // el cobro al cliente viaja como línea order_items.kind='fee' dentro de
     // total. Forzar el costo a 0 cuando el cliente pagaba hacía que el flete
     // real nunca se restara del margen.
-    const body = { ...req.body };
-    const { sql, params } = buildUpdate('orders', COLS, body, String(req.params.id));
-    const { rows } = await pool.query(sql, params);
-    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-    res.json(rows[0]);
+    const id = String(req.params.id);
+    const body: Record<string, unknown> = pickBody(req.body, COLS);
+
+    const { rows: currentRows } = await pool.query(
+      `SELECT order_number, status, tracking_number, is_cod FROM orders WHERE id = $1`,
+      [id]
+    );
+    const current = currentRows[0];
+    if (!current) return res.status(404).json({ error: 'Not found' });
+
+    // Invariante: un pedido no puede quedar 'shipped' sin guía. El tablero de
+    // logística la necesita, y hasta ahora el desplegable de estado la saltaba.
+    // 'delivered' queda fuera a propósito: se puede entregar en mano, sin
+    // transportadora ni guía.
+    if (body.status === 'shipped') {
+      const tracking = String(body.tracking_number ?? current.tracking_number ?? '').trim();
+      if (!tracking) {
+        return res
+          .status(409)
+          .json({ error: 'Captura la guía antes de marcar el pedido como enviado.' });
+      }
+    }
+
+    // Entregado implica recaudado: si la transportadora entregó, cobró.
+    // cod_confirmed pasa a significar que el dinero ya está en manos de la
+    // transportadora; el contraste contra sus giros reales se hace en Finanzas
+    // (conciliación por vía de cobro). Revertir la entrega deshace el recaudo
+    // para poder corregir un clic errado.
+    if (current.is_cod && body.status !== undefined && body.status !== current.status) {
+      if (body.status === 'delivered') {
+        body.cod_confirmed = true;
+        body.cod_received_at = new Date().toISOString();
+        body.received_by_staff_id = req.user?.id ?? null;
+      } else if (current.status === 'delivered') {
+        body.cod_confirmed = false;
+        body.cod_received_at = null;
+        body.received_by_staff_id = null;
+      }
+    }
+
+    const { sql, params } = buildUpdate('orders', UPDATE_COLS, body, id);
+
+    const client = await pool.connect();
+    /** Fila actualizada; solo se leen estos campos, el resto viaja al cliente. */
+    let updated:
+      | ({ order_number: string; shipping_cost: number | string; shipped_at: string | null } & Record<
+          string,
+          unknown
+        >)
+      | undefined;
+    try {
+      await client.query('BEGIN');
+      const { rows } = await client.query(sql, params);
+      updated = rows[0];
+      // El pedido existía al leerlo arriba; si desapareció a mitad, mejor abortar
+      // que dejar el asiento de flete apuntando a un pedido que ya no está.
+      if (!updated) throw Object.assign(new Error('Not found'), { status: 404 });
+
+      // El flete real vive en un único sitio: orders.shipping_cost. Este asiento
+      // lo espeja en el libro para que Finanzas vea la misma cifra que el
+      // Dashboard sin que nadie lo teclee a mano. Idempotente por pedido (índice
+      // único parcial sobre reference_id where reference_type='shipping').
+      if (body.shipping_cost !== undefined) {
+        const amount = Number(updated.shipping_cost) || 0;
+        if (amount > 0) {
+          await client.query(
+            `INSERT INTO financial_transactions
+               (transaction_type, amount, category, reference_type, reference_id,
+                description, occurred_at)
+             VALUES ('expense', $1, $2, 'shipping', $3, $4, $5)
+             ON CONFLICT (reference_id) WHERE reference_type = 'shipping'
+             DO UPDATE SET amount = EXCLUDED.amount,
+                           occurred_at = EXCLUDED.occurred_at,
+                           description = EXCLUDED.description`,
+            [
+              amount,
+              SHIPPING_EXPENSE_CATEGORY,
+              id,
+              `Flete pedido ${updated.order_number}`,
+              updated.shipped_at ?? new Date().toISOString(),
+            ]
+          );
+        } else {
+          await client.query(
+            `DELETE FROM financial_transactions
+              WHERE reference_type = 'shipping' AND reference_id = $1`,
+            [id]
+          );
+        }
+      }
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    res.json(updated);
   })
 );
 
@@ -166,14 +279,24 @@ ordersRouter.post(
   '/:id/verify-payment',
   asyncHandler(async (req, res) => {
     const staffId = req.user?.id ?? null;
+    // El método de pago es obligatorio: es el eje de la conciliación por vía de
+    // cobro en Finanzas. Los pedidos de Shopify llegan sin él (la API solo trae
+    // el gateway crudo), así que este es el momento de capturarlo.
+    const paymentMethod = req.body?.payment_method;
+    if (!ORDER_PAYMENT_METHODS.includes(paymentMethod)) {
+      return res.status(400).json({
+        error: `payment_method requerido, uno de: ${ORDER_PAYMENT_METHODS.join(', ')}`,
+      });
+    }
     const { rows } = await pool.query(
       `UPDATE orders
          SET payment_status = 'paid',
              payment_verified_at = now(),
-             verified_by_staff_id = $1
-       WHERE id = $2 AND payment_status = 'pending_verification'
+             payment_method = $1,
+             verified_by_staff_id = $2
+       WHERE id = $3 AND payment_status = 'pending_verification'
        RETURNING *`,
-      [staffId, String(req.params.id)]
+      [paymentMethod, staffId, String(req.params.id)]
     );
     if (!rows[0]) {
       return res.status(404).json({ error: 'Pedido no encontrado o ya verificado' });

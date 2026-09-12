@@ -40,6 +40,20 @@ export const HISTORY_STATUSES = ORDER_STATUSES.filter((s) =>
 export const isOrderEditable = (status: OrderStatus) =>
   status === "pending" || status === "processing";
 
+/**
+ * Un pedido no puede quedar despachado sin guía: el tablero de Logística la
+ * necesita y el servidor rechaza el PATCH con 409. Cuando esto da true hay que
+ * abrir el ShipDialog en vez de cambiar el estado a secas. 'delivered' entra
+ * porque tampoco tiene sentido dar por entregado algo que nunca se despachó,
+ * pero ahí el diálogo es solo una ayuda: el servidor no lo bloquea (se puede
+ * entregar en mano, sin transportadora).
+ */
+export const requiresTracking = (
+  target: OrderStatus,
+  trackingNumber: string | null,
+): target is "shipped" | "delivered" =>
+  (target === "shipped" || target === "delivered") && !trackingNumber;
+
 export interface Order {
   id: string;
   order_number: string;
@@ -61,7 +75,12 @@ export interface Order {
   shipping_cost: number;
   customer_pays_shipping: boolean;
   tracking_number: string | null;
+  shipped_at: string | null;
+  delay_reason: string | null;
   delivered_at: string | null;
+  order_confirmed: boolean;
+  order_confirmed_at: string | null;
+  cod_received_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -94,11 +113,35 @@ export const isGarmentLine = (it: Pick<OrderItem, "kind">) => it.kind === "produ
 export const countGarments = (items: Pick<OrderItem, "kind" | "quantity">[]) =>
   items.reduce((n, it) => (isGarmentLine(it) ? n + Number(it.quantity) : n), 0);
 
+/**
+ * Nombres con los que nace la línea de cargo por envío. No hay categoría en
+ * order_items, así que el nombre es lo único que distingue el envío de los otros
+ * cargos (comisión COD). "Envío estándar" lo usan el alta manual y el botón del
+ * detalle; "Envío" lo usa el import de Shopify prepago.
+ */
+export const SHIPPING_FEE_NAME = "Envío estándar";
+export const SHIPPING_FEE_NAMES = [SHIPPING_FEE_NAME, "Envío"] as const;
+
+export const isShippingFeeLine = (it: Pick<OrderItem, "kind" | "external_name">) =>
+  it.kind === "fee" && SHIPPING_FEE_NAMES.includes(it.external_name as any);
+
+/** Lo que el cliente pagó por envío en un pedido. */
+export const sumShippingCharged = (
+  items: Pick<OrderItem, "kind" | "external_name" | "quantity" | "unit_price">[],
+) =>
+  items.reduce(
+    (n, it) => (isShippingFeeLine(it) ? n + Number(it.quantity) * Number(it.unit_price) : n),
+    0,
+  );
+
 export interface OrderWithItems extends Order {
   items: OrderItemWithProduct[];
 }
 
 const QK_ORDERS = ["orders"] as const;
+/** El tablero de Logística sirve las mismas órdenes bajo otra key: hay que
+ * invalidarlo desde aquí o se queda mostrando datos viejos (p. ej. sin guía). */
+const QK_LOGISTICS = ["logistics-orders"] as const;
 
 export function useOrders() {
   return useQuery({
@@ -151,7 +194,6 @@ export function useCreateManualOrder() {
         customer_city_dane_code: input.customer_city_dane_code ?? null,
         status: input.status,
         is_cod: input.is_cod,
-        cod_confirmed: false,
         payment_method: input.payment_method,
         customer_pays_shipping: input.customer_pays_shipping,
       });
@@ -182,9 +224,13 @@ export function useAssignOrderItemProduct() {
   });
 }
 
-/** Invalida pedidos y el selector de productos (para reflejar el stock ajustado). */
+/**
+ * Invalida pedidos, el tablero de Logística (que lee las mismas órdenes con otra
+ * query key) y el selector de productos (para reflejar el stock ajustado).
+ */
 function invalidateOrdersAndStock(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: QK_ORDERS });
+  qc.invalidateQueries({ queryKey: QK_LOGISTICS });
   qc.invalidateQueries({ queryKey: ["products-for-order"] });
 }
 
@@ -251,25 +297,41 @@ export function useUpdateOrderStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       api.patch<Order>(`/orders/${id}`, { status }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QK_ORDERS }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK_ORDERS });
+      qc.invalidateQueries({ queryKey: QK_LOGISTICS });
+    },
   });
 }
 
-export function useConfirmCod() {
+/** Corrige la vía de cobro de un pedido ya pagado (histórico sin método). */
+export function useUpdatePaymentMethod() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, confirmed }: { id: string; confirmed: boolean }) =>
-      api.patch<Order>(`/orders/${id}`, { cod_confirmed: confirmed }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QK_ORDERS }),
+    mutationFn: ({ id, payment_method }: { id: string; payment_method: PaymentMethod }) =>
+      api.patch<Order>(`/orders/${id}`, { payment_method }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK_ORDERS });
+      qc.invalidateQueries({ queryKey: ["finance_reconciliation"] });
+    },
   });
 }
 
-/** Marca una transferencia (Nequi u otra) como verificada → pasa a prepago. */
+/**
+ * Marca una transferencia (Nequi u otra) como verificada → pasa a prepago.
+ * El método es obligatorio: es el eje de la conciliación por vía de cobro, y los
+ * pedidos de Shopify llegan sin él.
+ */
 export function useVerifyPayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.post<Order>(`/orders/${id}/verify-payment`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QK_ORDERS }),
+    mutationFn: ({ id, payment_method }: { id: string; payment_method: PaymentMethod }) =>
+      api.post<Order>(`/orders/${id}/verify-payment`, { payment_method }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK_ORDERS });
+      qc.invalidateQueries({ queryKey: QK_LOGISTICS });
+      qc.invalidateQueries({ queryKey: ["finance_reconciliation"] });
+    },
   });
 }
 

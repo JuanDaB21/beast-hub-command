@@ -1,7 +1,7 @@
 import { EntityDetailCard } from "@/components/shared/EntityDetailCard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
-import { BOARD_STATUSES, type OrderStatus, type OrderWithItems } from "./api";
+import { BOARD_STATUSES, requiresTracking, type OrderStatus, type OrderWithItems } from "./api";
 import { STATUS_LABEL, statusTone } from "./status";
 import { ReactNode } from "react";
 import {
@@ -46,7 +46,7 @@ export function OrdersBoard({ orders, renderDetails, onChangeStatus, onRequestSh
     const target = over.id as OrderStatus;
     if (!order || order.status === target) return;
 
-    if ((target === "shipped" || target === "delivered") && !order.tracking_number) {
+    if (requiresTracking(target, order.tracking_number)) {
       onRequestShip?.(order, target);
       return;
     }
@@ -158,7 +158,10 @@ function OrderCard({
               {order.source}
             </span>
             {order.is_cod && (
-              <StatusBadge tone={codTone} label={order.cod_confirmed ? "COD ok" : "COD pend."} />
+              <StatusBadge
+                tone={codTone}
+                label={order.cod_confirmed ? "COD cobrado" : "COD por cobrar"}
+              />
             )}
             {!order.is_cod && order.payment_status === "pending_verification" && (
               <StatusBadge tone="red" label="Pago por verificar" />

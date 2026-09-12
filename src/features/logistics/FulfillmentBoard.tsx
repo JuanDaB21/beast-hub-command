@@ -4,13 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WhatsAppContactButton } from "@/components/shared/WhatsAppContactButton";
-import { PackageCheck, Truck, Clock, Hash } from "lucide-react";
-import { slaFromCreatedAt, useMarkDelivered, type ShipmentOrder } from "./api";
+import { PackageCheck, Truck, Clock, Hash, AlertTriangle, ClipboardCheck } from "lucide-react";
+import {
+  needsOrderConfirmation,
+  slaFromCreatedAt,
+  useConfirmCodOrder,
+  useMarkDelivered,
+  type ShipmentOrder,
+} from "./api";
+import { countGarments } from "@/features/orders/api";
 import { STATUS_LABEL } from "@/features/orders/status";
 import { statusTone } from "@/features/orders/status";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 interface Props {
   orders: ShipmentOrder[];
@@ -45,18 +52,41 @@ export function FulfillmentBoard({ orders, onShip }: Props) {
   );
 }
 
-function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: () => void }) {
+export function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: () => void }) {
   const sla = slaFromCreatedAt(order.created_at);
-  const itemCount = order.items.reduce((acc, it) => acc + it.quantity, 0);
+  const itemCount = countGarments(order.items);
   const isShipped = order.status === "shipped";
+  // Los COD entregados siguen en el tablero hasta que se concilia su recaudo,
+  // así que la tarjeta también se renderiza para ellos.
+  const isDispatched = isShipped || order.status === "delivered";
   const markDelivered = useMarkDelivered();
+  const confirmOrder = useConfirmCodOrder();
+
+  // Los COD de Shopify no se despachan sin la llamada de confirmación: es el
+  // filtro anti-pedido-falso y hasta ahora vivía en otra página, sin bloquear
+  // nada.
+  const pendingConfirmation = needsOrderConfirmation(order);
+  const missingTracking = isShipped && !order.tracking_number;
 
   const handleDelivered = async () => {
     try {
       await markDelivered.mutateAsync(order.id);
-      toast.success(`Pedido ${order.order_number} entregado`);
+      toast.success(
+        order.is_cod
+          ? `Pedido ${order.order_number} entregado · recaudo a cargo de la transportadora`
+          : `Pedido ${order.order_number} entregado`,
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "No se pudo marcar como entregado");
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    try {
+      await confirmOrder.mutateAsync(order.id);
+      toast.success(`Pedido ${order.order_number} confirmado con el cliente`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "No se pudo confirmar el pedido");
     }
   };
 
@@ -78,7 +108,7 @@ function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: () => v
         <StatusBadge tone={statusTone(order.status)} label={STATUS_LABEL[order.status]} />
         {order.is_cod && (
           <Badge variant={order.cod_confirmed ? "default" : "destructive"}>
-            COD {order.cod_confirmed ? "✓" : "?"}
+            {order.cod_confirmed ? "COD cobrado" : "COD por cobrar"}
           </Badge>
         )}
         <span>·</span>
@@ -87,10 +117,28 @@ function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: () => v
         <span className="tabular-nums">{currency(Number(order.total))}</span>
       </div>
 
-      {order.tracking_number && (
+      {order.tracking_number ? (
         <div className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1.5 text-xs">
+          {/* La guía es lo primero que busca el operativo para rastrear. */}
           <Hash className="h-3 w-3 text-muted-foreground" />
           <span className="font-mono">{order.tracking_number}</span>
+        </div>
+      ) : (
+        missingTracking && (
+          <div className="flex items-center gap-1.5 rounded-md border border-status-red/30 bg-status-red/5 px-2 py-1.5 text-xs">
+            <AlertTriangle className="h-3 w-3 text-status-red" />
+            <span className="font-medium text-status-red">Sin guía</span>
+            <span className="text-muted-foreground">· despachado sin registrarla</span>
+          </div>
+        )
+      )}
+
+      {pendingConfirmation && (
+        <div className="rounded-md border border-status-yellow/30 bg-status-yellow/5 p-2 text-xs">
+          <div className="font-medium text-status-yellow">Pendiente de confirmación</div>
+          <div className="text-muted-foreground">
+            Confirma el pedido con el cliente antes de despacharlo.
+          </div>
         </div>
       )}
 
@@ -125,11 +173,31 @@ function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: () => v
           }
           label="WhatsApp"
         />
-        <Button size="sm" variant={isShipped ? "outline" : "default"} className="gap-1.5" onClick={onShip}>
-          {isShipped ? (
+        {pendingConfirmation && (
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={handleConfirmOrder}
+            disabled={confirmOrder.isPending}
+          >
+            <ClipboardCheck className="h-4 w-4" />
+            {confirmOrder.isPending ? "Guardando..." : "Confirmar pedido"}
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant={isDispatched ? "outline" : "default"}
+          className="gap-1.5"
+          onClick={onShip}
+          disabled={pendingConfirmation}
+          title={
+            pendingConfirmation ? "Confirma el pedido con el cliente primero" : undefined
+          }
+        >
+          {isDispatched ? (
             <>
               <Hash className="h-4 w-4" />
-              Editar guía
+              {missingTracking ? "Registrar guía" : "Editar guía"}
             </>
           ) : (
             <>
