@@ -123,12 +123,12 @@ export default function Index() {
               icon={Package}
             />
             <KpiCard
-              label="Costos de envío"
+              label="Flete pagado"
               value={currency(data.shippingCost)}
               hint={
                 data.returnsCost > 0
                   ? `+ ${currency(data.returnsCost)} en devoluciones`
-                  : "Restado del margen neto"
+                  : "Lo que se le paga a la transportadora"
               }
               icon={Truck}
               tone="default"
@@ -141,6 +141,43 @@ export default function Index() {
               tone={
                 data.returnsRate > 0.1 ? "red" : data.returnsRate > 0.05 ? "yellow" : "green"
               }
+            />
+          </div>
+
+          {/*
+            Envíos: el cliente paga el envío como línea del pedido y casi todo se
+            va en el flete. El margen neto ya lo tiene descontado, pero el neto
+            de envíos es invisible ahí y es lo que conviene vigilar.
+          */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <KpiCard
+              label="Envíos cobrados"
+              value={currency(data.shippingCharged)}
+              hint="Cobrado al cliente (ya dentro de los ingresos)"
+              icon={Truck}
+              tone="default"
+            />
+            <KpiCard
+              label="Neto envíos"
+              value={currency(data.shippingNet)}
+              hint={
+                data.shippingNet < 0
+                  ? "La empresa subsidia parte del flete"
+                  : "Cobrado menos flete real"
+              }
+              icon={Truck}
+              tone={data.shippingNet >= 0 ? "green" : "red"}
+            />
+            <KpiCard
+              label="Despachados sin flete"
+              value={data.ordersMissingShippingCost.toLocaleString("es-CO")}
+              hint={
+                data.ordersMissingShippingCost > 0
+                  ? "Inflan el margen: captura el costo en Logística"
+                  : "Todos los despachos tienen su flete registrado"
+              }
+              icon={Truck}
+              tone={data.ordersMissingShippingCost > 0 ? "yellow" : "green"}
             />
           </div>
 

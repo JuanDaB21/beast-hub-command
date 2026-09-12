@@ -25,7 +25,6 @@ import { Plus, Search, Trash2 } from "lucide-react";
 import {
   BOARD_STATUSES,
   HISTORY_STATUSES,
-  useConfirmCod,
   useDeleteAllOrders,
   useDeleteOrder,
   useOrders,
@@ -39,7 +38,7 @@ import { OrdersHistoryTable } from "@/features/orders/OrdersHistoryTable";
 import { OrderDetails } from "@/features/orders/OrderDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShipDialog } from "@/features/logistics/ShipDialog";
-import type { ShipmentOrder } from "@/features/logistics/api";
+
 import { toast } from "@/hooks/use-toast";
 import { matchesAllTokens } from "@/lib/textSearch";
 
@@ -52,7 +51,6 @@ const HISTORY_SET = new Set(HISTORY_STATUSES.map((s) => s.value));
 export default function Orders() {
   const { data: orders = [], isLoading } = useOrders();
   const updateStatus = useUpdateOrderStatus();
-  const confirmCod = useConfirmCod();
   const del = useDeleteOrder();
   const delAll = useDeleteAllOrders();
 
@@ -97,6 +95,7 @@ export default function Orders() {
   const stats = useMemo(() => {
     const total = orders.length;
     const pending = orders.filter((o) => o.status === "pending").length;
+    // COD que la transportadora todavía no ha cobrado (aún sin entregar).
     const codPending = orders.filter((o) => o.is_cod && !o.cod_confirmed).length;
     const paymentPending = orders.filter(
       (o) => !o.is_cod && o.payment_status === "pending_verification",
@@ -144,12 +143,7 @@ export default function Orders() {
           .then(() => toast({ title: "Estado actualizado" }))
           .catch((e) => toast({ title: "Error", description: e.message, variant: "destructive" }))
       }
-      onConfirmCod={(confirmed) =>
-        confirmCod
-          .mutateAsync({ id: o.id, confirmed })
-          .then(() => toast({ title: confirmed ? "COD confirmado" : "COD desmarcado" }))
-          .catch((e) => toast({ title: "Error", description: e.message, variant: "destructive" }))
-      }
+      onRequestShip={(targetStatus) => setShipTarget({ order: o, targetStatus })}
       onDelete={() => setConfirmDelete(o)}
     />
   );
@@ -182,7 +176,7 @@ export default function Orders() {
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <KPI label="Pedidos totales" value={String(stats.total)} />
         <KPI label="Pendientes" value={String(stats.pending)} tone="yellow" />
-        <KPI label="COD por confirmar" value={String(stats.codPending)} tone="red" />
+        <KPI label="COD por cobrar" value={String(stats.codPending)} tone="red" />
         <KPI label="Pagos por verificar" value={String(stats.paymentPending)} tone="red" />
         <KPI label="Ingresos entregados" value={currency(stats.revenue)} />
       </div>
@@ -228,7 +222,7 @@ export default function Orders() {
       )}
 
       <ShipDialog
-        order={shipTarget ? (shipTarget.order as unknown as ShipmentOrder) : null}
+        order={shipTarget?.order ?? null}
         open={!!shipTarget}
         onOpenChange={(o) => !o && setShipTarget(null)}
         targetStatus={shipTarget?.targetStatus}

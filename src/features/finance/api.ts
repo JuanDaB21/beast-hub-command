@@ -62,6 +62,10 @@ export interface FinanceFilters {
   category?: string | "all";
   /** Id del responsable, "none" para los sin asignar, "all" para no filtrar. */
   charged_to?: string | "all" | "none";
+  /** Vía de cobro; "none" para los ingresos sin asignar. */
+  payment_method?: string | "all" | "none";
+  /** Canal de venta; "none" para los que no se asignaron a ninguno. */
+  source?: string | "all" | "none";
   from?: string | null;
   to?: string | null;
   search?: string;
@@ -75,11 +79,20 @@ export const INCOME_CATEGORIES = [
   "Otro",
 ];
 
+/**
+ * 'Logística — Envío a cliente' la genera el servidor al capturar el costo del
+ * flete en el ShipDialog; se lista aquí solo para que el filtro por categoría la
+ * ofrezca. No hay que teclearla a mano, y 'Logística RMA' vuelve a significar
+ * solo fletes de devolución.
+ */
+export const SHIPPING_EXPENSE_CATEGORY = "Logística — Envío a cliente";
+
 export const EXPENSE_CATEGORIES = [
   "Pago a proveedor",
   "Nómina",
   "Servicios",
   "Logística",
+  SHIPPING_EXPENSE_CATEGORY,
   "Marketing",
   "Pérdida por Merma",
   "Logística RMA",
@@ -95,6 +108,11 @@ export function useFinancialTransactions(filters: FinanceFilters = {}) {
         category: filters.category && filters.category !== "all" ? filters.category : undefined,
         charged_to:
           filters.charged_to && filters.charged_to !== "all" ? filters.charged_to : undefined,
+        payment_method:
+          filters.payment_method && filters.payment_method !== "all"
+            ? filters.payment_method
+            : undefined,
+        source: filters.source && filters.source !== "all" ? filters.source : undefined,
         from: filters.from ?? undefined,
         to: filters.to ?? undefined,
         search: filters.search?.trim() || undefined,
@@ -187,9 +205,33 @@ export interface ExpenseCategoryRow {
   amount: number;
 }
 
+/**
+ * Conciliación por vía de cobro. A diferencia de by_source (ventas facturadas),
+ * `collected` es plata YA COBRADA: COD entregados y prepagos verificados. El
+ * `diff` de la fila 'cod' es lo que la transportadora aún no ha girado.
+ */
+export interface PaymentChannelRow {
+  channel: string;
+  collected: number;
+  income: number;
+  diff: number;
+}
+
+export interface ShippingSummary {
+  /** Lo que el cliente pagó por envío (líneas kind='fee'). */
+  charged: number;
+  /** El flete real pagado a la transportadora (orders.shipping_cost). */
+  paid: number;
+  net: number;
+  /** Despachados con shipping_cost=0: inflan el margen hasta capturarlo. */
+  missing_cost_orders: number;
+}
+
 export interface Reconciliation {
   month: string;
   by_source: ReconciliationRow[];
+  by_payment_method: PaymentChannelRow[];
+  shipping: ShippingSummary;
   expenses_by_category: ExpenseCategoryRow[];
   sales_total: number;
   income_total: number;

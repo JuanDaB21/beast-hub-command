@@ -2,29 +2,33 @@ import { Router } from 'express';
 import { pool } from '../db';
 import { asyncHandler } from '../util';
 
-const COD_COLUMNS = `
+/**
+ * Lo que queda del módulo COD tras fusionarlo dentro de Logística.
+ *
+ * El feed propio (GET /orders) desapareció: Logística ya devuelve las mismas
+ * órdenes completas y su pestaña de recaudo trabaja sobre ellas.
+ *
+ * El registro del recaudo (POST /orders/:id/receipt) también desapareció: ahora
+ * el recaudo se deriva de la entrega, porque si la transportadora entregó,
+ * cobró. Lo escribe PATCH /api/orders/:id al pasar a 'delivered', que además
+ * deja el timestamp y el staff (cosa que el viejo atajo por PATCH no hacía).
+ *
+ * Sobrevive solo el hito 1: la llamada de confirmación previa al despacho.
+ */
+export const codRouter = Router();
+
+const RETURN_COLUMNS = `
   id, order_number, customer_name, customer_phone, status, source, is_cod,
   order_confirmed, order_confirmed_at, confirmed_by_staff_id,
-  cod_confirmed, total, carrier, tracking_number, shipped_at,
+  cod_confirmed, total, tracking_number, shipped_at,
   cod_received_at, received_by_staff_id, created_at
 `;
 
-export const codRouter = Router();
-
-/** GET /api/cod/orders — COD orders feed for the COD page. */
-codRouter.get(
-  '/orders',
-  asyncHandler(async (_req, res) => {
-    const { rows } = await pool.query(
-      `SELECT ${COD_COLUMNS} FROM orders WHERE is_cod = true ORDER BY created_at DESC`
-    );
-    res.json(rows);
-  })
-);
-
 /**
  * POST /api/cod/orders/:id/confirm
- * Marks the order as order_confirmed with the current staff.
+ * Hito 1: el cliente confirmó por teléfono/WhatsApp que sí quiere el pedido.
+ * Es el filtro anti-pedido-falso de los COD de Shopify, previo al despacho.
+ * Único sitio que escribe order_confirmed_at y confirmed_by_staff_id.
  */
 codRouter.post(
   '/orders/:id/confirm',
@@ -36,45 +40,10 @@ codRouter.post(
            order_confirmed_at = now(),
            confirmed_by_staff_id = $1
        WHERE id = $2
-       RETURNING ${COD_COLUMNS}`,
+       RETURNING ${RETURN_COLUMNS}`,
       [staffId, String(req.params.id)]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-    res.json(rows[0]);
-  })
-);
-
-/**
- * POST /api/cod/orders/:id/receipt
- * Registers the COD cash receipt. Shopify orders must be confirmed first.
- */
-codRouter.post(
-  '/orders/:id/receipt',
-  asyncHandler(async (req, res) => {
-    const id = String(req.params.id);
-    const staffId = req.user?.id ?? null;
-
-    const { rows: check } = await pool.query(
-      'SELECT source, order_confirmed FROM orders WHERE id = $1',
-      [id]
-    );
-    const order = check[0];
-    if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
-    if (order.source === 'shopify' && !order.order_confirmed) {
-      return res
-        .status(400)
-        .json({ error: 'Debes confirmar el pedido antes de registrar el recaudo' });
-    }
-
-    const { rows } = await pool.query(
-      `UPDATE orders
-       SET cod_confirmed = true,
-           cod_received_at = now(),
-           received_by_staff_id = $1
-       WHERE id = $2
-       RETURNING ${COD_COLUMNS}`,
-      [staffId, id]
-    );
     res.json(rows[0]);
   })
 );

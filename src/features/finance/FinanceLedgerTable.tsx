@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import {
   PAYMENT_CHANNEL_LABEL,
+  SALES_SOURCE_LABEL,
   useDeleteTransaction,
   type FinancialTransaction,
 } from "./api";
@@ -38,6 +39,8 @@ const originLabel = (ref: string | null) => {
   if (!ref || ref === "manual") return "Manual";
   if (ref === "return") return "Devolución";
   if (ref === "order") return "Pedido";
+  if (ref === "shipping") return "Flete";
+  if (ref === "unit_payment") return "Pago prendas";
   return ref;
 };
 
@@ -81,6 +84,7 @@ export function FinanceLedgerTable({
               <TableHead>Tipo</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Método</TableHead>
+              <TableHead>Canal</TableHead>
               <TableHead>Cargado a</TableHead>
               <TableHead>Descripción</TableHead>
               <TableHead>Origen</TableHead>
@@ -91,7 +95,7 @@ export function FinanceLedgerTable({
           <TableBody>
             {transactions.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
                   No hay transacciones para los filtros seleccionados.
                 </TableCell>
               </TableRow>
@@ -115,6 +119,9 @@ export function FinanceLedgerTable({
                   <TableCell className="text-sm">{t.category}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {t.payment_method ? (PAYMENT_CHANNEL_LABEL[t.payment_method] ?? t.payment_method) : "—"}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {t.source ? (SALES_SOURCE_LABEL[t.source] ?? t.source) : "—"}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {t.charged_to?.full_name ?? "—"}

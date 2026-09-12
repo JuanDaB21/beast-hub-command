@@ -17,6 +17,21 @@ const INSERT_COLS = [
 
 const SALES_SOURCES = ['shopify', 'manual'] as const;
 
+/**
+ * Vías por las que entra la plata. Coinciden con el CHECK de
+ * financial_transactions.payment_method, que es lo que permite conciliar los dos
+ * lados sin traducir nada.
+ */
+const PAYMENT_CHANNELS = ['bancolombia', 'nequi', 'daviplata', 'fisico', 'cod'] as const;
+
+/**
+ * Nombres con los que nace la línea de cargo por envío en order_items. No hay
+ * categoría en esa tabla, así que el nombre es lo único que distingue el envío
+ * de los otros cargos (comisión COD). Espejo de SHIPPING_FEE_NAMES en
+ * src/features/orders/api.ts.
+ */
+const SHIPPING_FEE_NAMES = ['Envío estándar', 'Envío'];
+
 /** Convierte un YYYY-MM (o el mes actual si es inválido) al rango UTC [start, end). */
 function monthRange(month: string): { start: Date; end: Date; label: string } {
   const m = /^(\d{4})-(\d{2})$/.exec(month.trim());
@@ -33,10 +48,8 @@ export const financeRouter = Router();
 financeRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    const { type, category, from, to, search, charged_to } = req.query as Record<
-      string,
-      string | undefined
-    >;
+    const { type, category, from, to, search, charged_to, payment_method, source } =
+      req.query as Record<string, string | undefined>;
 
     const where: string[] = [];
     const params: unknown[] = [];
@@ -67,6 +80,19 @@ financeRouter.get(
     } else if (charged_to && charged_to !== 'all') {
       params.push(charged_to);
       where.push(`ft.charged_to_staff_id = $${params.length}`);
+    }
+    // Permiten abrir una barra de la conciliación y ver qué asientos la componen.
+    if (payment_method === 'none') {
+      where.push('ft.payment_method IS NULL');
+    } else if (payment_method && payment_method !== 'all') {
+      params.push(payment_method);
+      where.push(`ft.payment_method = $${params.length}`);
+    }
+    if (source === 'none') {
+      where.push('ft.source IS NULL');
+    } else if (source && source !== 'all') {
+      params.push(source);
+      where.push(`ft.source = $${params.length}`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
@@ -158,7 +184,70 @@ financeRouter.get(
       [startIso, endIso]
     );
 
-    const [sales, income, expense] = await Promise.all([salesQ, incomeQ, expenseQ]);
+    // --- Conciliación por vía de cobro ---
+    // A diferencia de by_source (que mira ventas facturadas), aquí el lado
+    // "esperado" es plata YA COBRADA, que es lo que de verdad debe aparecer en
+    // el libro:
+    //   · COD  → la transportadora entregó, luego cobró (cod_received_at).
+    //   · Prepago → el pago está verificado (payment_verified_at).
+    // El diff de la barra COD es, literalmente, lo que la transportadora aún no
+    // ha girado.
+    const collectedQ = pool.query(
+      `SELECT COALESCE(CASE WHEN is_cod THEN 'cod' ELSE payment_method END, 'sin_asignar')
+                AS channel,
+              COALESCE(SUM(total), 0)::numeric AS amount
+         FROM orders
+        WHERE status <> 'cancelled'
+          AND (
+            (is_cod AND cod_confirmed
+              AND cod_received_at >= $1 AND cod_received_at < $2)
+            OR
+            (NOT is_cod AND payment_status = 'paid'
+              AND COALESCE(payment_verified_at, created_at) >= $1
+              AND COALESCE(payment_verified_at, created_at) < $2)
+          )
+        GROUP BY 1`,
+      [startIso, endIso]
+    );
+    // Ingresos registrados por vía de cobro.
+    const incomeByChannelQ = pool.query(
+      `SELECT COALESCE(payment_method, 'sin_asignar') AS channel,
+              COALESCE(SUM(amount), 0)::numeric AS amount
+         FROM financial_transactions
+        WHERE transaction_type = 'income'
+          AND occurred_at >= $1 AND occurred_at < $2
+        GROUP BY 1`,
+      [startIso, endIso]
+    );
+    // --- Envíos del mes ---
+    // El cliente paga el envío como línea kind='fee' dentro del total, y la
+    // empresa le paga el flete a la transportadora (orders.shipping_cost). Lo
+    // que importa vigilar es el neto entre ambos.
+    const shippingQ = pool.query(
+      `SELECT
+         COALESCE((
+           SELECT SUM(oi.quantity * oi.unit_price)
+             FROM order_items oi
+             JOIN orders o2 ON o2.id = oi.order_id
+            WHERE oi.kind = 'fee'
+              AND oi.external_name = ANY($3::text[])
+              AND o2.status <> 'cancelled'
+              AND o2.created_at >= $1 AND o2.created_at < $2
+         ), 0)::numeric AS charged,
+         COALESCE((
+           SELECT SUM(shipping_cost) FROM orders
+            WHERE status <> 'cancelled'
+              AND created_at >= $1 AND created_at < $2
+         ), 0)::numeric AS paid,
+         COALESCE((
+           SELECT COUNT(*) FROM orders
+            WHERE status IN ('shipped','delivered') AND shipping_cost = 0
+         ), 0)::int AS missing_cost_orders`,
+      [startIso, endIso, SHIPPING_FEE_NAMES]
+    );
+
+    const [sales, income, expense, collected, incomeByChannel, shipping] =
+      await Promise.all([salesQ, incomeQ, expenseQ, collectedQ, incomeByChannelQ, shippingQ]);
 
     const salesMap = new Map<string, number>();
     for (const r of sales.rows) salesMap.set(r.source ?? 'sin_asignar', Number(r.amount));
@@ -177,6 +266,31 @@ financeRouter.get(
       return { source, sales: s, income: i, diff: i - s };
     });
 
+    const collectedMap = new Map<string, number>();
+    for (const r of collected.rows) collectedMap.set(r.channel, Number(r.amount));
+    const incomeChannelMap = new Map<string, number>();
+    for (const r of incomeByChannel.rows) incomeChannelMap.set(r.channel, Number(r.amount));
+
+    const channels = [...PAYMENT_CHANNELS] as string[];
+    if ((collectedMap.get('sin_asignar') ?? 0) > 0 || (incomeChannelMap.get('sin_asignar') ?? 0) > 0) {
+      channels.push('sin_asignar');
+    }
+    const by_payment_method = channels
+      .map((channel) => {
+        const c = collectedMap.get(channel) ?? 0;
+        const i = incomeChannelMap.get(channel) ?? 0;
+        return { channel, collected: c, income: i, diff: i - c };
+      })
+      .filter((r) => r.collected > 0 || r.income > 0);
+
+    const shippingRow = shipping.rows[0] ?? {};
+    const shipping_summary = {
+      charged: Number(shippingRow.charged ?? 0),
+      paid: Number(shippingRow.paid ?? 0),
+      net: Number(shippingRow.charged ?? 0) - Number(shippingRow.paid ?? 0),
+      missing_cost_orders: Number(shippingRow.missing_cost_orders ?? 0),
+    };
+
     const expenses_by_category = expense.rows.map((r) => ({
       category: r.category as string,
       amount: Number(r.amount),
@@ -189,6 +303,8 @@ financeRouter.get(
     res.json({
       month: label,
       by_source,
+      by_payment_method,
+      shipping: shipping_summary,
       expenses_by_category,
       sales_total,
       income_total,

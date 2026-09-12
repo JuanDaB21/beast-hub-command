@@ -11,6 +11,8 @@ import { useStaff } from "@/features/staff/api";
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
+  PAYMENT_CHANNELS,
+  SALES_SOURCES,
   type FinanceFilters as F,
 } from "./api";
 
@@ -102,6 +104,46 @@ export function FinanceFilters({
             placeholder="Todos"
             searchPlaceholder="Buscar staff..."
           />
+        </div>
+
+        {/* Permiten abrir una barra de la conciliación y ver qué la compone. */}
+        <div className="md:col-span-2 space-y-1">
+          <Label className="text-xs">Vía de cobro</Label>
+          <Select
+            value={filters.payment_method ?? "all"}
+            onValueChange={(v) => update({ payment_method: v })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="none">Sin asignar</SelectItem>
+              {PAYMENT_CHANNELS.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="md:col-span-2 space-y-1">
+          <Label className="text-xs">Canal de venta</Label>
+          <Select value={filters.source ?? "all"} onValueChange={(v) => update({ source: v })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="none">Sin asignar</SelectItem>
+              {SALES_SOURCES.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="md:col-span-4">
