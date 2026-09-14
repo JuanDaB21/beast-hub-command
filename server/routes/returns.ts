@@ -137,8 +137,9 @@ interface ResolveBody {
 
 /**
  * POST /:id/resolve — resuelve la devolución. Si restocked, suma +1 al stock.
- * Si scrapped y product_cost>0, registra merma en financial_transactions.
- * Si la empresa asume flete, registra ese gasto también.
+ * NO escribe en financial_transactions: el libro es solo lo realmente
+ * transferido y se registra a mano. La merma y el flete asumido quedan en la
+ * fila de returns y el Dashboard los descuenta del margen desde ahí.
  * Todo en una transacción para evitar estados inconsistentes.
  */
 returnsRouter.post(
@@ -167,28 +168,6 @@ returnsRouter.post(
           newStock,
           body.product_id,
         ]);
-      }
-
-      if (body.resolution === 'scrapped' && body.product_cost > 0) {
-        await client.query(
-          `INSERT INTO financial_transactions
-           (transaction_type, amount, category, reference_type, reference_id, description)
-           VALUES ('expense', $1, 'Pérdida por Merma', 'return', $2, $3)`,
-          [
-            body.product_cost,
-            id,
-            `Merma ${body.product_name ?? 'producto'} · pedido ${body.order_number ?? '—'}`,
-          ]
-        );
-      }
-
-      if (body.company_assumes_shipping && body.return_shipping_cost > 0) {
-        await client.query(
-          `INSERT INTO financial_transactions
-           (transaction_type, amount, category, reference_type, reference_id, description)
-           VALUES ('expense', $1, 'Logística RMA', 'return', $2, $3)`,
-          [body.return_shipping_cost, id, `Flete devolución pedido ${body.order_number ?? '—'}`]
-        );
       }
 
       await client.query('COMMIT');

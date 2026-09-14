@@ -80,10 +80,10 @@ export const INCOME_CATEGORIES = [
 ];
 
 /**
- * 'Logística — Envío a cliente' la genera el servidor al capturar el costo del
- * flete en el ShipDialog; se lista aquí solo para que el filtro por categoría la
- * ofrezca. No hay que teclearla a mano, y 'Logística RMA' vuelve a significar
- * solo fletes de devolución.
+ * Categoría MANUAL para registrar lo realmente girado a la transportadora por
+ * envíos a clientes. La tarjeta "Envíos del mes" la contrasta contra el flete
+ * capturado en los pedidos (espejo de SHIPPING_PAID_CATEGORIES en
+ * server/routes/finance.ts). 'Logística RMA' es solo fletes de devolución.
  */
 export const SHIPPING_EXPENSE_CATEGORY = "Logística — Envío a cliente";
 
@@ -220,9 +220,14 @@ export interface PaymentChannelRow {
 export interface ShippingSummary {
   /** Lo que el cliente pagó por envío (líneas kind='fee'). */
   charged: number;
-  /** El flete real pagado a la transportadora (orders.shipping_cost). */
-  paid: number;
+  /** Flete capturado en los pedidos despachados del mes (orders.shipping_cost). */
+  orders_cost: number;
+  /** Lo realmente girado a la transportadora, registrado a mano en el libro. */
+  paid_ledger: number;
+  /** charged − orders_cost. */
   net: number;
+  /** paid_ledger − orders_cost: >0 registrado de más, <0 pendiente por pagar/registrar. */
+  diff: number;
   /** Despachados con shipping_cost=0: inflan el margen hasta capturarlo. */
   missing_cost_orders: number;
 }

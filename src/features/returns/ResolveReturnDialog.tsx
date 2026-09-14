@@ -88,7 +88,10 @@ export function ResolveReturnDialog({ ret, open, onOpenChange }: Props) {
 
       toast({
         title: resolution === "restocked" ? "Re-ingresado al stock" : "Marcado como merma",
-        description: impacts.length > 0 ? `Impacto financiero · ${impacts.join(" · ")}` : "Sin impacto financiero adicional.",
+        description:
+          impacts.length > 0
+            ? `Se descuenta del margen en el Dashboard · ${impacts.join(" · ")}. Registra el pago real en el libro.`
+            : "Sin impacto financiero adicional.",
       });
       onOpenChange(false);
     } catch (e: any) {
@@ -139,7 +142,7 @@ export function ResolveReturnDialog({ ret, open, onOpenChange }: Props) {
                 Descartar como merma
               </div>
               <p className="text-xs text-muted-foreground">
-                Se asume la pérdida. Se registrará un gasto de {currency(productCost)} en el libro mayor.
+                Se asume la pérdida de {currency(productCost)}; se descuenta del margen en el Dashboard.
               </p>
             </div>
           </label>
@@ -158,7 +161,7 @@ export function ResolveReturnDialog({ ret, open, onOpenChange }: Props) {
             <div>
               <Label htmlFor="ras" className="text-sm">¿Asumimos el costo de envío?</Label>
               <p className="text-xs text-muted-foreground">
-                Si activas esta opción, el flete se registrará como gasto.
+                Se descuenta del margen; el pago real a la transportadora se registra a mano en el libro.
               </p>
             </div>
             <Switch

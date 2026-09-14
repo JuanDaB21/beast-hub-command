@@ -32,6 +32,13 @@ const PAYMENT_CHANNELS = ['bancolombia', 'nequi', 'daviplata', 'fisico', 'cod'] 
  */
 const SHIPPING_FEE_NAMES = ['Envío estándar', 'Envío'];
 
+/**
+ * Categorías de gasto MANUAL con las que se registra el giro real a la
+ * transportadora. Espejo de SHIPPING_EXPENSE_CATEGORY en
+ * src/features/finance/api.ts; 'Envios a clientes' es la categoría legada.
+ */
+const SHIPPING_PAID_CATEGORIES = ['Logística — Envío a cliente', 'Envios a clientes'];
+
 /** Convierte un YYYY-MM (o el mes actual si es inválido) al rango UTC [start, end). */
 function monthRange(month: string): { start: Date; end: Date; label: string } {
   const m = /^(\d{4})-(\d{2})$/.exec(month.trim());
@@ -220,9 +227,12 @@ financeRouter.get(
       [startIso, endIso]
     );
     // --- Envíos del mes ---
-    // El cliente paga el envío como línea kind='fee' dentro del total, y la
-    // empresa le paga el flete a la transportadora (orders.shipping_cost). Lo
-    // que importa vigilar es el neto entre ambos.
+    // Tres cifras:
+    //   · charged     → lo cobrado al cliente (línea kind='fee' de envío).
+    //   · orders_cost → el flete capturado en los pedidos (orders.shipping_cost),
+    //                   imputado al mes en que se despachó.
+    //   · paid_ledger → lo realmente girado a la transportadora, registrado A MANO
+    //                   en el libro. Es la conciliación: el libro no se llena solo.
     const shippingQ = pool.query(
       `SELECT
          COALESCE((
@@ -237,13 +247,20 @@ financeRouter.get(
          COALESCE((
            SELECT SUM(shipping_cost) FROM orders
             WHERE status <> 'cancelled'
-              AND created_at >= $1 AND created_at < $2
-         ), 0)::numeric AS paid,
+              AND COALESCE(shipped_at, created_at) >= $1
+              AND COALESCE(shipped_at, created_at) < $2
+         ), 0)::numeric AS orders_cost,
+         COALESCE((
+           SELECT SUM(amount) FROM financial_transactions
+            WHERE transaction_type = 'expense'
+              AND category = ANY($4::text[])
+              AND occurred_at >= $1 AND occurred_at < $2
+         ), 0)::numeric AS paid_ledger,
          COALESCE((
            SELECT COUNT(*) FROM orders
             WHERE status IN ('shipped','delivered') AND shipping_cost = 0
          ), 0)::int AS missing_cost_orders`,
-      [startIso, endIso, SHIPPING_FEE_NAMES]
+      [startIso, endIso, SHIPPING_FEE_NAMES, SHIPPING_PAID_CATEGORIES]
     );
 
     const [sales, income, expense, collected, incomeByChannel, shipping] =
@@ -284,10 +301,16 @@ financeRouter.get(
       .filter((r) => r.collected > 0 || r.income > 0);
 
     const shippingRow = shipping.rows[0] ?? {};
+    const charged = Number(shippingRow.charged ?? 0);
+    const orders_cost = Number(shippingRow.orders_cost ?? 0);
+    const paid_ledger = Number(shippingRow.paid_ledger ?? 0);
     const shipping_summary = {
-      charged: Number(shippingRow.charged ?? 0),
-      paid: Number(shippingRow.paid ?? 0),
-      net: Number(shippingRow.charged ?? 0) - Number(shippingRow.paid ?? 0),
+      charged,
+      orders_cost,
+      paid_ledger,
+      net: charged - orders_cost,
+      // >0 registrado de más en el libro; <0 flete aún sin pagar o sin registrar.
+      diff: paid_ledger - orders_cost,
       missing_cost_orders: Number(shippingRow.missing_cost_orders ?? 0),
     };
 

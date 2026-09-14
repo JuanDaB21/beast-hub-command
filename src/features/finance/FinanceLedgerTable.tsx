@@ -37,9 +37,7 @@ const fmt = (n: number) =>
 
 const originLabel = (ref: string | null) => {
   if (!ref || ref === "manual") return "Manual";
-  if (ref === "return") return "Devolución";
   if (ref === "order") return "Pedido";
-  if (ref === "shipping") return "Flete";
   if (ref === "unit_payment") return "Pago prendas";
   return ref;
 };

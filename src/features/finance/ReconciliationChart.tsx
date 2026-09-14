@@ -180,14 +180,15 @@ export function ReconciliationChart({ month }: { month: string }) {
 
       {/*
         Envíos: el cliente paga el envío como línea del pedido y la empresa le
-        paga el flete a la transportadora. Casi todo lo cobrado se va en el
-        flete, así que lo que hay que vigilar es el neto.
+        paga el flete a la transportadora. Arriba el neto según los pedidos;
+        abajo la conciliación contra lo realmente girado, que se registra a mano
+        en el libro (el libro no se llena solo con fletes).
       */}
       <Card className="flex flex-col gap-3 p-4">
         <div>
           <h3 className="text-sm font-semibold">Envíos del mes</h3>
           <p className="text-xs text-muted-foreground">
-            Lo cobrado al cliente contra el flete pagado a la transportadora.
+            Ítem de envío de los pedidos y flete capturado, contra lo pagado registrado en el libro.
           </p>
         </div>
         {isLoading || !shipping ? (
@@ -201,9 +202,9 @@ export function ReconciliationChart({ month }: { month: string }) {
               <span className="tabular-nums font-medium">{cop(shipping.charged)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Pagado a la transportadora</span>
+              <span className="text-muted-foreground">Flete según pedidos</span>
               <span className="tabular-nums font-medium text-status-red">
-                −{cop(shipping.paid)}
+                −{cop(shipping.orders_cost)}
               </span>
             </div>
             <div className="flex items-center justify-between border-t pt-2">
@@ -216,6 +217,27 @@ export function ReconciliationChart({ month }: { month: string }) {
                 {cop(shipping.net)}
               </span>
             </div>
+            <div className="mt-2 flex items-center justify-between border-t pt-2">
+              <span className="text-muted-foreground">Pagado registrado en libro</span>
+              <span className="tabular-nums font-medium">{cop(shipping.paid_ledger)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Diferencia libro vs pedidos</span>
+              <span
+                className={`tabular-nums font-semibold ${
+                  shipping.diff === 0 ? "text-status-green" : "text-status-yellow"
+                }`}
+              >
+                {cop(shipping.diff)}
+              </span>
+            </div>
+            {shipping.diff !== 0 && (
+              <p className="text-xs text-muted-foreground">
+                {shipping.diff < 0
+                  ? `${cop(-shipping.diff)} de flete aún sin pagar o sin registrar en el libro.`
+                  : `${cop(shipping.diff)} registrados de más frente al flete de los pedidos.`}
+              </p>
+            )}
             {shipping.missing_cost_orders > 0 && (
               <div className="mt-1 rounded-md border border-status-yellow/30 bg-status-yellow/5 p-2 text-xs">
                 <span className="font-medium text-status-yellow">

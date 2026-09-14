@@ -133,7 +133,11 @@ interface ReturnRow {
   order_id: string | null;
   reason_category: string;
   resolution_status: string;
+  company_assumes_shipping: boolean;
+  return_shipping_cost: number;
+  resolved_at: string | null;
   created_at: string;
+  product: { cost: number } | null;
 }
 
 interface ProductMaterialRow {
@@ -153,11 +157,6 @@ interface ProductCatalogRow {
 interface ProcessLinkRow {
   product_id: string;
   process: { cost: number } | null;
-}
-
-interface ExpenseRow {
-  amount: number;
-  reference_type: string | null;
 }
 
 export interface BiData {
@@ -254,29 +253,26 @@ export function useBiData(range: DateRange) {
         }
       }
 
-      // Gastos de devolución (merma y flete RMA) que el margen ignoraba.
-      const expenses = await api.get<ExpenseRow[]>("/finance", {
-        type: "expense",
-        from: range.from?.toISOString(),
-        to: range.to?.toISOString(),
-      });
-      // Solo los gastos de devolución (merma y flete RMA). NO ampliar este
-      // filtro a 'shipping': ese asiento espeja orders.shipping_cost, que ya se
-      // resta abajo como shippingCost — contarlo aquí descontaría el flete dos
-      // veces. Los manuales tampoco entran: el margen se calcula desde las
-      // órdenes, no desde el libro.
-      const returnsCost = expenses
-        .filter((e) => e.reference_type === "return")
-        .reduce((s, e) => s + (Number(e.amount) || 0), 0);
-
       const returns = await api.get<ReturnRow[]>("/returns");
-      const filteredReturns = returns.filter((r) => {
-        if (!range.from && !range.to) return true;
-        const t = new Date(r.created_at).getTime();
+      const inRange = (iso: string) => {
+        const t = new Date(iso).getTime();
         if (range.from && t < range.from.getTime()) return false;
         if (range.to && t > range.to.getTime()) return false;
         return true;
-      });
+      };
+      const filteredReturns = returns.filter((r) => inRange(r.created_at));
+
+      // Costo de devoluciones (merma + flete RMA asumido), leído de la fila de
+      // returns e imputado al mes en que se resolvió. El libro ya no lo recibe
+      // automáticamente (es solo manual), y el margen se calcula desde la
+      // operación, no desde el libro.
+      const returnsCost = returns
+        .filter((r) => r.resolved_at && inRange(r.resolved_at))
+        .reduce((s, r) => {
+          const scrap = r.resolution_status === "scrapped" ? Number(r.product?.cost ?? 0) : 0;
+          const freight = r.company_assumes_shipping ? Number(r.return_shipping_cost) || 0 : 0;
+          return s + scrap + freight;
+        }, 0);
 
       const validOrders = orders.filter((o) => o.status !== "cancelled");
 
