@@ -9,9 +9,6 @@ import { asyncHandler, buildInsert, buildUpdate, pickBody } from '../util';
  */
 export const ORDER_PAYMENT_METHODS = ['fisico', 'nequi', 'daviplata', 'bancolombia'] as const;
 
-/** Categoría del gasto de flete que se espeja en el libro al capturar el costo. */
-const SHIPPING_EXPENSE_CATEGORY = 'Logística — Envío a cliente';
-
 /** Columnas que el cliente puede escribir directamente. */
 const COLS = [
   'order_number',
@@ -207,66 +204,13 @@ ordersRouter.patch(
       }
     }
 
+    // shipping_cost NO se espeja en el libro: el libro es solo lo realmente
+    // transferido y se registra a mano. El contraste flete de pedidos vs pagado
+    // vive en la tarjeta "Envíos del mes" (GET /finance/reconciliation).
     const { sql, params } = buildUpdate('orders', UPDATE_COLS, body, id);
-
-    const client = await pool.connect();
-    /** Fila actualizada; solo se leen estos campos, el resto viaja al cliente. */
-    let updated:
-      | ({ order_number: string; shipping_cost: number | string; shipped_at: string | null } & Record<
-          string,
-          unknown
-        >)
-      | undefined;
-    try {
-      await client.query('BEGIN');
-      const { rows } = await client.query(sql, params);
-      updated = rows[0];
-      // El pedido existía al leerlo arriba; si desapareció a mitad, mejor abortar
-      // que dejar el asiento de flete apuntando a un pedido que ya no está.
-      if (!updated) throw Object.assign(new Error('Not found'), { status: 404 });
-
-      // El flete real vive en un único sitio: orders.shipping_cost. Este asiento
-      // lo espeja en el libro para que Finanzas vea la misma cifra que el
-      // Dashboard sin que nadie lo teclee a mano. Idempotente por pedido (índice
-      // único parcial sobre reference_id where reference_type='shipping').
-      if (body.shipping_cost !== undefined) {
-        const amount = Number(updated.shipping_cost) || 0;
-        if (amount > 0) {
-          await client.query(
-            `INSERT INTO financial_transactions
-               (transaction_type, amount, category, reference_type, reference_id,
-                description, occurred_at)
-             VALUES ('expense', $1, $2, 'shipping', $3, $4, $5)
-             ON CONFLICT (reference_id) WHERE reference_type = 'shipping'
-             DO UPDATE SET amount = EXCLUDED.amount,
-                           occurred_at = EXCLUDED.occurred_at,
-                           description = EXCLUDED.description`,
-            [
-              amount,
-              SHIPPING_EXPENSE_CATEGORY,
-              id,
-              `Flete pedido ${updated.order_number}`,
-              updated.shipped_at ?? new Date().toISOString(),
-            ]
-          );
-        } else {
-          await client.query(
-            `DELETE FROM financial_transactions
-              WHERE reference_type = 'shipping' AND reference_id = $1`,
-            [id]
-          );
-        }
-      }
-
-      await client.query('COMMIT');
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
-    }
-
-    res.json(updated);
+    const { rows } = await pool.query(sql, params);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
   })
 );
 

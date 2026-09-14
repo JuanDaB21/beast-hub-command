@@ -86,7 +86,10 @@ export function UnitPaymentsPanel() {
     [runs],
   );
 
-  const generate = async (force = false) => {
+  const alreadyPaidOrders = period?.already_paid_orders ?? 0;
+  const alreadyPaidUnits = period?.already_paid_units ?? 0;
+
+  const generate = async () => {
     if (!from || !to) return;
     try {
       await create.mutateAsync({
@@ -94,7 +97,6 @@ export function UnitPaymentsPanel() {
         period_to: to.toISOString(),
         rate_per_unit: rateNum,
         notes: notes.trim() || null,
-        force,
       });
       setRate("");
       setNotes("");
@@ -126,7 +128,8 @@ export function UnitPaymentsPanel() {
             <Wallet className="h-4 w-4" /> Generar pago por prendas vendidas
           </CardTitle>
           <CardDescription>
-            Se cuentan las prendas de pedidos ya entregados dentro del rango.
+            Se cuentan las prendas de pedidos marcados como entregados dentro del rango. Un pedido
+            se paga una sola vez: los ya incluidos en otro pago se excluyen.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -233,26 +236,18 @@ export function UnitPaymentsPanel() {
             />
           </div>
 
-          {overlapping.length > 0 && (
-            <Alert variant="destructive">
+          {(alreadyPaidOrders > 0 || overlapping.length > 0) && (
+            <Alert>
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Periodo ya pagado parcialmente</AlertTitle>
+              <AlertTitle>Pedidos ya pagados excluidos</AlertTitle>
               <AlertDescription>
-                Hay {overlapping.length} pago(s) que se cruzan con este rango:{" "}
-                {overlapping
-                  .map((r) => `${shortDate(r.period_from)}–${shortDate(r.period_to)}`)
-                  .join(", ")}
-                . Generar aquí pagaría esas prendas dos veces, así que está bloqueado; ajusta
-                las fechas o confírmalo de forma explícita.
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  disabled={create.isPending || units <= 0 || rateNum <= 0}
-                  onClick={() => generate(true)}
-                >
-                  Generar de todos modos
-                </Button>
+                {alreadyPaidOrders > 0
+                  ? `${alreadyPaidOrders} pedido(s) entregados en este rango (${alreadyPaidUnits} prendas) ya estaban en otro pago y no se vuelven a contar.`
+                  : "Ningún pedido del rango estaba pagado."}
+                {overlapping.length > 0 &&
+                  ` Pagos que se cruzan con el rango: ${overlapping
+                    .map((r) => `${shortDate(r.period_from)}–${shortDate(r.period_to)}`)
+                    .join(", ")}.`}
               </AlertDescription>
             </Alert>
           )}

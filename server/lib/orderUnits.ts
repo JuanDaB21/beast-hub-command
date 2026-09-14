@@ -25,3 +25,11 @@ export function deliveredInRangeSql(alias: string, fromIdx: number) {
         AND ${alias}.delivered_at >= $${fromIdx}
         AND ${alias}.delivered_at < $${fromIdx + 1}`;
 }
+
+/**
+ * Predicado SQL de pedido aún no incluido en ningún pago de prendas. `alias` es
+ * el alias de orders. Un pedido se paga una sola vez (unit_payment_run_orders).
+ */
+export function notYetPaidSql(alias: string) {
+  return `NOT EXISTS (SELECT 1 FROM unit_payment_run_orders upo WHERE upo.order_id = ${alias}.id)`;
+}

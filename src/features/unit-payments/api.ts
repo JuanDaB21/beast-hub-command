@@ -15,7 +15,11 @@ export interface UnitPaymentRun {
 }
 
 export interface UnitsInPeriod {
+  /** Prendas entregadas en el rango aún sin pagar. */
   units: number;
+  /** Entregadas en el rango pero ya incluidas en otro pago (excluidas). */
+  already_paid_units: number;
+  already_paid_orders: number;
   overlapping_runs: {
     id: string;
     period_from: string;
@@ -73,8 +77,6 @@ export interface NewUnitPaymentInput {
   period_to: string;
   rate_per_unit: number;
   notes?: string | null;
-  /** Genera el pago aunque el periodo se cruce con otro ya pagado (el server lo rechaza si no). */
-  force?: boolean;
 }
 
 /** El gasto de nómina que genera este pago también mueve el libro y los KPIs. */
@@ -92,8 +94,7 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
 export function useCreateUnitPayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ force, ...body }: NewUnitPaymentInput) =>
-      api.post<UnitPaymentRun>("/unit-payments", body, force ? { force: "true" } : undefined),
+    mutationFn: (body: NewUnitPaymentInput) => api.post<UnitPaymentRun>("/unit-payments", body),
     onSuccess: () => invalidateAll(qc),
   });
 }
