@@ -118,6 +118,31 @@ export function useDeleteProduct() {
   });
 }
 
+export interface MergeProductResult {
+  ok: true;
+  moved: { order_items: number; work_order_items: number; returns: number };
+  stock_delta: number;
+}
+
+/**
+ * Fusiona una variante duplicada dentro de otra: mueve pedidos, órdenes de trabajo y
+ * devoluciones al destino (con su efecto de stock) y elimina el origen. Es la única
+ * forma de borrar una variante que ya tiene historial.
+ */
+export function useMergeProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sourceId, targetId }: { sourceId: string; targetId: string }) =>
+      api.post<MergeProductResult>(`/products/${sourceId}/merge-into/${targetId}`, {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["work-orders"] });
+      qc.invalidateQueries({ queryKey: ["returns"] });
+    },
+  });
+}
+
 /**
  * Archiva (o restaura) un padre y todas sus variantes hijas poniendo `active`.
  * No borra filas: las ventas conservan su producto (nombre/precio) intactos.

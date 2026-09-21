@@ -75,7 +75,7 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
   const editable = isOrderEditable(order.status);
   const colCount = editable ? 5 : 4;
   const productOptions = useMemo(
-    () => products.map((p) => ({ value: p.id, label: `${p.name} · ${p.sku}` })),
+    () => products.map((p) => ({ value: p.id, label: p.name, sublabel: p.sku })),
     [products],
   );
 
@@ -672,7 +672,7 @@ function AddItemRow({ products, onAdd, adding }: AddItemRowProps) {
   const [price, setPrice] = useState("");
 
   const options = useMemo(
-    () => products.map((p) => ({ value: p.id, label: `${p.name} · ${p.sku}` })),
+    () => products.map((p) => ({ value: p.id, label: p.name, sublabel: p.sku })),
     [products],
   );
 

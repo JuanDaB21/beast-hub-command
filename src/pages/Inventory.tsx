@@ -36,6 +36,7 @@ import { ProductsMobileList } from "@/features/inventory/ProductsMobileList";
 import { matchesAllTokens } from "@/lib/textSearch";
 import { ProductForm } from "@/features/inventory/ProductForm";
 import { VariantEditDialog } from "@/features/inventory/VariantEditDialog";
+import { MergeVariantDialog } from "@/features/inventory/MergeVariantDialog";
 import { ProductProfitPanel } from "@/features/inventory/ProductProfitPanel";
 import { AvailableVariantsList } from "@/features/inventory/AvailableVariantsList";
 import { getStockStatus, isAgingFlagged } from "@/features/inventory/status";
@@ -54,6 +55,7 @@ export default function Inventory() {
   const [editingVariant, setEditingVariant] = useState<Product | null>(null);
   const [profitParent, setProfitParent] = useState<ProductWithChildren | null>(null);
   const [confirmDeleteVariant, setConfirmDeleteVariant] = useState<Product | null>(null);
+  const [mergeSource, setMergeSource] = useState<Product | null>(null);
   const [confirmDeleteTree, setConfirmDeleteTree] = useState<ProductWithChildren | null>(null);
 
   // KPIs sumando hijos + huérfanos (solo activos)
@@ -194,6 +196,7 @@ export default function Inventory() {
                   onDeleteParent={setConfirmDeleteTree}
                   onEditVariant={setEditingVariant}
                   onDeleteVariant={setConfirmDeleteVariant}
+                  onMergeVariant={setMergeSource}
                   onShowProfit={setProfitParent}
                   onArchiveParent={handleArchiveTree}
                   archivedView={showArchived}
@@ -208,6 +211,7 @@ export default function Inventory() {
                   onDeleteParent={setConfirmDeleteTree}
                   onEditVariant={setEditingVariant}
                   onDeleteVariant={setConfirmDeleteVariant}
+                  onMergeVariant={setMergeSource}
                   onShowProfit={setProfitParent}
                   onArchiveParent={handleArchiveTree}
                   archivedView={showArchived}
@@ -257,6 +261,12 @@ export default function Inventory() {
       </Dialog>
 
       {/* Editar variante */}
+      <MergeVariantDialog
+        source={mergeSource}
+        open={!!mergeSource}
+        onOpenChange={(o) => !o && setMergeSource(null)}
+      />
+
       <VariantEditDialog
         variant={editingVariant}
         open={!!editingVariant}

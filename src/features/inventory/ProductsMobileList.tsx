@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Archive, ArchiveRestore, ChevronDown, ChevronRight, LineChart, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ChevronDown, ChevronRight, LineChart, Merge, Pencil, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { getStockStatus, isAgingFlagged } from "./status";
 import type { Product, ProductWithChildren } from "./api";
@@ -17,6 +17,7 @@ interface Props {
   onDeleteParent: (p: ProductWithChildren) => void;
   onEditVariant: (p: Product) => void;
   onDeleteVariant: (p: Product) => void;
+  onMergeVariant: (p: Product) => void;
   onShowProfit: (p: ProductWithChildren) => void;
   onArchiveParent: (p: ProductWithChildren) => void;
   archivedView: boolean;
@@ -29,6 +30,7 @@ export function ProductsMobileList({
   onDeleteParent,
   onEditVariant,
   onDeleteVariant,
+  onMergeVariant,
   onShowProfit,
   onArchiveParent,
   archivedView,
@@ -50,6 +52,7 @@ export function ProductsMobileList({
           onDeleteParent={onDeleteParent}
           onEditVariant={onEditVariant}
           onDeleteVariant={onDeleteVariant}
+          onMergeVariant={onMergeVariant}
           onShowProfit={onShowProfit}
           onArchiveParent={onArchiveParent}
           archivedView={archivedView}
@@ -78,6 +81,14 @@ export function ProductsMobileList({
               <Button
                 size="sm"
                 variant="outline"
+                className="flex-1"
+                onClick={() => onMergeVariant(p)}
+              >
+                <Merge className="mr-2 h-4 w-4" /> Fusionar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 className="flex-1 text-destructive hover:text-destructive"
                 onClick={() => onDeleteVariant(p)}
               >
@@ -97,6 +108,7 @@ function ParentCard({
   onDeleteParent,
   onEditVariant,
   onDeleteVariant,
+  onMergeVariant,
   onShowProfit,
   onArchiveParent,
   archivedView,
@@ -106,6 +118,7 @@ function ParentCard({
   onDeleteParent: (p: ProductWithChildren) => void;
   onEditVariant: (p: Product) => void;
   onDeleteVariant: (p: Product) => void;
+  onMergeVariant: (p: Product) => void;
   onShowProfit: (p: ProductWithChildren) => void;
   onArchiveParent: (p: ProductWithChildren) => void;
   archivedView: boolean;
@@ -191,6 +204,14 @@ function ParentCard({
                       onClick={() => onEditVariant(c)}
                     >
                       <Pencil className="mr-1 h-3 w-3" /> Editar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 flex-1"
+                      onClick={() => onMergeVariant(c)}
+                    >
+                      <Merge className="mr-1 h-3 w-3" /> Fusionar
                     </Button>
                     <Button
                       size="sm"
