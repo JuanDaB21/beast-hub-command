@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Archive, ArchiveRestore, ChevronDown, ChevronRight, LineChart, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ChevronDown, ChevronRight, LineChart, Merge, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils";
 import type { Product, ProductWithChildren } from "./api";
@@ -32,6 +32,7 @@ interface Props {
   onDeleteParent: (p: ProductWithChildren) => void;
   onEditVariant: (p: Product) => void;
   onDeleteVariant: (p: Product) => void;
+  onMergeVariant: (p: Product) => void;
   onShowProfit: (p: ProductWithChildren) => void;
   onArchiveParent: (p: ProductWithChildren) => void;
   archivedView: boolean;
@@ -45,6 +46,7 @@ export function ProductsTable({
   onDeleteParent,
   onEditVariant,
   onDeleteVariant,
+  onMergeVariant,
   onShowProfit,
   onArchiveParent,
   archivedView,
@@ -171,6 +173,7 @@ export function ProductsTable({
                               children={parent.children}
                               onEdit={onEditVariant}
                               onDelete={onDeleteVariant}
+                              onMerge={onMergeVariant}
                             />
                           </TableCell>
                         </TableRow>
@@ -206,6 +209,9 @@ export function ProductsTable({
                             <DropdownMenuItem onClick={() => onEditVariant(p)}>
                               <Pencil className="mr-2 h-4 w-4" /> Editar
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onMergeVariant(p)}>
+                              <Merge className="mr-2 h-4 w-4" /> Fusionar en…
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => onDeleteVariant(p)}
                               className="text-destructive focus:text-destructive"
@@ -231,10 +237,12 @@ function ChildrenTable({
   children,
   onEdit,
   onDelete,
+  onMerge,
 }: {
   children: Product[];
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
+  onMerge: (p: Product) => void;
 }) {
   if (children.length === 0) {
     return (
@@ -285,6 +293,15 @@ function ChildrenTable({
                   <div className="flex justify-end gap-1">
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(c)}>
                       <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      title="Fusionar en otra variante"
+                      onClick={() => onMerge(c)}
+                    >
+                      <Merge className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       size="icon"

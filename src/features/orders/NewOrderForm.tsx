@@ -61,7 +61,8 @@ export function NewOrderForm({ onSuccess }: Props) {
     () =>
       products.map((p) => ({
         value: p.id,
-        label: `${p.name} · ${p.sku}`,
+        label: p.name,
+        sublabel: p.sku,
       })),
     [products],
   );
