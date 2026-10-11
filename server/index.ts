@@ -29,6 +29,7 @@ import { shopifyRouter } from './routes/shopify';
 import { printDesignsRouter } from './routes/print-designs';
 import { productionProcessesRouter } from './routes/production-processes';
 import { unitPaymentsRouter } from './routes/unit-payments';
+import { startEmailIngestScheduler } from './lib/orderEmailIngest';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -90,6 +91,7 @@ async function bootstrap() {
   app.listen(PORT, () => {
     console.log(`Server listening on :${PORT}`);
   });
+  startEmailIngestScheduler();
 }
 
 bootstrap().catch(async (err) => {

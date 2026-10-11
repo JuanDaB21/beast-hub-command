@@ -45,6 +45,14 @@ Rama: `claude/fix-railway-deployment-AE5PT`.
   - **Dashboard**: `returnsCost` ya no sale del libro; se calcula desde `/returns` por `resolved_at` en rango: `product.cost` si `scrapped` + `return_shipping_cost` si `company_assumes_shipping`.
   - **Pago de prendas**: cuenta prendas de pedidos con `delivered_at` en `[from, to)` **y** no incluidos en otro pago. **Migración `027_unit_payment_run_orders.sql`**: tabla `unit_payment_run_orders (order_id PK, run_id, units)` con backfill desde los runs existentes (el más antiguo se queda el pedido). `POST /` amarra los pedidos al run y deriva `units`/`total` de esas filas (23505 concurrente → 409); se eliminó el bloqueo por solape y `?force`. `GET /units` devuelve `already_paid_units`/`already_paid_orders`; `DELETE /:id` libera los pedidos por CASCADE. Predicado `notYetPaidSql()` en `server/lib/orderUnits.ts`.
 
+- [ ] FASE 13 — Importación automática de pedidos Shopify vía Gmail (rama `claude/shopify-gmail-order-ingest`; código listo, falta setup de Google/Shopify y validar con pedido real):
+  - **Por qué**: en plan Basic la API no entrega datos protegidos del cliente (nombre/dirección/teléfono) y Flow "Send HTTP request" no está disponible. La notificación al staff **"Nuevo pedido"** sí tiene esos datos en Liquid.
+  - **Plantilla**: `docs/shopify/staff-order-notification.liquid` se pega al final de la notificación; imprime el pedido como JSON en base64 entre `BEASTHUB_ORDER_JSON_START`/`_END` dentro de un div oculto. Usa el `id` real del pedido → mismo `shopify_order_id` que el CSV (idempotentes entre sí). Precios Liquid en centavos ÷ 100; `price` = `original_price` (paridad con "Lineitem price" del CSV).
+  - **Server**: `server/lib/gmailClient.ts` (fetch nativo, refresh token → access token, `listMessageIds`, `getMessage`). `server/lib/orderEmailIngest.ts`: `extractOrderPayload` (base64 o JSON plano) → **`syncOrders([order])`** sin cambios; `runEmailIngest(force)` con `pg_try_advisory_lock(728028)`; `startEmailIngestScheduler()` en `bootstrap()` cada `GMAIL_POLL_MINUTES` (5), no-op sin credenciales. Red de seguridad `findMissingShopifyOrders()` (API, solo id/nombre/fecha, últimas 48 h, gracia 20 min).
+  - **Migración `028_gmail_order_ingest.sql`**: tabla `shopify_email_ingest` (PK `gmail_message_id`; dedupe porque `gmail.readonly` no marca leído; los `error` se reintentan) + columnas `email_ingest_enabled`/`email_ingest_query` (default `label:beasthub-pedidos newer_than:3d`)/`last_email_ingest`/`last_email_ingest_error` en `shopify_config`.
+  - **Rutas**: `GET /api/shopify/email-ingest/status`, `PATCH /email-ingest/config`, `POST /email-ingest/run`. UI: `src/features/config/EmailIngestCard.tsx` en el panel Shopify (switch, búsqueda, "Revisar ahora", log, alerta de faltantes). El import CSV queda como respaldo.
+  - **Setup**: Google Cloud → Gmail API + consentimiento externo **publicado en Producción** (en Testing el refresh token vence a 7 días) + OAuth "App de escritorio" → `node scripts/gmail-auth.mjs` (lee `GMAIL_CLIENT_ID/SECRET` de `.env.local`) → vars en Railway. Filtro de Gmail que etiquete las notificaciones como `beasthub-pedidos`.
+
 ## Convenciones clave
 
 - **CRUD**: `pickBody`/`buildInsert`/`buildUpdate` con `COLS` whitelist. Siempre `String(req.params.id)` (Express 5 tipa `string | string[]`).
@@ -97,6 +105,8 @@ Rama: `claude/fix-railway-deployment-AE5PT`.
 | `ADMIN_EMAIL` | no | `admin@beasthub.com` |
 | `ADMIN_PASSWORD` | no | `admin123` (cambiar tras primer login) |
 | `ADMIN_NAME` | no | `Admin` |
+| `GMAIL_CLIENT_ID` / `GMAIL_CLIENT_SECRET` / `GMAIL_REFRESH_TOKEN` | no | Importación automática de pedidos (FASE 13); sin ellas el sondeo no arranca |
+| `GMAIL_POLL_MINUTES` | no | `5` |
 
 ## Pasos para desplegar
 

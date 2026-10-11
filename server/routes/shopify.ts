@@ -14,7 +14,10 @@ import {
   pullInventoryFromShopify,
   pushPendingInventoryErrors,
   listInventoryErrors,
+  findMissingShopifyOrders,
 } from '../lib/shopifyClient';
+import { isGmailConfigured } from '../lib/gmailClient';
+import { runEmailIngest, emailIngestPollMinutes } from '../lib/orderEmailIngest';
 import {
   bulkAutoLink,
   resolveColorId,
@@ -169,6 +172,70 @@ shopifyRouter.post(
     const orders = parseShopifyOrdersCsv(csv);
     if (orders.length === 0) return res.status(400).json({ error: 'No se encontraron órdenes en el CSV' });
     const result = await syncOrders(orders);
+    res.json(result);
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Importación automática de pedidos desde Gmail (notificación "Nuevo pedido")
+// ---------------------------------------------------------------------------
+
+/** GET /email-ingest/status — config, log reciente y pedidos de Shopify sin importar. */
+shopifyRouter.get(
+  '/email-ingest/status',
+  asyncHandler(async (_req, res) => {
+    const cfg = await getShopifyConfig();
+    const { rows: log } = await pool.query(
+      `SELECT gmail_message_id, shopify_order_id, order_name, status, error, received_at, processed_at
+         FROM shopify_email_ingest ORDER BY processed_at DESC LIMIT 50`
+    );
+    let missing: Awaited<ReturnType<typeof findMissingShopifyOrders>> = [];
+    let missing_error: string | null = null;
+    try {
+      missing = await findMissingShopifyOrders();
+    } catch (err: any) {
+      missing_error = err?.message ?? 'error desconocido';
+    }
+    res.json({
+      gmail_configured: isGmailConfigured(),
+      enabled: cfg?.email_ingest_enabled ?? false,
+      query: cfg?.email_ingest_query ?? '',
+      last_run: cfg?.last_email_ingest ?? null,
+      last_error: cfg?.last_email_ingest_error ?? null,
+      poll_minutes: emailIngestPollMinutes(),
+      log,
+      missing,
+      missing_error,
+    });
+  })
+);
+
+/** PATCH /email-ingest/config — { enabled?, query? } */
+shopifyRouter.patch(
+  '/email-ingest/config',
+  asyncHandler(async (req, res) => {
+    const { enabled, query } = req.body as { enabled?: boolean; query?: string };
+    const updates: string[] = ['updated_at = now()'];
+    const params: unknown[] = [];
+    if (enabled !== undefined) {
+      params.push(!!enabled);
+      updates.push(`email_ingest_enabled = $${params.length}`);
+    }
+    if (query !== undefined) {
+      if (!query.trim()) return res.status(400).json({ error: 'La búsqueda de Gmail no puede estar vacía' });
+      params.push(query.trim());
+      updates.push(`email_ingest_query = $${params.length}`);
+    }
+    await pool.query(`UPDATE shopify_config SET ${updates.join(', ')} WHERE id = 1`, params);
+    res.json({ ok: true });
+  })
+);
+
+/** POST /email-ingest/run — revisar Gmail ya (aunque el switch esté apagado). */
+shopifyRouter.post(
+  '/email-ingest/run',
+  asyncHandler(async (_req, res) => {
+    const result = await runEmailIngest(true);
     res.json(result);
   })
 );
