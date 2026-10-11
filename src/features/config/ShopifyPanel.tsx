@@ -45,6 +45,7 @@ import {
   type UnlinkedParent,
 } from "@/features/shopify/api";
 import { LinkingWizard } from "@/features/shopify/LinkingWizard";
+import { EmailIngestCard } from "./EmailIngestCard";
 
 function formatDate(iso: string | null | undefined) {
   if (!iso) return "Nunca";
@@ -626,6 +627,8 @@ export function ShopifyPanel() {
         open={!!wizardParent}
         onClose={() => setWizardParent(null)}
       />
+
+      <EmailIngestCard />
 
       {/* CSV Import */}
       <Card>

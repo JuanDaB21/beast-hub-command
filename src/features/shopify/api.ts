@@ -184,6 +184,71 @@ export function useShopifyInventoryErrors() {
 }
 
 // ---------------------------------------------------------------------------
+// Importación automática desde Gmail
+// ---------------------------------------------------------------------------
+
+export interface EmailIngestLogRow {
+  gmail_message_id: string;
+  shopify_order_id: string | null;
+  order_name: string | null;
+  status: "imported" | "skipped" | "error" | "no_payload";
+  error: string | null;
+  received_at: string | null;
+  processed_at: string;
+}
+
+export interface EmailIngestStatus {
+  gmail_configured: boolean;
+  enabled: boolean;
+  query: string;
+  last_run: string | null;
+  last_error: string | null;
+  poll_minutes: number;
+  log: EmailIngestLogRow[];
+  missing: Array<{ id: string; name: string; created_at: string }>;
+  missing_error: string | null;
+}
+
+export interface EmailIngestResult extends SyncOrdersResult {
+  ran: boolean;
+  reason?: string;
+  scanned: number;
+  no_payload: number;
+}
+
+const EMAIL_INGEST_QK = ["shopify_email_ingest"] as const;
+
+export function useEmailIngestStatus() {
+  return useQuery({
+    queryKey: EMAIL_INGEST_QK,
+    queryFn: () => api.get<EmailIngestStatus>("/shopify/email-ingest/status"),
+    refetchInterval: 60_000,
+  });
+}
+
+export function useUpdateEmailIngestConfig() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: { enabled?: boolean; query?: string }) =>
+      api.patch<{ ok: true }>("/shopify/email-ingest/config", patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: EMAIL_INGEST_QK }),
+  });
+}
+
+export function useRunEmailIngest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<EmailIngestResult>("/shopify/email-ingest/run"),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: EMAIL_INGEST_QK });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["logistics-orders"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // BOM / Base linking
 // ---------------------------------------------------------------------------
 

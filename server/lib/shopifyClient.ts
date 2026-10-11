@@ -15,6 +15,10 @@ export interface ShopifyConfig {
   location_name: string | null;
   last_inventory_sync: string | null;
   inventory_sync_enabled: boolean;
+  email_ingest_enabled: boolean;
+  email_ingest_query: string;
+  last_email_ingest: string | null;
+  last_email_ingest_error: string | null;
 }
 
 interface ShopifyVariant {
@@ -40,7 +44,7 @@ interface ShopifyProduct {
 }
 
 interface ShopifyLineItem {
-  variant_id: number | null;
+  variant_id: number | string | null;
   title: string;
   quantity: number;
   price: string;
@@ -62,7 +66,7 @@ interface ShopifyAddress {
   city: string | null;
 }
 
-interface ShopifyOrder {
+export interface ShopifyOrder {
   id: number | string;
   name: string; // e.g. "#1001"
   financial_status: string;
@@ -974,6 +978,47 @@ export async function syncOrdersFromShopify(): Promise<SyncOrdersResult> {
   const result = await syncOrders(orders);
   await pool.query('UPDATE shopify_config SET last_orders_sync = now() WHERE id = 1');
   return result;
+}
+
+export interface MissingShopifyOrder {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+/**
+ * Red de seguridad de la importación por correo: pedidos de Shopify de las
+ * últimas `hours` horas que no existen en BH. Solo pide id/nombre/fecha, que la
+ * API sí entrega en plan Basic (sin datos protegidos del cliente). Ignora los
+ * últimos `graceMinutes` para no alertar por correos que aún no se han leído.
+ */
+export async function findMissingShopifyOrders(
+  hours = 48,
+  graceMinutes = 20
+): Promise<MissingShopifyOrder[]> {
+  const cfg = requireConfig(await getShopifyConfig());
+  const now = Date.now();
+  const { body } = await shopifyFetch<{ orders: Array<{ id: number; name: string; created_at: string }> }>(
+    cfg,
+    'orders.json',
+    {
+      status: 'any',
+      limit: '250',
+      fields: 'id,name,created_at',
+      created_at_min: new Date(now - hours * 3_600_000).toISOString(),
+      created_at_max: new Date(now - graceMinutes * 60_000).toISOString(),
+    }
+  );
+  const orders = body.orders ?? [];
+  if (orders.length === 0) return [];
+  const { rows } = await pool.query<{ shopify_order_id: string }>(
+    'SELECT shopify_order_id FROM orders WHERE shopify_order_id = ANY($1::text[])',
+    [orders.map((o) => String(o.id))]
+  );
+  const present = new Set(rows.map((r) => r.shopify_order_id));
+  return orders
+    .filter((o) => !present.has(String(o.id)))
+    .map((o) => ({ id: String(o.id), name: o.name, created_at: o.created_at }));
 }
 
 export interface TestConnectionResult {
