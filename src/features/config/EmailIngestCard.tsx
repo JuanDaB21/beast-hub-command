@@ -129,8 +129,8 @@ export function EmailIngestCard() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Misma sintaxis del buscador de Gmail. Recomendado: un filtro que etiquete las
-                notificaciones de pedido como <span className="font-mono">beasthub-pedidos</span>.
+                Misma sintaxis del buscador de Gmail. Las notificaciones de pedido llegan desde{" "}
+                <span className="font-mono">t.shopifyemail.com</span> con asunto "Pedido #…".
               </p>
             </div>
 
