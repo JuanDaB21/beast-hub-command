@@ -33,6 +33,8 @@ export function extractOrderPayload(body: string): ShopifyOrder | null {
     return null;
   }
   if (!data || !data.id || !data.name || !Array.isArray(data.line_items)) return null;
+  // "Enviar notificación de prueba" de Shopify usa siempre este pedido ficticio.
+  if (data.name === '#9999' && data.customer?.email === 'john@example.com') return null;
 
   // Liquid entrega textos con entidades HTML (p. ej. títulos con &quot;).
   const str = (v: unknown): string | null =>
