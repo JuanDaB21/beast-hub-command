@@ -22,6 +22,6 @@ CREATE INDEX IF NOT EXISTS idx_shopify_email_ingest_processed
 
 ALTER TABLE shopify_config
   ADD COLUMN IF NOT EXISTS email_ingest_enabled    BOOLEAN NOT NULL DEFAULT false,
-  ADD COLUMN IF NOT EXISTS email_ingest_query      TEXT NOT NULL DEFAULT 'label:beasthub-pedidos newer_than:3d',
+  ADD COLUMN IF NOT EXISTS email_ingest_query      TEXT NOT NULL DEFAULT 'from:t.shopifyemail.com subject:Pedido newer_than:3d',
   ADD COLUMN IF NOT EXISTS last_email_ingest       TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS last_email_ingest_error TEXT;
