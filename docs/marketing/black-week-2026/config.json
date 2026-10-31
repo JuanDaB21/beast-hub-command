@@ -1,0 +1,237 @@
+{
+  "campana": "Black Week Beast",
+  "periodo": { "inicio": "2026-11-13", "fin": "2026-11-20", "teaser": "2026-11-10" },
+  "envio": { "flete_promedio": 19000, "umbral_actual": 300000, "umbral_black_week": 169900 },
+  "pauta": {
+    "diaria_actual": 30000,
+    "diaria_black_week": 60000,
+    "factor_impuestos": 1.114,
+    "cpa_real_max": 25000,
+    "estructura": [
+      "Campaña Black Week de prospección: ~40.000/día. Un conjunto por pack (Trío, Training, Outfit) con 2 creativos cada uno.",
+      "Retargeting: ~10.000/día sobre visitantes de 30 días, interacciones de Instagram y Facebook y la lista de clientes (1.226). Copy: «Lo que viste ahora viene en pack».",
+      "Anuncio 5 (evergreen): ~10.000/día para no perder su aprendizaje.",
+      "Teaser del 10 al 12 de noviembre solo orgánico; la pauta sigue en 30.000/día hasta el 13.",
+      "Revisiones con la skill meta-review el 15 y el 17 de noviembre: se pausa el anuncio que gaste 2 veces el CPA objetivo sin compras."
+    ]
+  },
+  "hallazgos": [
+    "La producción es bajo pedido: el inventario real son las prendas base (blanks). El stock de producto terminado figura en negativo.",
+    "La oversized 200 g negra es la base del 60 % de las ventas (213 unidades en 90 días) y hoy está casi agotada: hay que reabastecerla antes del 13.",
+    "Más vendidos en 90 días: GYMSHARK Training Shirt (80 u), GS-TANK (20), Motor YoungLA Tank (15), CHAOS TANK gris claro (14), CBUM (14), CHAOS TEE blanca (13), BASIC short (12), NECKLACE SHARK (11). La compresión icon vendió sus 7 unidades en los últimos 30 días.",
+    "La CHAOS TEE blanca es la ficha con más tráfico (469 sesiones en 45 días) pero convierte solo el 0,4 %: el pack le da una razón de compra.",
+    "El 58 % de los pedidos ya lleva 2 o más prendas y la canasta más común es oversized + oversized. Por eso la oferta empieza en 3 prendas: un descuento en 1 o 2 prendas regalaría margen en pedidos que ya ocurren.",
+    "Los shorts aparecen en pedidos de 3 o más prendas: funcionan como complemento de outfit, no como compra suelta.",
+    "El envío gratis cuesta en promedio 19.000 por pedido y se incluye en el cálculo de cada pack."
+  ],
+  "web": [
+    "Una sola página de campaña, /pages/black-week-beast (sin marcas en el título ni en el handle), como destino de todos los anuncios. Concentra la señal del píxel y deja comparar los 3 packs, lo que empuja al de mayor valor.",
+    "Arriba: hero con cuenta regresiva al 20-nov 23:59 y la promesa «Packs desde 169.900 · Envío gratis».",
+    "Una tarjeta por pack con ancla (#trio, #training, #outfit): foto del pack, miniatura de cada prenda, un selector de talla por prenda (pueden ser tallas distintas; las agotadas se deshabilitan), precio del pack frente al regular y el ahorro.",
+    "Botón principal «Comprar ahora»: agrega el pack con las tallas elegidas y lleva directo al checkout. Botón secundario «Agregar al carrito».",
+    "Franja de complementos debajo de los packs: ACID GRIS a 39.900 y buzo compresión a 59.900.",
+    "Bloque de confianza: pago contra entrega, envío gratis, cambios de talla. Preguntas frecuentes con los tiempos de entrega por el festivo del 16.",
+    "Portada con banner de la campaña y barra de anuncio «Black Week Beast · 13–20 nov» hacia la página. La barra de envío gratis muestra el umbral de la semana (169.900).",
+    "Mecanismo previsto: packs fijos con la app Shopify Bundles (precio fijo; al pagar se descompone en las prendas reales, así el inventario y Beast Hub reciben cada prenda). Plan B: descuento automático de monto fijo por colección del pack.",
+    "Envío gratis: descuento automático programado del 13 al 20 de noviembre desde 169.900, el precio del pack más barato."
+  ],
+  "riesgos": [
+    "Marcas de terceros en Meta: los anuncios apuntan a la página de packs y los textos no nombran marcas. Conviene tener lista una versión del Trío con diseños propios por si hay rechazo.",
+    "Capacidad de producción y festivo del 16: producir por anticipado las tallas top y publicar los tiempos de entrega en la página.",
+    "Canibalización de pedidos de 2 prendas: no hay descuento por debajo de 3 prendas; se vigila qué parte de los pedidos llega por pack.",
+    "Compatibilidad de los pedidos con pack en Beast Hub: se valida con un pedido de prueba antes de publicar.",
+    "Umbral de envío gratis inconsistente hoy (barra del tema 250k, descuento nativo 300k, app Apex): verificar antes de programar el de la semana.",
+    "El Black Friday real es el 27-nov, después de la campaña: decidir el 24-nov si se repite con lo que quede.",
+    "Datos de catálogo por corregir antes de la campaña: el ALL STARS TEE figura «Hueso» en Beast Hub y «Vainilla» en Shopify; el buzo compresión tiene precio tachado menor que el precio (79.900 frente a 89.900); la compresión con handle gymshark-icon-compress-shirt se titula YOUNGLA SUPERMAN."
+  ],
+  "demanda": {
+    "pedidos_semana": 55,
+    "participacion_packs": 0.65,
+    "prendas_por_pedido_sin_pack": 2.1,
+    "semanas_de_seguridad": 1,
+    "minimo_por_talla": 3
+  },
+  "packs": [
+    {
+      "id": "trio",
+      "nombre": "TRÍO BEAST",
+      "rol": "Gancho principal. Lleva la canasta típica (2 oversized) a 3 prendas.",
+      "precio": 169900,
+      "mezcla": 0.5,
+      "versiones": [
+        {
+          "id": "trio-negro",
+          "nombre": "Trío Negro",
+          "participacion": 0.6,
+          "componentes": [
+            { "producto": "\"GYMSHARK\" Training Shirt", "handle": "gym-shark-training-shirt", "color": "Negro / Letras Rojas", "base": "Camiseta Oversized 200 gr - 011-Negro" },
+            { "producto": "\"NECKLACE SHARK\" Training Shirt", "handle": "gymshark-necklace-training-shirt", "color": "Negro / Letras Rojas", "base": "Camiseta Oversized 200 gr - 011-Negro" },
+            { "producto": "\"GMTHARK CBUM", "handle": "gymthark-cbum-training-shirt", "color": "Negro / Letras Blancas", "base": "Camiseta Oversized 200 gr - 011-Negro" }
+          ]
+        },
+        {
+          "id": "trio-color",
+          "nombre": "Trío Color",
+          "participacion": 0.4,
+          "componentes": [
+            { "producto": "\"CHAOS TEE\" Training Shirt", "handle": "chaos-tee-training-shirt", "color": "Blanco / Estampado Negro", "base": "Camiseta Oversized 200 gr - 001-Blanco" },
+            { "producto": "\"ALL STARS TEE\" Training Shirt", "handle": "all-stars-tee-training-shirt", "color": "Vainilla / Letras Grises", "base": "Camiseta Oversized 200 gr - Hueso" },
+            { "producto": "\"BASIC TEE\" Training Shirt", "handle": "basic-tee-training-shirt", "color": "Negro / Letras Blancas", "base": "Camiseta Oversized 200 gr - 011-Negro" }
+          ]
+        }
+      ],
+      "creativos": {
+        "ganchos": [
+          "3 camisetas. 169.900. Envío gratis.",
+          "Tu semana de entreno resuelta: 3 oversized por 169.900.",
+          "Lunes, miércoles y viernes: un pack, tres entrenos."
+        ],
+        "texto_imagen": "BLACK WEEK BEAST · 3 × 169.900 · ENVÍO GRATIS · 13–20 NOV",
+        "copy": "Black Week Beast llegó. Arma tu rotación de la semana con 3 oversized de 200 g por 169.900 y el envío corre por nuestra cuenta. Eliges la talla de cada camiseta. Solo hasta el 20 de noviembre.",
+        "cta": "Comprar",
+        "piezas": [
+          { "formato": "4:5 estático", "brief": "Flat lay del Trío Negro sobre concreto o fondo negro, las 3 camisetas abiertas en abanico. Sello de precio grande «3 × 169.900» y franja «ENVÍO GRATIS»." },
+          { "formato": "9:16 reel (8–12 s)", "brief": "Prueba en espejo de gym: 3 cambios al ritmo del beat (lunes / miércoles / viernes). Cierre con las 3 camisetas dobladas y el precio." },
+          { "formato": "4:5 estático (Versión Color)", "brief": "Blanca, vainilla y negra colgadas o en modelo. Texto: «Blanco, vainilla y negro: los 3 tonos que combinan con todo»." }
+        ]
+      }
+    },
+    {
+      "id": "training",
+      "nombre": "PACK TRAINING",
+      "rol": "Kit completo para el gym. Mueve el tank acid estancado y la compresión.",
+      "precio": 199900,
+      "mezcla": 0.25,
+      "versiones": [
+        {
+          "id": "training-negro",
+          "nombre": "Training Negro",
+          "participacion": 0.6,
+          "componentes": [
+            { "producto": "Gymshark compresión icon", "handle": "gymshark-icon-compress-buzo-copia", "color": "Negro / Logo rojo", "base": "Camiseta Compresión - Negra - Tiburón rojo" },
+            { "producto": "\"Motor Youngla\" Training Tank Top", "handle": "motor-youngla-training-tank-top", "color": "Acid Negro / Estampado Motor", "base": "Tank Oversized acid - Acid_negro" },
+            { "producto": "\"GYMSHARK\" Training Shirt", "handle": "gym-shark-training-shirt", "color": "Negro / Letras Rojas", "base": "Camiseta Oversized 200 gr - 011-Negro" }
+          ]
+        },
+        {
+          "id": "training-gris",
+          "nombre": "Training Gris",
+          "participacion": 0.4,
+          "componentes": [
+            { "producto": "Gymshark compresión icon", "handle": "gymshark-icon-compress-buzo-copia", "color": "Negro / Logo rojo", "base": "Camiseta Compresión - Negra - Tiburón rojo" },
+            { "producto": "\"CHAOS TANK\" Training Tank Top", "handle": "chaos-tank-training-tank-top", "color": "Acid gris claro / Letras Blancas", "base": "Tank Oversized acid - Acid_gris_claro" },
+            { "producto": "\"GYMSHARK\" Training Shirt", "handle": "gym-shark-training-shirt", "color": "Negro / Letras Rojas", "base": "Camiseta Oversized 200 gr - 011-Negro" }
+          ]
+        }
+      ],
+      "creativos": {
+        "ganchos": [
+          "Compresión + tank + oversized: el kit completo por 199.900.",
+          "Menos de 200 mil por todo tu kit de entreno, con envío gratis.",
+          "Calentamiento, series pesadas y pump final: una prenda para cada momento."
+        ],
+        "texto_imagen": "KIT TRAINING · 3 PRENDAS · 199.900 · ENVÍO GRATIS",
+        "copy": "Todo lo que necesitas para entrenar en un solo pack: camiseta de compresión, tank acid y oversized por 199.900, con envío gratis. Cada prenda en tu talla. Black Week Beast, del 13 al 20 de noviembre.",
+        "cta": "Comprar",
+        "piezas": [
+          { "formato": "9:16 reel (10–15 s)", "brief": "Una sesión en 3 tiempos: llega con la oversized (calentamiento), cambia al tank (series pesadas), cierra en compresión (pump frente al espejo). Precio al final." },
+          { "formato": "4:5 estático", "brief": "Las 3 prendas en capas sobre banco de gym o rack, con etiquetas «Calienta / Entrena / Pump» y el sello «199.900»." }
+        ]
+      }
+    },
+    {
+      "id": "outfit",
+      "nombre": "OUTFIT BEAST",
+      "rol": "Outfit completo con short. Sube el ticket de quien busca un look y no solo una camiseta.",
+      "precio": 179900,
+      "mezcla": 0.25,
+      "versiones": [
+        {
+          "id": "outfit",
+          "nombre": "Outfit Beast",
+          "participacion": 1,
+          "componentes": [
+            { "producto": "\"GS-TANK\"", "handle": "gs-tank-training-tank-top", "color": "Negro / Letras rojas", "base": "Camiseta Oversized 200 gr - 011-Negro" },
+            { "producto": "\"CHAOS TEE\" Training Shirt", "handle": "chaos-tee-training-shirt", "color": "Blanco / Estampado Negro", "base": "Camiseta Oversized 200 gr - 001-Blanco" },
+            { "producto": "\"BASIC\" Gymshark Short", "handle": "basic-gymshark-short", "color": "Negro / Logo Blanco", "base": "Pantaloneta tela suave - 011-Negro" }
+          ]
+        }
+      ],
+      "creativos": {
+        "ganchos": [
+          "El outfit completo: 2 camisetas + short por 179.900.",
+          "Entra al gym completo: short y 2 camisetas, con envío gratis.",
+          "Arriba y abajo resuelto en un solo pack."
+        ],
+        "texto_imagen": "OUTFIT COMPLETO · 2 CAMISETAS + SHORT · 179.900",
+        "copy": "Un tank, una oversized y el short para combinarlos: el outfit completo por 179.900 con envío gratis. Eliges la talla de cada prenda. Solo en Black Week Beast, hasta el 20 de noviembre.",
+        "cta": "Comprar",
+        "piezas": [
+          { "formato": "4:5 estático", "brief": "Selfie de cuerpo entero en el espejo del gym con tank + short; la CHAOS TEE blanca doblada en primer plano. Sello «179.900 · envío gratis»." },
+          { "formato": "9:16 reel (8–12 s)", "brief": "Transición de 2 looks con el mismo short (tank negro → oversized blanca). Texto «1 short, 2 looks»." }
+        ]
+      }
+    }
+  ],
+  "complementos": [
+    {
+      "nombre": "ACID GRIS (CHAOS sobre acid gris claro)",
+      "estado": "Producto nuevo por crear",
+      "base": "Camiseta Oversize Acid 220 gr - Acid_gris_claro",
+      "precio_actual": 69900,
+      "precio_black_week": 39900,
+      "nota": "Liquida 26 blanks ya pagados (más de un año de cobertura). Contribución contable ≈0; caja ≈34k por unidad."
+    },
+    {
+      "nombre": "Buzo compresión icon",
+      "handle": "gymshark-icon-compress-buzo",
+      "base": "Buzo compresión - Negra",
+      "precio_actual": 89900,
+      "precio_black_week": 59900,
+      "nota": "8 blanks (L/XL) con 2 ventas en 90 días."
+    }
+  ],
+  "reglas_meta": [
+    "Textos e imágenes de texto sin marcas de terceros: el pack se nombra TRÍO BEAST / PACK TRAINING / OUTFIT BEAST.",
+    "Nada de «Nuevo lanzamiento» ni referencias a robo o ilegalidad.",
+    "El ahorro se calcula sobre el precio vigente; no se muestra un «antes» inflado (SIC).",
+    "Todo anuncio enlaza a la página de packs (/pages/black-week-beast#trio, #training, #outfit), nunca a la ficha de un producto con marca.",
+    "Todo objeto nuevo se crea en PAUSA y se activa el 13-nov con el OK del dueño."
+  ],
+  "calendario": [
+    { "fecha": "3-nov", "hito": "Entrega del plan al equipo de marketing. Pedido de reabastecimiento (oversized negra, pantaloneta, compresión)." },
+    { "fecha": "3–7 nov", "hito": "Sesión de fotos y video de los 3 packs (flat lay y en modelo). Creación del producto ACID GRIS." },
+    { "fecha": "4–9 nov", "hito": "Implementación web en staging (página de packs, talla por prenda, compra directa) y prueba de pedido en Beast Hub." },
+    { "fecha": "9–10 nov", "hito": "Creativos finales subidos en PAUSA. Borradores de correo." },
+    { "fecha": "10–12 nov", "hito": "Teaser orgánico: stories con cuenta regresiva «13.11», posts de anticipo. Producción anticipada de tallas top." },
+    { "fecha": "12-nov (noche)", "hito": "Publicación del tema y descuento de envío gratis programado." },
+    { "fecha": "13-nov", "hito": "Lanzamiento: pauta a 60.000/día, correo de lanzamiento, banner y barra de anuncio." },
+    { "fecha": "14–16 nov", "hito": "Puente festivo + quincena (15): correo y stories de recordatorio. Revisión de pauta el 15." },
+    { "fecha": "17-nov", "hito": "Revisión de pauta (72 h): pausar lo que no vende, subir lo que vende." },
+    { "fecha": "19–20 nov", "hito": "Última llamada: «los packs vuelven a precio normal el 20 a medianoche»." },
+    { "fecha": "21-nov", "hito": "Revertir precios, umbral de envío y portada." },
+    { "fecha": "24-nov", "hito": "Cierre con cifras; decidir si se repite el 27-nov (Black Friday real)." }
+  ],
+  "organico": [
+    { "fecha": "10–12 nov", "pieza": "Stories con cuenta regresiva y sticker de recordatorio «Black Week Beast · 13.11»." },
+    { "fecha": "13-nov", "pieza": "Reel de lanzamiento con los 3 packs en 10 segundos + post carrusel (portada + 1 slide por pack)." },
+    { "fecha": "15-nov", "pieza": "Story «es quincena»: encuesta «¿Trío, Training u Outfit?» con link a la página." },
+    { "fecha": "17-nov", "pieza": "UGC/unboxing de un pack real entregado." },
+    { "fecha": "19–20 nov", "pieza": "Stories «últimas horas» con contador y tallas que se agotan." }
+  ],
+  "correos": [
+    { "fecha": "12-nov", "asunto": "Mañana empieza la Black Week Beast", "contenido": "Anticipo de los 3 packs y la fecha." },
+    { "fecha": "13-nov", "asunto": "3 camisetas por 169.900 + envío gratis", "contenido": "Lanzamiento con los 3 packs y botón a la página." },
+    { "fecha": "15-nov", "asunto": "Quincena + Black Week: arma tu pack", "contenido": "Recordatorio con el pack más vendido de los primeros días." },
+    { "fecha": "19-nov", "asunto": "Últimas horas de Black Week Beast", "contenido": "Cierre el 20 a medianoche; tallas que se agotan." }
+  ],
+  "kpis": {
+    "pedidos": 55,
+    "packs": 35,
+    "prendas": 140,
+    "contribucion_neta_pauta": 2000000,
+    "acid_gris_vendidas": 15,
+    "tank_acid_vendidos": 15,
+    "cpa_real_max": 25000
+  }
+}

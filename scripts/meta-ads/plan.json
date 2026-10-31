@@ -1,0 +1,124 @@
+{
+  "_doc": "Estado deseado de la campaña Evergreen. apply.cjs lo compara con Meta. Textos sin marcas de terceros. Todo se crea en PAUSA.",
+  "campaign_id": "120251830408650684",
+  "adset": {
+    "id": "120252635698640684",
+    "rename": "Evergreen | Broad | Purchase | Oct26-v2",
+    "targeting_patch": {
+      "age_min": 18,
+      "age_max": 65,
+      "age_range": [18, 44],
+      "genders": null,
+      "publisher_platforms": ["facebook", "instagram"],
+      "facebook_positions": ["feed", "profile_feed", "story", "facebook_reels", "instream_video"],
+      "instagram_positions": ["stream", "profile_feed", "story", "reels", "explore_home", "ig_search"]
+    }
+  },
+  "pause_adsets": ["120253665770130684"],
+  "pause_ads": ["R2 — Reel oversized"],
+  "retag_ads": ["Anuncio 5 — 59k V2", "Anuncio 7 -video", "Banner Best seller"],
+  "url_tags": "utm_source=meta&utm_medium=paid&utm_campaign={{campaign.name}}&utm_content={{ad.name}}",
+  "creatives_dir": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Octubre 2026/listos",
+  "video_src": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Octubre 2025 Q2/Chica camisa reel .mov",
+  "new_ads": [
+    {
+      "key": "N1",
+      "name": "N1 — Tank Motor (lavado)",
+      "type": "placement_image",
+      "feed": "3_45.jpg",
+      "vertical": "3_916.jpg",
+      "link": "https://beastclub.store/products/motor-youngla-training-tank-top",
+      "body": "Tank Motor $74.900 · Pagas al recibir 💵\nEstampado de motor en tela lavada, corte holgado para entrenar sin límites. Envío a toda Colombia 🚚",
+      "title": "Tank Motor — $74.900"
+    },
+    {
+      "key": "N2",
+      "name": "N2 — Oversized gótica (carrusel)",
+      "type": "carousel",
+      "cards": ["5.2_45.jpg", "5.3_45.jpg"],
+      "link": "https://beastclub.store/collections/nove-coleccion",
+      "body": "Oversized negra con letras góticas rojas en el cuello 🖤 $64.900 · Pagas al recibir\nEnvío a toda Colombia 🚚",
+      "title": "Oversized gótica — $64.900"
+    },
+    {
+      "key": "N3",
+      "name": "N3 — Receta prohibida",
+      "type": "placement_image",
+      "feed": "16_45.jpg",
+      "vertical": "16_916.jpg",
+      "link": "https://beastclub.store/products/monster-recipe-training-shirt",
+      "body": "La receta prohibida ☕⚡ $64.900 · Pagas al recibir\nOversized negra para los que no entrenan sin su dosis. Envío a toda Colombia 🚚",
+      "title": "Nuevo lanzamiento — $64.900"
+    },
+    {
+      "key": "N4",
+      "name": "N4 — Nuevas oversized (novedades)",
+      "type": "placement_image",
+      "feed": "17_45.jpg",
+      "vertical": "17_916.jpg",
+      "link": "https://beastclub.store/collections/nove-coleccion",
+      "body": "Nuevas oversized desde $64.900 🔥 Pagas al recibir\nDiseños nuevos, pocas unidades por talla. Envío a toda Colombia 🚚",
+      "title": "Nuevas oversized — desde $64.900"
+    },
+    {
+      "key": "N5",
+      "name": "N5 — Reel chica (oversized lavada)",
+      "type": "video",
+      "link": "https://beastclub.store/collections/nove-coleccion",
+      "body": "Oversized de lavado ácido que no te vas a querer quitar 🖤 $84.900 · Pagas al recibir\nEnvío a toda Colombia 🚚",
+      "title": "Oversized lavada — $84.900"
+    },
+    {
+      "key": "N6",
+      "name": "N6 — Compresión gancho (carrusel)",
+      "type": "carousel",
+      "cards": ["14_45.jpg", "15_45.jpg"],
+      "link": "https://beastclub.store/collections/nove-coleccion",
+      "body": "Compresión que marca tu físico 💪 Desde $79.900 · Pagas al recibir\nNueva línea de compresión, pocas unidades por talla. Envío a toda Colombia 🚚",
+      "title": "Nueva compresión — desde $79.900"
+    },
+    {
+      "key": "U1",
+      "name": "U1 — UGC semana de tanks",
+      "type": "video",
+      "video": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Noviembre 2026/1023.mp4",
+      "link": "https://beastclub.store/collections/tanks",
+      "body": "Tanks para entrenar desde $44.900 · Pagas al recibir 💵\nUn tank para cada día de tu semana de gym. Envío a toda Colombia 🚚",
+      "title": "Tanks — desde $44.900"
+    },
+    {
+      "key": "U2",
+      "name": "U2 — UGC la más vendida 59k",
+      "type": "video",
+      "video": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Noviembre 2026/1023 (2).mp4",
+      "link": "https://beastclub.store/collections/best-sellers",
+      "body": "La oversized más vendida de la tienda $59.900 · Pagas al recibir 💵\nNegra con letras rojas o negras. Envío a toda Colombia 🚚",
+      "title": "La más vendida — $59.900"
+    },
+    {
+      "key": "U3",
+      "name": "U3 — UGC outfits caminadora (hombre)",
+      "type": "video",
+      "video": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Noviembre 2026/1023 (1).mp4",
+      "link": "https://beastclub.store/collections/hombre",
+      "body": "Oversized para entrenar desde $54.900 · Pagas al recibir 💵\nArma tu outfit de gym para toda la semana. Envío a toda Colombia 🚚",
+      "title": "Oversized hombre — desde $54.900"
+    },
+    {
+      "key": "U4",
+      "name": "U4 — UGC unboxing colección energía",
+      "type": "video",
+      "video": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Noviembre 2026/1017.mov",
+      "link": "https://beastclub.store/collections/monster-gym-training-shirt-unleash-the-beast",
+      "body": "Camisetas y tanks de entrenamiento desde $64.900 · Pagas al recibir 💵\nTu receta de energía para entrenar. Envío a toda Colombia 🚚",
+      "title": "Colección energía — desde $64.900"
+    },
+    {
+      "key": "A5",
+      "name": "Anuncio 5 — 59k V2",
+      "type": "clone",
+      "source_creative": "1090220080009075",
+      "ad_id": "120253265578950684"
+    }
+  ]
+}
