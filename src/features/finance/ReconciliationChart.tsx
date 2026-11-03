@@ -27,14 +27,14 @@ const cop = (n: number) =>
 const kFormat = (v: number) => `$${Math.round(Number(v) / 1000)}k`;
 
 const EXPENSE_COLORS = [
-  "hsl(0 72% 51%)",
-  "hsl(24 80% 50%)",
-  "hsl(43 74% 49%)",
-  "hsl(280 55% 55%)",
-  "hsl(200 60% 45%)",
-  "hsl(160 55% 40%)",
-  "hsl(320 55% 52%)",
-  "hsl(220 15% 55%)",
+  "hsl(var(--danger))",
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--chart-6))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--muted-foreground))",
 ];
 
 function buildChannelData(rec: Reconciliation) {
@@ -112,8 +112,8 @@ export function ReconciliationChart({ month }: { month: string }) {
                   wrapperStyle={{ fontSize: 11 }}
                   formatter={(v) => (v === "sales" ? "Ventas (órdenes)" : "Ingresado")}
                 />
-                <Bar dataKey="sales" fill="hsl(222 47% 45%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="income" fill="hsl(142 71% 38%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="sales" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="income" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -170,8 +170,8 @@ export function ReconciliationChart({ month }: { month: string }) {
                   wrapperStyle={{ fontSize: 11 }}
                   formatter={(v) => (v === "collected" ? "Cobrado" : "Ingresado")}
                 />
-                <Bar dataKey="collected" fill="hsl(222 47% 45%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="income" fill="hsl(142 71% 38%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="collected" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="income" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

@@ -139,7 +139,7 @@ export function DesignDialog({ open, onClose, initial, defaultParentId, onCreate
                 value={form.hex_code}
                 onChange={(e) => set("hex_code", e.target.value)}
                 placeholder="#000000"
-                className="font-mono w-32"
+                className="tabular w-32"
                 maxLength={7}
               />
             </div>

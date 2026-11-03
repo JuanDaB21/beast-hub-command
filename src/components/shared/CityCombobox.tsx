@@ -134,7 +134,7 @@ export function CityCombobox({
                       · {c.department}
                     </span>
                   </span>
-                  <span className="ml-2 shrink-0 font-mono text-[10px] text-muted-foreground">
+                  <span className="ml-2 shrink-0 tabular text-[10px] text-muted-foreground">
                     {c.dane_code}
                   </span>
                 </button>

@@ -74,7 +74,7 @@ export function NegativeStockBatchDialog() {
           <Factory className="h-4 w-4 mr-1" /> Lote de faltantes
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl w-[95vw]">
+      <DialogContent className="max-w-3xl sm:w-[95vw]">
         <DialogHeader>
           <DialogTitle>Lote de faltantes (stock negativo)</DialogTitle>
           <DialogDescription>

@@ -40,7 +40,7 @@ import { toast } from "@/hooks/use-toast";
 import { STATUS_LABEL, statusTone } from "./status";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 /** Nombre de la línea de cargo de envío estándar (kind='fee'). */
 interface Props {
@@ -203,28 +203,28 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
         {order.customer_pays_shipping && (
           <StatusBadge tone="neutral" label="Envío a cargo del cliente" />
         )}
-        <span className="ml-auto rounded-md bg-secondary px-2 py-0.5 text-xs uppercase text-secondary-foreground">
+        <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-xs capitalize text-secondary-foreground">
           {order.source}
         </span>
       </div>
 
       {/* Tipo de pago prominente para que se detecte de un vistazo. */}
       <div
-        className={`rounded-md border-2 p-3 ${
+        className={`rounded-xl border p-3.5 ${
           order.is_cod
-            ? "border-amber-400 bg-amber-50"
+            ? "border-warning/40 bg-warning-soft"
             : pendingVerification
-              ? "border-orange-400 bg-orange-50"
-              : "border-emerald-400 bg-emerald-50"
+              ? "border-warning/50 bg-warning-soft"
+              : "border-success/50 bg-success-soft"
         }`}
       >
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">Tipo de pago</div>
-        <div className="text-lg font-bold">
+        <div className="text-xs text-muted-foreground">Tipo de pago</div>
+        <div className="font-display text-2xl font-semibold leading-tight">
           {order.is_cod
-            ? "CONTRA ENTREGA (COD)"
+            ? "Contra entrega (COD)"
             : pendingVerification
-              ? "PAGO POR VERIFICAR"
-              : "PREPAGO"}
+              ? "Pago por verificar"
+              : "Prepago"}
         </div>
         {order.shopify_payment_gateway && (
           <div className="text-sm text-muted-foreground">{order.shopify_payment_gateway}</div>
@@ -267,8 +267,8 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
         )}
       </div>
 
-      <div className="rounded-md border p-3">
-        <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Cliente</div>
+      <div className="rounded-xl border bg-card p-3.5">
+        <div className="mb-2 text-xs font-medium text-muted-foreground">Cliente</div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="font-medium">{order.customer_name}</div>
@@ -288,14 +288,14 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
 
       <div>
         <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">Productos</span>
+          <span className="text-xs font-medium text-muted-foreground">Productos</span>
           {editable && (
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 gap-1.5 text-xs"
+                className="h-8 gap-1.5 text-xs"
                 onClick={onAddShipping}
                 disabled={hasShippingFee || addFee.isPending}
                 title={hasShippingFee ? "Este pedido ya tiene envío estándar" : undefined}
@@ -309,8 +309,8 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
             </div>
           )}
         </div>
-        <div className="overflow-hidden rounded-md border">
-          <table className="w-full table-fixed text-sm">
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <table className="stack-table w-full table-fixed text-sm">
             <colgroup>
               <col />
               <col className="w-16" />
@@ -318,7 +318,7 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
               <col className="w-28" />
               {editable && <col className="w-12" />}
             </colgroup>
-            <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+            <thead className="bg-muted/40 text-xs text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left">Producto</th>
                 <th className="px-3 py-2 text-right">Cant.</th>
@@ -357,9 +357,9 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
                           assigning={assign.isPending}
                         />
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <td data-label="Cant." className="px-3 py-2 text-right tabular-nums">{it.quantity}</td>
+                      <td data-label="Precio" className="px-3 py-2 text-right tabular-nums">{currency(Number(it.unit_price))}</td>
+                      <td data-label="Subtotal" className="px-3 py-2 text-right font-medium tabular-nums">
                         {currency(it.quantity * Number(it.unit_price))}
                       </td>
                     </tr>
@@ -372,16 +372,16 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
             </tbody>
             <tfoot>
               <tr className="border-t bg-muted/30">
-                <td colSpan={colCount - 1} className="px-3 py-2 text-right text-xs uppercase text-muted-foreground">
+                <td colSpan={colCount - 1} className="px-3 py-2 text-right text-xs text-muted-foreground">
                   Total
                 </td>
-                <td className="px-3 py-2 text-right text-base font-semibold tabular-nums">
+                <td className="px-3 py-2 text-right font-display text-xl font-semibold tabular-nums">
                   {currency(Number(order.total))}
                 </td>
               </tr>
               {order.customer_pays_shipping ? (
                 <tr className="border-t bg-muted/10">
-                  <td colSpan={colCount - 1} className="px-3 py-1.5 text-right text-xs uppercase text-muted-foreground">
+                  <td colSpan={colCount - 1} className="px-3 py-1.5 text-right text-xs text-muted-foreground">
                     Envío
                   </td>
                   <td className="px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
@@ -392,7 +392,7 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
                 Number(order.shipping_cost) > 0 && (
                   <>
                     <tr className="border-t bg-muted/10">
-                      <td colSpan={colCount - 1} className="px-3 py-1.5 text-right text-xs uppercase text-muted-foreground">
+                      <td colSpan={colCount - 1} className="px-3 py-1.5 text-right text-xs text-muted-foreground">
                         Costo de envío
                       </td>
                       <td className="px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
@@ -400,7 +400,7 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
                       </td>
                     </tr>
                     <tr className="border-t bg-muted/30">
-                      <td colSpan={colCount - 1} className="px-3 py-2 text-right text-xs uppercase text-muted-foreground">
+                      <td colSpan={colCount - 1} className="px-3 py-2 text-right text-xs text-muted-foreground">
                         Total - envío
                       </td>
                       <td className="px-3 py-2 text-right text-sm font-semibold tabular-nums">
@@ -451,7 +451,7 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
-          <div className="text-xs uppercase text-muted-foreground">Cambiar estado</div>
+          <div className="text-xs text-muted-foreground">Cambiar estado</div>
           <Select value={order.status} onValueChange={(v) => onSelectStatus(v as OrderStatus)}>
             <SelectTrigger>
               <SelectValue />
@@ -473,7 +473,7 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
         */}
         {!order.is_cod && order.payment_status === "paid" && (
           <div className="space-y-1">
-            <div className="text-xs uppercase text-muted-foreground">Vía de cobro</div>
+            <div className="text-xs text-muted-foreground">Vía de cobro</div>
             <Select
               value={order.payment_method ?? ""}
               onValueChange={(v) => onChangePaymentMethod(v as PaymentMethod)}
@@ -505,8 +505,8 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
       </div>
 
       <div className="text-xs text-muted-foreground">
-        Creado: {new Date(order.created_at).toLocaleString("es-MX")} · Actualizado:{" "}
-        {new Date(order.updated_at).toLocaleString("es-MX")}
+        Creado {new Date(order.created_at).toLocaleString("es-CO")}. Actualizado{" "}
+        {new Date(order.updated_at).toLocaleString("es-CO")}
       </div>
     </div>
   );
@@ -533,7 +533,7 @@ function ItemLabel({ item, productOptions, onAssign, assigning }: ItemLabelProps
           <StatusBadge tone="red" label="Desconocido" />
         </div>
         {item.external_sku && (
-          <div className="font-mono text-xs text-muted-foreground">{item.external_sku}</div>
+          <div className="text-xs text-muted-foreground">{item.external_sku}</div>
         )}
         <div className="max-w-xs">
           <StandardCombobox
@@ -553,7 +553,7 @@ function ItemLabel({ item, productOptions, onAssign, assigning }: ItemLabelProps
     <>
       <div className="font-medium break-words">{item.product?.name ?? "Producto eliminado"}</div>
       {item.product?.sku && (
-        <div className="font-mono text-xs text-muted-foreground">{item.product.sku}</div>
+        <div className="text-xs text-muted-foreground">{item.product.sku}</div>
       )}
     </>
   );
@@ -616,7 +616,7 @@ function EditableItemRow({
           assigning={assigning}
         />
       </td>
-      <td className="px-2 py-2 text-right">
+      <td data-label="Cant." className="px-2 py-2 text-right">
         <Input
           type="number"
           min={1}
@@ -625,10 +625,10 @@ function EditableItemRow({
           onChange={(e) => setQty(e.target.value)}
           onBlur={commitQty}
           onKeyDown={blurOnEnter}
-          className="ml-auto h-8 w-16 text-right tabular-nums"
+          className="ml-auto h-9 w-16 text-right tabular-nums"
         />
       </td>
-      <td className="px-2 py-2 text-right">
+      <td data-label="Precio" className="px-2 py-2 text-right">
         <Input
           type="number"
           min={0}
@@ -638,16 +638,16 @@ function EditableItemRow({
           onChange={(e) => setPrice(e.target.value)}
           onBlur={commitPrice}
           onKeyDown={blurOnEnter}
-          className="ml-auto h-8 w-24 text-right tabular-nums"
+          className="ml-auto h-9 w-24 text-right tabular-nums"
         />
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">{currency(subtotal)}</td>
+      <td data-label="Subtotal" className="px-3 py-2 text-right font-medium tabular-nums">{currency(subtotal)}</td>
       <td className="px-2 py-2 text-right">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-9 w-9"
           onClick={onRemove}
           disabled={busy}
           aria-label="Eliminar línea"
@@ -705,16 +705,16 @@ function AddItemRow({ products, onAdd, adding }: AddItemRowProps) {
           wrapLabel
         />
       </td>
-      <td className="px-2 py-2 text-right">
+      <td data-label="Cant." className="px-2 py-2 text-right">
         <Input
           type="number"
           min={1}
           value={qty}
           onChange={(e) => setQty(e.target.value)}
-          className="ml-auto h-8 w-16 text-right tabular-nums"
+          className="ml-auto h-9 w-16 text-right tabular-nums"
         />
       </td>
-      <td className="px-2 py-2 text-right">
+      <td data-label="Precio" className="px-2 py-2 text-right">
         <Input
           type="number"
           min={0}
@@ -722,10 +722,10 @@ function AddItemRow({ products, onAdd, adding }: AddItemRowProps) {
           value={price}
           placeholder="0.00"
           onChange={(e) => setPrice(e.target.value)}
-          className="ml-auto h-8 w-24 text-right tabular-nums"
+          className="ml-auto h-9 w-24 text-right tabular-nums"
         />
       </td>
-      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+      <td data-label="Subtotal" className="px-3 py-2 text-right tabular-nums text-muted-foreground">
         {price !== "" ? currency((Number(qty) || 0) * (Number(price) || 0)) : "—"}
       </td>
       <td className="px-2 py-2 text-right">
@@ -733,7 +733,7 @@ function AddItemRow({ products, onAdd, adding }: AddItemRowProps) {
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-9 w-9"
           onClick={submit}
           disabled={!canAdd}
           aria-label="Agregar línea"

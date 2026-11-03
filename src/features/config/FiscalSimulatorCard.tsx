@@ -30,15 +30,15 @@ export function FiscalSimulatorCard() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <p className="text-xs uppercase text-muted-foreground">Ingresos brutos</p>
+              <p className="text-xs text-muted-foreground">Ingresos brutos</p>
               <p className="text-xl font-semibold tabular-nums">{currency(gross)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase text-muted-foreground">IVA estimado ({ivaPct}%)</p>
+              <p className="text-xs text-muted-foreground">IVA estimado ({ivaPct}%)</p>
               <p className="text-xl font-semibold tabular-nums">{currency(iva)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase text-muted-foreground">Retención ({retPct}%)</p>
+              <p className="text-xs text-muted-foreground">Retención ({retPct}%)</p>
               <p className="text-xl font-semibold tabular-nums">{currency(ret)}</p>
             </div>
           </div>

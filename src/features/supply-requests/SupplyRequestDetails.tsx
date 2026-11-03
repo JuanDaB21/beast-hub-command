@@ -212,7 +212,7 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
       <div className="rounded-md border p-3 space-y-2 bg-muted/30">
         <p className="text-xs text-muted-foreground">URL del portal del proveedor</p>
         <div className="flex flex-col sm:flex-row gap-2">
-          <code className="flex-1 truncate text-xs bg-background border rounded px-2 py-2 font-mono">
+          <code className="flex-1 truncate text-xs bg-background border rounded px-2 py-2 tabular">
             {portalUrl}
           </code>
           <div className="flex gap-2">

@@ -254,6 +254,47 @@
   }
 }
 
+/* Tabla que en móvil se apila: 1ª celda a lo ancho, el resto en fila con etiqueta (data-label). */
+@media (max-width: 639px) {
+  .stack-table,
+  .stack-table tbody,
+  .stack-table tfoot {
+    display: block;
+    width: 100%;
+  }
+  .stack-table colgroup,
+  .stack-table thead {
+    display: none;
+  }
+  .stack-table tbody tr {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    align-items: end;
+    column-gap: 0.25rem;
+    padding: 0.5rem 0.25rem;
+  }
+  .stack-table tbody tr > td {
+    padding: 0.25rem 0.5rem;
+  }
+  .stack-table tbody tr > td:first-child,
+  .stack-table tbody tr > td[colspan] {
+    grid-column: 1 / -1;
+  }
+  .stack-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.125rem;
+    font-size: 0.6875rem;
+    color: hsl(var(--muted-foreground));
+    text-align: left;
+  }
+  .stack-table tfoot tr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
 @layer utilities {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);

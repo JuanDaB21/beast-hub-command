@@ -26,7 +26,7 @@ interface Row extends Product {
 }
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 export function AvailableVariantsList({ parents, orphans }: Props) {
   const [filter, setFilter] = useState("");
@@ -88,7 +88,7 @@ export function AvailableVariantsList({ parents, orphans }: Props) {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium line-clamp-2">{r.name}</p>
-                      <p className="text-xs text-muted-foreground font-mono">{r.sku}</p>
+                      <p className="text-xs text-muted-foreground tabular">{r.sku}</p>
                       {r.parentName && (
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {r.parentName}
@@ -138,7 +138,7 @@ export function AvailableVariantsList({ parents, orphans }: Props) {
                   const aging = isAgingFlagged(r);
                   return (
                     <TableRow key={r.id}>
-                      <TableCell className="font-mono text-xs">{r.sku}</TableCell>
+                      <TableCell className="tabular text-xs">{r.sku}</TableCell>
                       <TableCell className="text-sm">
                         {r.parentName ?? <span className="text-muted-foreground">—</span>}
                       </TableCell>

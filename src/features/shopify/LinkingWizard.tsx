@@ -247,7 +247,7 @@ export function LinkingWizard({ parent, open, onClose }: Props) {
                         </p>
                       </div>
                       {resolved ? (
-                        <Badge className="bg-green-100 text-green-800 border-green-200">
+                        <Badge className="bg-success-soft text-success-ink border-success/40">
                           <CheckCircle className="h-3 w-3 mr-1" /> OK
                         </Badge>
                       ) : (
@@ -276,7 +276,7 @@ export function LinkingWizard({ parent, open, onClose }: Props) {
             </div>
 
             {resolvedCount < preview.length && (
-              <div className="flex items-center gap-2 rounded bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+              <div className="flex items-center gap-2 rounded bg-warning-soft border border-warning/40 px-3 py-2 text-xs text-warning-ink">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {preview.length - resolvedCount} variante(s) sin base asignada serán omitidas.
               </div>

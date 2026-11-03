@@ -15,7 +15,7 @@ export function FinanceKpiRow({ month }: { month: string }) {
   const net = data?.net ?? 0;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
       <KpiCard
         label="Ventas del mes"
         value={cop(data?.sales_total ?? 0)}

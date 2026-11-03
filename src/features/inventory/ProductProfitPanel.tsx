@@ -122,7 +122,7 @@ export function ProductProfitPanel({ parent, open, onOpenChange }: Props) {
                 ) : (
                   rows.map(({ c, base, ink, process, total, price, margin, marginPct }) => (
                     <TableRow key={c.id}>
-                      <TableCell className="font-mono text-xs">{c.sku}</TableCell>
+                      <TableCell className="tabular text-xs">{c.sku}</TableCell>
                       <TableCell className="text-sm">{c.base_color ?? "—"}</TableCell>
                       <TableCell className="text-sm">{c.size ?? "—"}</TableCell>
                       <TableCell className="text-sm">{c.print_design ?? "—"}</TableCell>

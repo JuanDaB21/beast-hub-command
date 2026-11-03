@@ -104,7 +104,7 @@ export default function Returns() {
       )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-h-[90vh] w-[95vw] max-w-2xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] sm:w-[95vw] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registrar nueva devolución</DialogTitle>
             <DialogDescription>

@@ -30,9 +30,9 @@ function monthLabel(ym: string) {
 type SeriesKey = "net" | "projected" | "accumulated";
 
 const SERIES: { key: SeriesKey; label: string; color: string; dashed?: boolean }[] = [
-  { key: "net", label: "Rentabilidad neta (caja)", color: "hsl(142 71% 38%)" },
-  { key: "projected", label: "Rentabilidad proyectada", color: "hsl(222 47% 45%)" },
-  { key: "accumulated", label: "Neta acumulada", color: "hsl(38 92% 50%)", dashed: true },
+  { key: "net", label: "Rentabilidad neta (caja)", color: "hsl(var(--success))" },
+  { key: "projected", label: "Rentabilidad proyectada", color: "hsl(var(--chart-2))" },
+  { key: "accumulated", label: "Neta acumulada", color: "hsl(var(--warning))", dashed: true },
 ];
 
 /**

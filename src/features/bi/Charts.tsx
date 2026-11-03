@@ -16,19 +16,19 @@ import {
 import { Card } from "@/components/ui/card";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", {
+  new Intl.NumberFormat("es-CO", {
     style: "currency",
-    currency: "MXN",
+    currency: "COP",
     maximumFractionDigits: 0,
   }).format(n);
 
 const PIE_COLORS = [
-  "hsl(222 47% 14%)",
-  "hsl(24 95% 53%)",
-  "hsl(38 92% 50%)",
-  "hsl(142 71% 38%)",
-  "hsl(200 80% 45%)",
-  "hsl(280 60% 50%)",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-1))",
+  "hsl(var(--warning))",
+  "hsl(var(--success))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-6))",
 ];
 
 function fmtDay(d: string) {
@@ -91,7 +91,7 @@ export function SalesLineChart({
         <Line
           type="monotone"
           dataKey="revenue"
-          stroke="hsl(var(--primary))"
+          stroke="hsl(var(--chart-1))"
           strokeWidth={2.5}
           dot={{ r: 3 }}
           activeDot={{ r: 5 }}
@@ -136,7 +136,7 @@ export function TopProductsBarChart({
             name === "quantity" ? [value, "Unidades"] : [currency(value), "Ingresos"]
           }
         />
-        <Bar dataKey="quantity" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
       </BarChart>
     </ChartCard>
   );

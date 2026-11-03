@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/table";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", {
+  new Intl.NumberFormat("es-CO", {
     style: "currency",
-    currency: "MXN",
+    currency: "COP",
     maximumFractionDigits: 0,
   }).format(n);
 
@@ -36,7 +36,7 @@ export function MonthlyClosureTable({ rows }: { rows: Row[] }) {
   const fmtMonth = (m: string) => {
     const [y, mm] = m.split("-");
     const d = new Date(Number(y), Number(mm) - 1, 1);
-    return d.toLocaleDateString("es-MX", { month: "short", year: "numeric" });
+    return d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
   };
 
   return (

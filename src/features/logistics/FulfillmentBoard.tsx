@@ -94,7 +94,7 @@ export function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: 
     <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="font-mono text-xs text-muted-foreground">{order.order_number}</div>
+          <div className="tabular text-xs text-muted-foreground">{order.order_number}</div>
           <div className="truncate text-base font-semibold">{order.customer_name}</div>
         </div>
         <StatusBadge tone={sla.tone} label={sla.label} />
@@ -121,7 +121,7 @@ export function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: 
         <div className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1.5 text-xs">
           {/* La guía es lo primero que busca el operativo para rastrear. */}
           <Hash className="h-3 w-3 text-muted-foreground" />
-          <span className="font-mono">{order.tracking_number}</span>
+          <span className="tabular">{order.tracking_number}</span>
         </div>
       ) : (
         missingTracking && (

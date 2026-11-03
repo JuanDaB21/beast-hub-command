@@ -109,7 +109,7 @@ export function FinanceLedgerTable({
                   <TableCell>
                     <Badge
                       variant={isIncome ? "default" : "destructive"}
-                      className={isIncome ? "bg-emerald-600 hover:bg-emerald-600" : ""}
+                      className={isIncome ? "bg-success hover:bg-success" : ""}
                     >
                       {isIncome ? "Ingreso" : "Gasto"}
                     </Badge>
@@ -134,7 +134,7 @@ export function FinanceLedgerTable({
                   </TableCell>
                   <TableCell
                     className={`text-right font-medium tabular-nums ${
-                      isIncome ? "text-emerald-600" : "text-red-600"
+                      isIncome ? "text-success-ink" : "text-danger-ink"
                     }`}
                   >
                     {isIncome ? "+" : "−"} {fmt(Number(t.amount))}
@@ -176,8 +176,8 @@ export function FinanceLedgerTable({
                   Totales del filtro
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold">
-                  <div className="text-emerald-600">+ {fmt(totalIncome)}</div>
-                  <div className="text-red-600">− {fmt(totalExpense)}</div>
+                  <div className="text-success-ink">+ {fmt(totalIncome)}</div>
+                  <div className="text-danger-ink">− {fmt(totalExpense)}</div>
                 </TableCell>
                 <TableCell />
               </TableRow>

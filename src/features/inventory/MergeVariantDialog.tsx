@@ -75,7 +75,7 @@ export function MergeVariantDialog({ source, open, onOpenChange }: Props) {
             <Label className="text-muted-foreground">Se elimina</Label>
             <div className="mt-1 rounded-md border p-2">
               <div className="text-sm">{source?.name}</div>
-              <div className="font-mono text-[11px] text-muted-foreground">{source?.sku}</div>
+              <div className="tabular text-[11px] text-muted-foreground">{source?.sku}</div>
             </div>
           </div>
 
@@ -98,7 +98,7 @@ export function MergeVariantDialog({ source, open, onOpenChange }: Props) {
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               Los pedidos, órdenes de trabajo y devoluciones pasan a{" "}
-              {target ? <span className="font-mono">{target.sku}</span> : "la variante elegida"},
+              {target ? <span className="tabular">{target.sku}</span> : "la variante elegida"},
               junto con el stock que tenían reservado o producido. No se puede deshacer.
             </AlertDescription>
           </Alert>

@@ -65,7 +65,7 @@ export function ProductsMobileList({
           <Card key={p.id} className="p-3 space-y-2">
             <div>
               <div className="font-medium">{p.name}</div>
-              <div className="text-xs font-mono text-muted-foreground">{p.sku}</div>
+              <div className="text-xs tabular text-muted-foreground">{p.sku}</div>
             </div>
             <div className="flex flex-wrap gap-1.5">
               <StatusBadge tone={s.tone} label={`${s.label} · ${p.stock}`} />
@@ -138,7 +138,7 @@ function ParentCard({
             )}
             <div className="flex-1 min-w-0">
               <div className="font-medium line-clamp-2">{parent.name}</div>
-              <div className="text-xs font-mono text-muted-foreground">{parent.sku}</div>
+              <div className="text-xs tabular text-muted-foreground">{parent.sku}</div>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 <StatusBadge
                   tone={anyOut ? "red" : "neutral"}
@@ -188,7 +188,7 @@ function ParentCard({
                       <div className="text-sm font-medium line-clamp-2">
                         {c.base_color} · {c.size} {c.print_design ? `· ${c.print_design}` : ""}
                       </div>
-                      <div className="text-[11px] font-mono text-muted-foreground">{c.sku}</div>
+                      <div className="text-[11px] tabular text-muted-foreground">{c.sku}</div>
                     </div>
                     <StatusBadge tone={s.tone} label={`${s.label} · ${c.stock}`} />
                   </div>

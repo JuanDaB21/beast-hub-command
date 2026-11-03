@@ -8,7 +8,7 @@ export function statusTone(s: OrderStatus): StatusTone {
     case "shipped":
       return "green";
     case "processing":
-      return "yellow";
+      return "info";
     case "pending":
       return "yellow";
     case "cancelled":

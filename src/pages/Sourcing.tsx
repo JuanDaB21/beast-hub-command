@@ -21,7 +21,7 @@ import { EntityDetailCard } from "@/components/shared/EntityDetailCard";
 import { MaterialGroupCard, groupMaterials } from "@/features/sourcing/MaterialGroupCard";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 export default function Sourcing() {
   const [tab, setTab] = useState("suppliers");

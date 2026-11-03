@@ -49,7 +49,7 @@ import { type MaterialGroup, extractBaseName, groupMaterials } from "@/features/
 export { type MaterialGroup, extractBaseName, groupMaterials };
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 interface Props {
   group: MaterialGroup;
@@ -238,7 +238,7 @@ export function MaterialGroupCard({ group }: Props) {
                         <TableCell>
                           {v.size?.label ?? <span className="text-muted-foreground">—</span>}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">
+                        <TableCell className="tabular text-xs">
                           {v.sku ?? <span className="text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell className="text-right">

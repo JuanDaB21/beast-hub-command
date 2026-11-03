@@ -161,7 +161,7 @@ export function StandardCombobox({
                   <span className="min-w-0 flex-1">
                     <span className="block whitespace-normal break-words">{opt.label}</span>
                     {opt.sublabel && (
-                      <span className="mt-0.5 block truncate font-mono text-[11px] text-muted-foreground">
+                      <span className="mt-0.5 block truncate tabular text-[11px] text-muted-foreground">
                         {opt.sublabel}
                       </span>
                     )}

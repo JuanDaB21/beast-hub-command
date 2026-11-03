@@ -93,7 +93,7 @@ function UnifiedSupplyDialog({ workOrders }: { workOrders: WorkOrderWithItems[] 
           <PackagePlus className="h-4 w-4 mr-1" /> Solicitud unificada de bases
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl w-[95vw]">
+      <DialogContent className="max-w-3xl sm:w-[95vw]">
         <DialogHeader>
           <DialogTitle>Solicitud unificada de bases</DialogTitle>
           <DialogDescription>
@@ -167,7 +167,7 @@ export default function Production() {
                 <Plus className="h-4 w-4 mr-1" /> Nuevo lote
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl lg:max-w-4xl w-[95vw]">
+            <DialogContent className="max-w-3xl lg:max-w-4xl sm:w-[95vw]">
               <DialogHeader>
                 <DialogTitle>Nuevo lote de producción</DialogTitle>
               </DialogHeader>

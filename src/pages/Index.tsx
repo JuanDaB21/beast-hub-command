@@ -29,9 +29,9 @@ import { MonthlyClosureTable } from "@/features/bi/MonthlyClosureTable";
 import { Card } from "@/components/ui/card";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", {
+  new Intl.NumberFormat("es-CO", {
     style: "currency",
-    currency: "MXN",
+    currency: "COP",
     maximumFractionDigits: 0,
   }).format(n);
 
