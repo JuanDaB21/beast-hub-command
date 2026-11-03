@@ -113,7 +113,7 @@ export function WorkOrderDetails({ wo, onClose }: Props) {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-xs text-muted-foreground">Fecha objetivo</p>
-              <p>{wo.target_date ?? "—"}</p>
+              <p>{wo.target_date ? new Date(wo.target_date).toLocaleDateString("es-CO") : "—"}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Total unidades</p>

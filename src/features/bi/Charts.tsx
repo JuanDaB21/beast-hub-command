@@ -46,12 +46,12 @@ interface ChartCardProps {
 
 function ChartCard({ title, subtitle, children, height = 280 }: ChartCardProps) {
   return (
-    <Card className="flex flex-col gap-2 p-4">
+    <Card className="flex flex-col gap-3 p-4">
       <div>
-        <h3 className="text-sm font-semibold">{title}</h3>
+        <h3 className="font-display text-lg font-semibold leading-none">{title}</h3>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </div>
-      <div style={{ width: "100%", height }}>
+      <div className={height === 280 ? "h-60 w-full sm:h-[280px]" : "w-full"} style={height === 280 ? undefined : { height }}>
         <ResponsiveContainer>{children as any}</ResponsiveContainer>
       </div>
     </Card>

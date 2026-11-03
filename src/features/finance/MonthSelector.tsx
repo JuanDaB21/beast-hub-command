@@ -23,7 +23,7 @@ export function MonthSelector({ month, onChange }: Props) {
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
-      <div className="min-w-[180px] text-center text-lg font-semibold capitalize">
+      <div className="min-w-[180px] text-center font-display text-2xl font-semibold capitalize leading-none">
         {format(month, "MMMM yyyy", { locale: es })}
       </div>
       <Button

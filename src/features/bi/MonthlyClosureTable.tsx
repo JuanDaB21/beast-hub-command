@@ -42,9 +42,9 @@ export function MonthlyClosureTable({ rows }: { rows: Row[] }) {
   return (
     <Card className="overflow-hidden">
       <div className="border-b p-4">
-        <h3 className="text-sm font-semibold">Cierre Mensual Analítico</h3>
+        <h3 className="font-display text-xl font-semibold leading-none">Cierre mensual</h3>
         <p className="text-xs text-muted-foreground">
-          Últimos 6 meses · ingresos por canal vs. costo de bases y envíos
+          Últimos 6 meses: ingresos por canal frente a costo de bases y envíos
         </p>
       </div>
       <div className="overflow-x-auto">

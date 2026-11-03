@@ -151,13 +151,11 @@ export default function Production() {
       title="Producción"
       description="Lotes de producción y recetas de cada producto."
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <NegativeStockBatchDialog />
-          <UnifiedSupplyDialog workOrders={workOrders} />
+        <div className="flex items-center gap-2">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Nuevo lote
+              <Button size="sm" variant="brand" className="gap-1.5">
+                <Plus className="h-4 w-4" /> Nuevo<span className="hidden sm:inline"> lote</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl lg:max-w-4xl sm:w-[95vw]">
@@ -179,10 +177,16 @@ export default function Production() {
         </StatStrip>
 
         <Tabs defaultValue="lotes" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="lotes">Lotes</TabsTrigger>
-            <TabsTrigger value="recetas">Recetas (BOM)</TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
+              <TabsTrigger value="lotes">Lotes</TabsTrigger>
+              <TabsTrigger value="recetas">Recetas</TabsTrigger>
+            </TabsList>
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:px-0 [&_button]:shrink-0">
+              <NegativeStockBatchDialog />
+              <UnifiedSupplyDialog workOrders={workOrders} />
+            </div>
+          </div>
 
           <TabsContent value="lotes">
             {isLoading ? (
