@@ -15,10 +15,10 @@ export function FinanceGlobalKpis() {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Acumulado histórico · todo el tiempo
+      <h3 className="text-sm font-medium text-muted-foreground">
+        Acumulado histórico
       </h3>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 [&>*:first-child]:col-span-2 sm:[&>*:first-child]:col-span-1">
         <KpiCard
           label="Ventas históricas"
           value={cop(data?.sales_total ?? 0)}

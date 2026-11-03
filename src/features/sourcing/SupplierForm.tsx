@@ -54,7 +54,7 @@ export function SupplierForm({ onSuccess }: Props) {
           <Input
             id="sup-phone"
             type="tel"
-            placeholder="+52 55 1234 5678"
+            placeholder="+57 300 123 4567"
             value={form.contact_phone}
             onChange={(e) => setForm({ ...form, contact_phone: e.target.value })}
             required

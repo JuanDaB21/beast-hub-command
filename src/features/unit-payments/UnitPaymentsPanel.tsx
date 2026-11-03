@@ -199,10 +199,10 @@ export function UnitPaymentsPanel() {
                         d.created_at.slice(0, 7) !== d.delivered_at.slice(0, 7);
                       return (
                         <TableRow key={d.order_number}>
-                          <TableCell className="font-mono text-xs">{d.order_number}</TableCell>
+                          <TableCell className="tabular text-xs">{d.order_number}</TableCell>
                           <TableCell
                             className={`whitespace-nowrap text-xs ${
-                              crossesMonth ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground"
+                              crossesMonth ? "text-warning-ink" : "text-muted-foreground"
                             }`}
                           >
                             {format(new Date(d.created_at), "d MMM yy", { locale: es })}

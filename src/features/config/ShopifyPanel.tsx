@@ -423,7 +423,7 @@ export function ShopifyPanel() {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">Productos / Variantes</p>
                 {cfg?.last_products_sync && (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -447,7 +447,7 @@ export function ShopifyPanel() {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">Órdenes</p>
                 {cfg?.last_orders_sync && (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -546,13 +546,13 @@ export function ShopifyPanel() {
             </Button>
           </div>
           {inventoryErrors.data && inventoryErrors.data.length > 0 && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-amber-900">
+            <div className="rounded-md border border-warning/40 bg-warning-soft p-3 space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-warning-ink">
                 <AlertTriangle className="h-4 w-4" />
                 {inventoryErrors.data.length} producto
                 {inventoryErrors.data.length === 1 ? "" : "s"} con errores de sync
               </div>
-              <ul className="text-xs text-amber-900 space-y-1 max-h-40 overflow-y-auto">
+              <ul className="text-xs text-warning-ink space-y-1 max-h-40 overflow-y-auto">
                 {inventoryErrors.data.slice(0, 10).map((e) => (
                   <li key={e.id} className="truncate">
                     <span className="font-mono">{e.product_sku ?? "?"}</span>
@@ -608,7 +608,7 @@ export function ShopifyPanel() {
                   <p className="text-xs text-muted-foreground">
                     {parent.children.length} variante{parent.children.length !== 1 ? "s" : ""} sin base
                     {parent.base_group_key && (
-                      <span className="ml-2 text-green-700">· base configurada (auto-link pendiente)</span>
+                      <span className="ml-2 text-success-ink">· base configurada (auto-link pendiente)</span>
                     )}
                   </p>
                 </div>

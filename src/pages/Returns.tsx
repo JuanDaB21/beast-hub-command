@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
+import { StatTile } from "@/components/shared/StatTile";
+import { StatStrip } from "@/components/shared/StatStrip";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -53,24 +54,24 @@ export default function Returns() {
   }, [returns]);
 
   const headerActions = (
-    <Button size="sm" className="gap-2" onClick={() => setFormOpen(true)}>
+    <Button size="sm" variant="brand" className="gap-1.5" onClick={() => setFormOpen(true)}>
       <Plus className="h-4 w-4" />
-      <span className="hidden sm:inline">Nueva devolución</span>
+      Nueva<span className="hidden sm:inline"> devolución</span>
     </Button>
   );
 
   return (
     <AppShell
-      title="Módulo 7 · Devoluciones (RMA)"
-      description="Calidad y resolución: re-ingreso a stock o merma."
+      title="Devoluciones"
+      description="Reingreso a stock o merma."
       actions={headerActions}
     >
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatStrip cols={4} className="mb-4">
         <KPI label="Totales" value={String(stats.total)} />
         <KPI label="Pendientes" value={String(stats.pending)} tone="yellow" />
         <KPI label="Re-ingresadas" value={String(stats.restocked)} tone="green" />
         <KPI label="Merma" value={String(stats.scrapped)} tone="red" />
-      </div>
+      </StatStrip>
 
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
@@ -104,7 +105,7 @@ export default function Returns() {
       )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-h-[90vh] w-[95vw] max-w-2xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] sm:w-[95vw] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registrar nueva devolución</DialogTitle>
             <DialogDescription>
@@ -124,29 +125,6 @@ export default function Returns() {
   );
 }
 
-function KPI({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "green" | "yellow" | "red";
-}) {
-  const toneClass =
-    tone === "red"
-      ? "text-status-red"
-      : tone === "yellow"
-        ? "text-status-yellow"
-        : tone === "green"
-          ? "text-status-green"
-          : "text-foreground";
-  return (
-    <Card className="p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`mt-1 text-xl font-semibold tabular-nums sm:text-2xl ${toneClass}`}>
-        {value}
-      </div>
-    </Card>
-  );
+function KPI({ label, value, tone }: { label: string; value: string; tone?: "green" | "yellow" | "red" }) {
+  return <StatTile label={label} value={value} tone={tone} size="compact" />;
 }

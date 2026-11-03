@@ -65,7 +65,7 @@ export function StaffPanel() {
                   <div className="flex items-center gap-2">
                     <h3 className="truncate font-semibold">{s.full_name ?? "(Sin nombre)"}</h3>
                     {s.active ? (
-                      <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                      <Badge className="bg-success-soft text-success-ink">
                         Activo
                       </Badge>
                     ) : (

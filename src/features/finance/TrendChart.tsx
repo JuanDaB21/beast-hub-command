@@ -27,9 +27,9 @@ function monthLabel(ym: string) {
 }
 
 const SERIES: { key: "sales" | "income" | "expenses"; label: string; color: string }[] = [
-  { key: "sales", label: "Ventas (órdenes)", color: "hsl(222 47% 45%)" },
-  { key: "income", label: "Ingresos", color: "hsl(142 71% 38%)" },
-  { key: "expenses", label: "Gastos", color: "hsl(0 72% 51%)" },
+  { key: "sales", label: "Ventas (órdenes)", color: "hsl(var(--chart-2))" },
+  { key: "income", label: "Ingresos", color: "hsl(var(--success))" },
+  { key: "expenses", label: "Gastos", color: "hsl(var(--danger))" },
 ];
 
 export function TrendChart({ month, months = 6 }: { month: string; months?: number }) {

@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/table";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", {
+  new Intl.NumberFormat("es-CO", {
     style: "currency",
-    currency: "MXN",
+    currency: "COP",
     maximumFractionDigits: 0,
   }).format(n);
 
@@ -36,15 +36,15 @@ export function MonthlyClosureTable({ rows }: { rows: Row[] }) {
   const fmtMonth = (m: string) => {
     const [y, mm] = m.split("-");
     const d = new Date(Number(y), Number(mm) - 1, 1);
-    return d.toLocaleDateString("es-MX", { month: "short", year: "numeric" });
+    return d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
   };
 
   return (
     <Card className="overflow-hidden">
       <div className="border-b p-4">
-        <h3 className="text-sm font-semibold">Cierre Mensual Analítico</h3>
+        <h3 className="font-display text-xl font-semibold leading-none">Cierre mensual</h3>
         <p className="text-xs text-muted-foreground">
-          Últimos 6 meses · ingresos por canal vs. costo de bases y envíos
+          Últimos 6 meses: ingresos por canal frente a costo de bases y envíos
         </p>
       </div>
       <div className="overflow-x-auto">

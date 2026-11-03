@@ -68,7 +68,7 @@ export function VariantPreviewTable({ rows }: Props) {
                       <CheckCircle2 className="h-4 w-4 text-status-green" />
                     )}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{r.sku}</TableCell>
+                  <TableCell className="tabular text-xs">{r.sku}</TableCell>
                   <TableCell className="text-sm">
                     <div className="flex items-center gap-2">
                       <span>{r.name}</span>

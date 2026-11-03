@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export type StatusTone = "green" | "yellow" | "red" | "neutral";
+export type StatusTone = "green" | "yellow" | "red" | "info" | "neutral";
 
 interface StatusBadgeProps {
   /** Pasa `tone` directo, o `daysOverdue` para cálculo automático. */
@@ -21,10 +21,11 @@ function toneFromDays(days: number, warn: number, danger: number): StatusTone {
 }
 
 const toneStyles: Record<StatusTone, string> = {
-  green: "bg-status-green/15 text-status-green border-status-green/30",
-  yellow: "bg-status-yellow/15 text-status-yellow border-status-yellow/40",
-  red: "bg-status-red/15 text-status-red border-status-red/30",
-  neutral: "bg-muted text-muted-foreground border-border",
+  green: "bg-success-soft text-success-ink",
+  yellow: "bg-warning-soft text-warning-ink",
+  red: "bg-danger-soft text-danger-ink",
+  info: "bg-info-soft text-info-ink",
+  neutral: "bg-muted text-muted-foreground",
 };
 
 export function StatusBadge({
@@ -42,7 +43,7 @@ export function StatusBadge({
       : "neutral");
 
   return (
-    <Badge variant="outline" className={cn("font-medium", toneStyles[resolvedTone], className)}>
+    <Badge variant="outline" className={cn("whitespace-nowrap border-transparent px-2 font-medium", toneStyles[resolvedTone], className)}>
       <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current" />
       {label}
     </Badge>

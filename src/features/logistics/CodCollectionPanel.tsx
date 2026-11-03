@@ -4,6 +4,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PackageCheck } from "lucide-react";
 import { codStage, type CodStage, type ShipmentOrder } from "./api";
 import { KpiTile } from "./KpiTile";
+import { StatStrip } from "@/components/shared/StatStrip";
 import { ShipmentCard } from "./FulfillmentBoard";
 
 const currency = (n: number) =>
@@ -55,7 +56,7 @@ export function CodCollectionPanel({ orders, onShip }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatStrip cols={4}>
         <KpiTile
           label="Por confirmar"
           value={String(groups.to_confirm.length)}
@@ -71,11 +72,11 @@ export function CodCollectionPanel({ orders, onShip }: Props) {
         <KpiTile
           label="En manos de la transportadora"
           value={currency(sum(groups.collected))}
-          hint={`${groups.collected.length} entregados · contrastar en Finanzas`}
+          hint={`${groups.collected.length} entregados, contrastar en Finanzas`}
           tone="green"
         />
         <KpiTile label="Total COD" value={String(codOrders.length)} />
-      </div>
+      </StatStrip>
 
       <Tabs value={stage} onValueChange={(v) => setStage(v as CodStage | "all")}>
         <TabsList>
@@ -88,7 +89,7 @@ export function CodCollectionPanel({ orders, onShip }: Props) {
       </Tabs>
 
       {visible.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center gap-2 p-10 text-center">
+        <Card className="flex flex-col items-center justify-center gap-2 border-dashed p-10 text-center">
           <PackageCheck className="h-10 w-10 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
             No hay pedidos contra-entrega en esta etapa.

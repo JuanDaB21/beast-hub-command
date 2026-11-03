@@ -1,0 +1,28 @@
+{
+  "_doc": "Orden de las colecciones a las que apunta la pauta. pin = productos del anuncio (en ese orden); el resto lo ordena collection-order.cjs por ventas. Actualizar los pins al cambiar anuncios.",
+  "sales_days": 60,
+  "new_days": 30,
+  "new_after": 8,
+  "collections": {
+    "tanks": {
+      "ads": "U1",
+      "pin": ["chaos-tank-training-tank-top", "motor-youngla-training-tank-top", "run-beast-training-tank-top"]
+    },
+    "best-sellers": {
+      "ads": "U2, Banner Best seller",
+      "pin": ["gym-shark-training-shirt"]
+    },
+    "hombre": {
+      "ads": "U3",
+      "pin": ["gym-shark-training-shirt", "chaos-tank-training-tank-top", "the-monster-club-training-shirt", "monster-recipe-training-shirt"]
+    },
+    "nove-coleccion": {
+      "ads": "N2, N4, N5",
+      "pin": ["gymshark-necklace-training-shirt", "revenge-tee-training-shirt"]
+    },
+    "monster-gym-training-shirt-unleash-the-beast": {
+      "ads": "U4",
+      "pin": ["the-monster-club-training-shirt", "monster-recipe-training-shirt", "monster-tank-training-tank-top"]
+    }
+  }
+}

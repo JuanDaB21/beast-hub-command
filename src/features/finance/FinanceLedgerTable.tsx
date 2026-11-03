@@ -74,7 +74,68 @@ export function FinanceLedgerTable({
 
   return (
     <>
-      <div className="rounded-md border">
+      {/* Móvil: lista; tocar abre la edición */}
+      <div className="md:hidden">
+        {transactions.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+            No hay transacciones para los filtros seleccionados.
+          </div>
+        ) : (
+          <>
+            <ul className="divide-y overflow-hidden rounded-xl border bg-card">
+              {transactions.map((t) => {
+                const isIncome = t.transaction_type === "income";
+                const isManual = !t.reference_type || t.reference_type === "manual";
+                return (
+                  <li key={t.id} className="flex items-center gap-1 pr-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditTarget(t)}
+                      className="flex min-w-0 flex-1 items-center gap-3 px-3.5 py-3 text-left active:bg-surface-2"
+                    >
+                      <span
+                        aria-hidden
+                        className={`h-9 w-1 shrink-0 rounded-full ${isIncome ? "bg-success" : "bg-danger"}`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{t.category}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {format(new Date(t.occurred_at ?? t.created_at), "dd MMM", { locale: es })}
+                          {t.description ? `, ${t.description}` : ""}
+                        </p>
+                      </div>
+                      <span
+                        className={`tabular shrink-0 font-display text-lg font-semibold leading-none ${
+                          isIncome ? "text-success-ink" : "text-danger-ink"
+                        }`}
+                      >
+                        {isIncome ? "+" : "−"} {fmt(Number(t.amount))}
+                      </span>
+                    </button>
+                    {isManual && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-10 w-10 shrink-0 text-muted-foreground"
+                        onClick={() => setTarget(t)}
+                        aria-label="Eliminar"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-2 flex justify-end gap-4 px-1 text-sm font-semibold tabular-nums">
+              <span className="text-success-ink">+ {fmt(totalIncome)}</span>
+              <span className="text-danger-ink">− {fmt(totalExpense)}</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-xl border bg-card md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -109,7 +170,7 @@ export function FinanceLedgerTable({
                   <TableCell>
                     <Badge
                       variant={isIncome ? "default" : "destructive"}
-                      className={isIncome ? "bg-emerald-600 hover:bg-emerald-600" : ""}
+                      className={isIncome ? "bg-success hover:bg-success" : ""}
                     >
                       {isIncome ? "Ingreso" : "Gasto"}
                     </Badge>
@@ -134,7 +195,7 @@ export function FinanceLedgerTable({
                   </TableCell>
                   <TableCell
                     className={`text-right font-medium tabular-nums ${
-                      isIncome ? "text-emerald-600" : "text-red-600"
+                      isIncome ? "text-success-ink" : "text-danger-ink"
                     }`}
                   >
                     {isIncome ? "+" : "−"} {fmt(Number(t.amount))}
@@ -176,8 +237,8 @@ export function FinanceLedgerTable({
                   Totales del filtro
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold">
-                  <div className="text-emerald-600">+ {fmt(totalIncome)}</div>
-                  <div className="text-red-600">− {fmt(totalExpense)}</div>
+                  <div className="text-success-ink">+ {fmt(totalIncome)}</div>
+                  <div className="text-danger-ink">− {fmt(totalExpense)}</div>
                 </TableCell>
                 <TableCell />
               </TableRow>

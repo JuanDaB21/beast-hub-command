@@ -3,8 +3,9 @@ import { Plus, Loader2, PackagePlus, Send, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
+import { StatTile } from "@/components/shared/StatTile";
+import { StatStrip } from "@/components/shared/StatStrip";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -28,15 +29,7 @@ import { useGenerateUnifiedSupply } from "@/features/supply-requests/api";
 import type { WorkOrderWithItems } from "@/features/production/api";
 
 function KPI({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-2xl font-semibold tabular-nums">{value}</p>
-        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
-      </CardContent>
-    </Card>
-  );
+  return <StatTile label={label} value={String(value)} hint={hint} size="compact" />;
 }
 
 /**
@@ -93,7 +86,7 @@ function UnifiedSupplyDialog({ workOrders }: { workOrders: WorkOrderWithItems[] 
           <PackagePlus className="h-4 w-4 mr-1" /> Solicitud unificada de bases
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl w-[95vw]">
+      <DialogContent className="max-w-3xl sm:w-[95vw]">
         <DialogHeader>
           <DialogTitle>Solicitud unificada de bases</DialogTitle>
           <DialogDescription>
@@ -156,18 +149,16 @@ export default function Production() {
   return (
     <AppShell
       title="Producción"
-      description="Gestiona lotes (Órdenes de Trabajo) y recetas (BOM) de tus productos."
+      description="Lotes de producción y recetas de cada producto."
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <NegativeStockBatchDialog />
-          <UnifiedSupplyDialog workOrders={workOrders} />
+        <div className="flex items-center gap-2">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Nuevo lote
+              <Button size="sm" variant="brand" className="gap-1.5">
+                <Plus className="h-4 w-4" /> Nuevo<span className="hidden sm:inline"> lote</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl lg:max-w-4xl w-[95vw]">
+            <DialogContent className="max-w-3xl lg:max-w-4xl sm:w-[95vw]">
               <DialogHeader>
                 <DialogTitle>Nuevo lote de producción</DialogTitle>
               </DialogHeader>
@@ -178,18 +169,24 @@ export default function Production() {
       }
     >
       <div className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatStrip cols={4}>
           <KPI label="Pendientes" value={kpis.pending} />
           <KPI label="En proceso" value={kpis.inProgress} />
           <KPI label="Completados" value={kpis.completed} />
           <KPI label="Unidades producidas" value={kpis.totalProducedUnits} hint="En lotes completados" />
-        </div>
+        </StatStrip>
 
         <Tabs defaultValue="lotes" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="lotes">Lotes</TabsTrigger>
-            <TabsTrigger value="recetas">Recetas (BOM)</TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
+              <TabsTrigger value="lotes">Lotes</TabsTrigger>
+              <TabsTrigger value="recetas">Recetas</TabsTrigger>
+            </TabsList>
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:px-0 [&_button]:shrink-0">
+              <NegativeStockBatchDialog />
+              <UnifiedSupplyDialog workOrders={workOrders} />
+            </div>
+          </div>
 
           <TabsContent value="lotes">
             {isLoading ? (

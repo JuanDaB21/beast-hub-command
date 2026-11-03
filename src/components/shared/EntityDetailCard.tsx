@@ -1,12 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Card } from "@/components/ui/card";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { DetailPanel } from "./DetailPanel";
 import { cn } from "@/lib/utils";
 
 interface EntityDetailCardProps {
@@ -14,15 +8,18 @@ interface EntityDetailCardProps {
   subtitle?: string;
   /** Contenido siempre visible en la tarjeta (resumen). */
   summary: ReactNode;
-  /** Contenido del Drawer al hacer click. */
+  /** Contenido del panel de detalle al hacer click. */
   details: ReactNode;
-  /** Nombre de la entidad para encabezado del drawer. */
+  /** Nombre de la entidad para encabezado del panel. */
   detailsTitle?: string;
   detailsDescription?: string;
   className?: string;
 }
 
-/** Card clickeable que abre un Drawer con los detalles completos de una entidad. */
+/**
+ * Card clickeable que abre el detalle completo de una entidad:
+ * hoja inferior en móvil, panel lateral derecho en desktop.
+ */
 export function EntityDetailCard({
   title,
   subtitle,
@@ -47,28 +44,20 @@ export function EntityDetailCard({
           }
         }}
         className={cn(
-          "cursor-pointer p-4 transition-colors hover:border-primary/50 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "cursor-pointer p-3.5 transition-[border-color,background-color] duration-fast ease-out-quint hover:border-foreground/25 active:bg-surface-2",
           className,
         )}
       >
-        <div className="mb-2 flex items-baseline justify-between gap-2">
-          <h3 className="truncate text-base font-semibold">{title}</h3>
-          {subtitle && <span className="shrink-0 text-xs text-muted-foreground">{subtitle}</span>}
+        <div className="mb-1.5 flex items-baseline justify-between gap-2">
+          <h3 className="truncate text-[0.9375rem] font-semibold leading-tight">{title}</h3>
+          {subtitle && <span className="tabular shrink-0 text-xs text-muted-foreground">{subtitle}</span>}
         </div>
         <div className="text-sm text-muted-foreground">{summary}</div>
       </Card>
 
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="h-[90vh] max-h-[90vh]">
-          <div className="mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden">
-            <DrawerHeader className="shrink-0">
-              <DrawerTitle>{detailsTitle ?? title}</DrawerTitle>
-              {detailsDescription && <DrawerDescription>{detailsDescription}</DrawerDescription>}
-            </DrawerHeader>
-            <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-8">{details}</div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <DetailPanel open={open} onOpenChange={setOpen} title={detailsTitle ?? title} description={detailsDescription}>
+        {details}
+      </DetailPanel>
     </>
   );
 }

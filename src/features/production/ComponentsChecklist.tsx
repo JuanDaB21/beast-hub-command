@@ -85,7 +85,7 @@ export function ComponentsChecklist({ wo }: Props) {
       </ul>
 
       <div className="pt-2">
-        <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+        <p className="text-xs font-medium text-muted-foreground mb-2">
           Necesidades de materiales
         </p>
         <ProductionRequirementsSummary

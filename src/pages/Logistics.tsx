@@ -8,6 +8,7 @@ import { codStage, slaFromCreatedAt, useShipmentOrders, type ShipmentOrder } fro
 import { FulfillmentBoard } from "@/features/logistics/FulfillmentBoard";
 import { CodCollectionPanel } from "@/features/logistics/CodCollectionPanel";
 import { KpiTile } from "@/features/logistics/KpiTile";
+import { StatStrip } from "@/components/shared/StatStrip";
 import { ShipDialog } from "@/features/logistics/ShipDialog";
 import { matchesAllTokens } from "@/lib/textSearch";
 
@@ -53,21 +54,9 @@ export default function Logistics() {
 
   return (
     <AppShell
-      title="Módulo 6 · Logística"
-      description="Despacho con SLA semafórico, captura de guías y recaudo contra-entrega."
+      title="Logística"
+      description="Despacho por SLA, guías y recaudo contraentrega."
     >
-      <div className="mb-3 flex items-center gap-2">
-        <div className="relative flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Filtrar por # pedido, cliente, teléfono o guía..."
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-      </div>
-
       {isLoading ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -76,24 +65,36 @@ export default function Logistics() {
         </div>
       ) : (
         <Tabs defaultValue="dispatch">
-          <TabsList>
-            <TabsTrigger value="dispatch">Despacho ({stats.total})</TabsTrigger>
-            <TabsTrigger value="cod">Recaudo COD ({codPending})</TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
+              <TabsTrigger value="dispatch">Despacho ({stats.total})</TabsTrigger>
+              <TabsTrigger value="cod">Recaudo COD ({codPending})</TabsTrigger>
+            </TabsList>
+            <div className="relative sm:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Pedido, cliente, teléfono o guía"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
 
           <TabsContent value="dispatch" className="mt-4 flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <StatStrip cols={5}>
               <KpiTile label="En flujo" value={String(stats.total)} />
-              <KpiTile label="Estándar (≤48h)" value={String(stats.green)} tone="green" />
-              <KpiTile label="Prioridad (48-72h)" value={String(stats.yellow)} tone="yellow" />
-              <KpiTile label="Crítico (+72h)" value={String(stats.red)} tone="red" />
+              <KpiTile label="Estándar, hasta 48 h" value={String(stats.green)} tone="green" />
+              <KpiTile label="Prioridad, 48 a 72 h" value={String(stats.yellow)} tone="yellow" />
+              <KpiTile label="Crítico, más de 72 h" value={String(stats.red)} tone="red" />
               <KpiTile
                 label="Sin guía"
                 value={String(stats.missingTracking)}
                 hint={stats.missingTracking > 0 ? "despachados sin registrarla" : undefined}
                 tone={stats.missingTracking > 0 ? "red" : undefined}
               />
-            </div>
+            </StatStrip>
             <FulfillmentBoard orders={dispatchOrders} onShip={(o) => setShipTarget(o)} />
           </TabsContent>
 

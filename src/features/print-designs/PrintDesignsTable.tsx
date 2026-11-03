@@ -178,7 +178,7 @@ function DesignRow({
             className="inline-block h-5 w-5 rounded-full border border-border"
             style={{ backgroundColor: d.hex_code }}
           />
-          <span className="font-mono text-xs text-muted-foreground">{d.hex_code}</span>
+          <span className="tabular text-xs text-muted-foreground">{d.hex_code}</span>
         </div>
       </td>
       <td className="px-3 py-2 hidden md:table-cell text-muted-foreground">

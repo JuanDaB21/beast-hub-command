@@ -19,10 +19,10 @@ function formatDate(iso: string | null | undefined) {
 }
 
 const STATUS_LABEL: Record<EmailIngestLogRow["status"], { text: string; cls: string }> = {
-  imported: { text: "Importado", cls: "text-green-700" },
+  imported: { text: "Importado", cls: "text-success-ink" },
   skipped: { text: "Ya existía", cls: "text-muted-foreground" },
-  error: { text: "Error", cls: "text-red-700" },
-  no_payload: { text: "Sin bloque", cls: "text-amber-700" },
+  error: { text: "Error", cls: "text-danger-ink" },
+  no_payload: { text: "Sin bloque", cls: "text-warning-ink" },
 };
 
 /**
@@ -90,7 +90,7 @@ export function EmailIngestCard() {
         {status.isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
 
         {data && !data.gmail_configured && (
-          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <div className="rounded-md border border-warning/40 bg-warning-soft p-3 text-xs text-warning-ink">
             Falta configurar Gmail en el servidor (GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET,
             GMAIL_REFRESH_TOKEN en Railway).
           </div>
@@ -154,17 +154,17 @@ export function EmailIngestCard() {
             </div>
 
             {data.last_error && (
-              <p className="text-xs text-red-700 break-words">Último error: {data.last_error}</p>
+              <p className="text-xs text-danger-ink break-words">Último error: {data.last_error}</p>
             )}
 
             {data.missing.length > 0 && (
-              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-amber-900">
+              <div className="rounded-md border border-warning/40 bg-warning-soft p-3 space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-warning-ink">
                   <AlertTriangle className="h-4 w-4" />
                   {data.missing.length} pedido{data.missing.length === 1 ? "" : "s"} de Shopify
                   (últimas 48 h) sin importar
                 </div>
-                <p className="text-xs text-amber-900">
+                <p className="text-xs text-warning-ink">
                   {data.missing.map((m) => m.name).join(", ")} — revisa que la notificación llegó
                   al Gmail o súbelos con el CSV.
                 </p>
@@ -189,7 +189,7 @@ export function EmailIngestCard() {
                       <span className={`w-20 shrink-0 ${STATUS_LABEL[row.status].cls}`}>
                         {STATUS_LABEL[row.status].text}
                       </span>
-                      {row.error && <span className="truncate text-red-700">{row.error}</span>}
+                      {row.error && <span className="truncate text-danger-ink">{row.error}</span>}
                     </li>
                   ))}
                 </ul>

@@ -118,7 +118,7 @@ export function ProductsTable({
                             <ChevronRight className="h-4 w-4" />
                           )}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">{parent.sku}</TableCell>
+                        <TableCell className="tabular text-xs">{parent.sku}</TableCell>
                         <TableCell className="font-medium">{parent.name}</TableCell>
                         <TableCell className="text-sm">{parent.children.length}</TableCell>
                         <TableCell className="tabular-nums">{totalStock}</TableCell>
@@ -191,7 +191,7 @@ export function ProductsTable({
                       className={cn(flagged && "bg-status-yellow/5 hover:bg-status-yellow/10")}
                     >
                       <TableCell></TableCell>
-                      <TableCell className="font-mono text-xs">{p.sku}</TableCell>
+                      <TableCell className="tabular text-xs">{p.sku}</TableCell>
                       <TableCell className="font-medium">{p.name}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">— legacy —</TableCell>
                       <TableCell className="tabular-nums">{p.stock}</TableCell>
@@ -272,7 +272,7 @@ function ChildrenTable({
             const flagged = isAgingFlagged(c);
             return (
               <TableRow key={c.id}>
-                <TableCell className="font-mono text-xs">{c.sku}</TableCell>
+                <TableCell className="tabular text-xs">{c.sku}</TableCell>
                 <TableCell className="text-sm">{c.base_color ?? "—"}</TableCell>
                 <TableCell className="text-sm">{c.size ?? "—"}</TableCell>
                 <TableCell className="text-sm">{c.print_design ?? "—"}</TableCell>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Boxes, Copy, Loader2, MessageCircle, Send } from "lucide-react";
+import { Copy, Loader2, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -151,15 +151,15 @@ export default function SupplierPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
+    <div className="min-h-svh bg-background">
+      <header className="sticky top-0 z-10 border-b bg-background/95 pt-safe backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Boxes className="h-5 w-5" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand font-display text-2xl font-bold leading-none text-brand-foreground">
+            B
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground">Beast Club · Portal Proveedor</p>
-            <h1 className="truncate text-base font-semibold">
+            <p className="text-xs text-muted-foreground">Beast Club, portal de proveedores</p>
+            <h1 className="truncate font-display text-xl font-semibold leading-tight">
               {request?.supplier?.name ?? "Solicitud de insumos"}
             </h1>
           </div>
@@ -331,11 +331,12 @@ export default function SupplierPortal() {
       </main>
 
       {!loading && !error && request && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 p-3 backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
           <div className="mx-auto max-w-2xl">
             <Button
               type="button"
               size="lg"
+              variant="brand"
               onClick={handleSave}
               disabled={saving}
               className="h-12 w-full text-base"

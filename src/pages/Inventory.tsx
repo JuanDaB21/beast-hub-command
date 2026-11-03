@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { StatTile } from "@/components/shared/StatTile";
+import { StatStrip } from "@/components/shared/StatStrip";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -121,53 +122,55 @@ export default function Inventory() {
   const shownOrphans = orphans.filter((o) => (showArchived ? !o.active : o.active));
 
   const headerActions = (
-    <Button size="sm" className="gap-2" onClick={() => setCreateOpen(true)}>
+    <Button size="sm" variant="brand" className="gap-1.5" onClick={() => setCreateOpen(true)}>
       <Plus className="h-4 w-4" />
-      <span className="hidden sm:inline">Nuevo producto</span>
+      Nuevo<span className="hidden sm:inline"> producto</span>
     </Button>
   );
 
   return (
     <AppShell
-      title="Módulo 1 · Inventario"
-      description="Productos padre con variantes (color × talla × estampado)."
+      title="Inventario"
+      description="Productos con variantes de color, talla y estampado."
       actions={headerActions}
     >
       <Tabs defaultValue="productos" className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
           <TabsTrigger value="productos">Productos</TabsTrigger>
           <TabsTrigger value="disponibles">Disponibles</TabsTrigger>
         </TabsList>
 
         <TabsContent value="productos" className="space-y-3">
           {/* KPIs */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <KPI label="Productos padre" value={stats.totalParents} />
-            <KPI label="Variantes" value={stats.totalVariants} />
+          <StatStrip cols={5}>
             <KPI label="Agotadas" value={stats.outOfStock} tone="red" />
             <KPI label="Stock crítico" value={stats.critical} tone="yellow" />
             <KPI label="En aging" value={stats.aging} tone="yellow" />
-          </div>
+            <KPI label="Productos" value={stats.totalParents} />
+            <KPI label="Variantes" value={stats.totalVariants} />
+          </StatStrip>
 
           {/* Toolbar */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1 sm:max-w-xs">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Filtrar por SKU o nombre..."
+                type="search"
+                placeholder="SKU o nombre"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="pl-8"
+                className="pl-9"
               />
             </div>
             <Button
               variant={showArchived ? "default" : "outline"}
-              size="sm"
-              className="gap-2"
+              className="shrink-0 gap-2"
               onClick={() => setShowArchived((v) => !v)}
+              aria-pressed={showArchived}
             >
               <Archive className="h-4 w-4" />
-              {showArchived ? "Ver activos" : "Ver archivados"}
+              <span className="hidden sm:inline">{showArchived ? "Ver activos" : "Ver archivados"}</span>
+              <span className="sm:hidden">{showArchived ? "Activos" : "Archivo"}</span>
             </Button>
           </div>
 
@@ -338,16 +341,5 @@ export default function Inventory() {
 }
 
 function KPI({ label, value, tone }: { label: string; value: number; tone?: "red" | "yellow" }) {
-  const toneClass =
-    tone === "red"
-      ? "text-status-red"
-      : tone === "yellow"
-        ? "text-status-yellow"
-        : "text-foreground";
-  return (
-    <Card className="p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`mt-1 text-2xl font-semibold tabular-nums ${toneClass}`}>{value}</div>
-    </Card>
-  );
+  return <StatTile label={label} value={String(value)} tone={value > 0 ? tone : undefined} size="compact" />;
 }

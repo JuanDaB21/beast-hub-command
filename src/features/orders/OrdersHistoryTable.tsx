@@ -8,13 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { DetailPanel } from "@/components/shared/DetailPanel";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { STATUS_LABEL, statusTone } from "./status";
@@ -61,7 +55,7 @@ export function OrdersHistoryTable({ orders, renderDetails }: Props) {
 
   if (orders.length === 0) {
     return (
-      <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
         Sin pedidos en el historial.
       </div>
     );
@@ -69,7 +63,32 @@ export function OrdersHistoryTable({ orders, renderDetails }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto rounded-md border">
+      {/* Móvil: lista compacta */}
+      <ul className="divide-y overflow-hidden rounded-xl border bg-card md:hidden">
+        {rows.map((o) => (
+          <li key={o.id}>
+            <button
+              type="button"
+              onClick={() => setSelectedId(o.id)}
+              className="flex w-full items-center gap-3 px-3.5 py-3 text-left active:bg-surface-2"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{o.customer_name}</p>
+                <p className="tabular mt-0.5 text-xs text-muted-foreground">
+                  {o.order_number}, {countGarments(o.items)} prenda(s),{" "}
+                  {new Date(o.delivered_at ?? o.created_at).toLocaleDateString("es-CO")}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span className="tabular font-display text-lg font-semibold leading-none">{currency(Number(o.total))}</span>
+                <StatusBadge tone={statusTone(o.status)} label={STATUS_LABEL[o.status]} />
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-x-auto rounded-xl border bg-card md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -89,7 +108,7 @@ export function OrdersHistoryTable({ orders, renderDetails }: Props) {
                 className="cursor-pointer"
                 onClick={() => setSelectedId(o.id)}
               >
-                <TableCell className="font-mono text-xs">{o.order_number}</TableCell>
+                <TableCell className="tabular text-xs font-medium">{o.order_number}</TableCell>
                 <TableCell className="max-w-[200px] truncate">{o.customer_name}</TableCell>
                 <TableCell className="whitespace-nowrap text-muted-foreground">
                   {/*
@@ -128,10 +147,9 @@ export function OrdersHistoryTable({ orders, renderDetails }: Props) {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
+      <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span className="tabular-nums">
-          {orders.length} pedido(s) · {totalGarments} prenda(s) · página {safePage + 1} de{" "}
-          {pageCount}
+          {orders.length} pedido(s), {totalGarments} prenda(s). Página {safePage + 1} de {pageCount}
         </span>
         <div className="flex gap-1">
           <Button
@@ -153,19 +171,14 @@ export function OrdersHistoryTable({ orders, renderDetails }: Props) {
         </div>
       </div>
 
-      <Drawer open={!!selected} onOpenChange={(o) => !o && setSelectedId(null)}>
-        <DrawerContent className="h-[90vh] max-h-[90vh]">
-          <div className="mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden">
-            <DrawerHeader className="shrink-0">
-              <DrawerTitle>{selected ? `Pedido ${selected.order_number}` : ""}</DrawerTitle>
-              <DrawerDescription>{selected?.customer_name}</DrawerDescription>
-            </DrawerHeader>
-            <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-8">
-              {selected && renderDetails(selected)}
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <DetailPanel
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelectedId(null)}
+        title={selected ? `Pedido ${selected.order_number}` : ""}
+        description={selected?.customer_name}
+      >
+        {selected && renderDetails(selected)}
+      </DetailPanel>
     </div>
   );
 }

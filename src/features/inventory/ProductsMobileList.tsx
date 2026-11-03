@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { OverflowMenu } from "@/components/shared/OverflowMenu";
+import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Archive, ArchiveRestore, ChevronDown, ChevronRight, LineChart, Merge, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ChevronDown, LineChart, Merge, Pencil, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { getStockStatus, isAgingFlagged } from "./status";
 import type { Product, ProductWithChildren } from "./api";
@@ -37,13 +38,13 @@ export function ProductsMobileList({
 }: Props) {
   if (parents.length === 0 && orphans.length === 0) {
     return (
-      <div className="rounded-md border border-dashed bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
         Sin productos para mostrar.
       </div>
     );
   }
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {parents.map((p) => (
         <ParentCard
           key={p.id}
@@ -62,39 +63,18 @@ export function ProductsMobileList({
         const s = getStockStatus(p);
         const aging = isAgingFlagged(p);
         return (
-          <Card key={p.id} className="p-3 space-y-2">
-            <div>
-              <div className="font-medium">{p.name}</div>
-              <div className="text-xs font-mono text-muted-foreground">{p.sku}</div>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              <StatusBadge tone={s.tone} label={`${s.label} · ${p.stock}`} />
-              {aging && <StatusBadge tone="yellow" label={`Aging ${p.aging_days}d`} />}
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="font-medium">{currency(Number(p.price))}</span>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="flex-1" onClick={() => onEditVariant(p)}>
-                <Pencil className="mr-2 h-4 w-4" /> Editar
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1"
-                onClick={() => onMergeVariant(p)}
-              >
-                <Merge className="mr-2 h-4 w-4" /> Fusionar
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1 text-destructive hover:text-destructive"
-                onClick={() => onDeleteVariant(p)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-              </Button>
-            </div>
+          <Card key={p.id} className="p-0">
+            <VariantRow
+              title={p.name}
+              sku={p.sku}
+              stock={Number(p.stock)}
+              tone={s.tone}
+              statusLabel={s.label}
+              meta={[currency(Number(p.price)), aging ? `Aging ${p.aging_days} d` : null]}
+              onEdit={() => onEditVariant(p)}
+              onMerge={() => onMergeVariant(p)}
+              onDelete={() => onDeleteVariant(p)}
+            />
           </Card>
         );
       })}
@@ -125,109 +105,115 @@ function ParentCard({
 }) {
   const [open, setOpen] = useState(false);
   const totalStock = parent.children.reduce((a, c) => a + Number(c.stock), 0);
-  const anyOut = parent.children.some((c) => getStockStatus(c).tone === "red");
+  const outCount = parent.children.filter((c) => getStockStatus(c).tone === "red").length;
   return (
-    <Card className="p-3">
+    <Card className="overflow-hidden">
       <Collapsible open={open} onOpenChange={setOpen}>
-        <div className="flex items-start justify-between gap-2">
-          <CollapsibleTrigger className="flex flex-1 items-start gap-2 text-left">
-            {open ? (
-              <ChevronDown className="h-4 w-4 mt-1 shrink-0" />
-            ) : (
-              <ChevronRight className="h-4 w-4 mt-1 shrink-0" />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="font-medium line-clamp-2">{parent.name}</div>
-              <div className="text-xs font-mono text-muted-foreground">{parent.sku}</div>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                <StatusBadge
-                  tone={anyOut ? "red" : "neutral"}
-                  label={`${parent.children.length} variantes · stock ${totalStock}`}
-                />
+        <div className="flex items-center gap-1 pr-1">
+          <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-3 p-3.5 text-left active:bg-surface-2">
+            <ChevronDown
+              className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-base ease-out-quint", !open && "-rotate-90")}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="line-clamp-2 font-medium leading-snug">{parent.name}</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                {parent.children.length} variantes
+                {outCount > 0 && <span className="text-danger-ink">, {outCount} agotada{outCount === 1 ? "" : "s"}</span>}
               </div>
             </div>
+            <div className="shrink-0 text-right">
+              <div className="tabular font-display text-2xl font-semibold leading-none">{totalStock}</div>
+              <div className="text-2xs text-muted-foreground">en stock</div>
+            </div>
           </CollapsibleTrigger>
+          <OverflowMenu
+            label={`Acciones de ${parent.name}`}
+            items={[
+              { label: "Editar producto", icon: Pencil, onSelect: () => onEditParent(parent) },
+              { label: "Costo y rentabilidad", icon: LineChart, onSelect: () => onShowProfit(parent) },
+              {
+                label: archivedView ? "Restaurar" : "Archivar",
+                icon: archivedView ? ArchiveRestore : Archive,
+                onSelect: () => onArchiveParent(parent),
+              },
+              { label: "Eliminar con variantes", icon: Trash2, destructive: true, onSelect: () => onDeleteParent(parent) },
+            ]}
+          />
         </div>
-        <div className="mt-2 flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1" onClick={() => onEditParent(parent)}>
-            <Pencil className="mr-1 h-3.5 w-3.5" /> Padre
-          </Button>
-          <Button size="sm" variant="outline" className="flex-1" onClick={() => onShowProfit(parent)}>
-            <LineChart className="mr-1 h-3.5 w-3.5" /> Costo
-          </Button>
-          <Button size="sm" variant="outline" className="flex-1" onClick={() => onArchiveParent(parent)}>
-            {archivedView ? (
-              <>
-                <ArchiveRestore className="mr-1 h-3.5 w-3.5" /> Restaurar
-              </>
-            ) : (
-              <>
-                <Archive className="mr-1 h-3.5 w-3.5" /> Archivar
-              </>
-            )}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1 text-destructive hover:text-destructive"
-            onClick={() => onDeleteParent(parent)}
-          >
-            <Trash2 className="mr-1 h-3.5 w-3.5" /> Todo
-          </Button>
-        </div>
-        <CollapsibleContent className="mt-3 space-y-2 border-t pt-3">
+        <CollapsibleContent className="divide-y border-t bg-surface-2/60">
           {parent.children.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Sin variantes.</p>
+            <p className="p-3.5 text-xs text-muted-foreground">Sin variantes.</p>
           ) : (
             parent.children.map((c) => {
               const s = getStockStatus(c);
               return (
-                <div key={c.id} className="rounded-md border bg-muted/20 p-2 space-y-1.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium line-clamp-2">
-                        {c.base_color} · {c.size} {c.print_design ? `· ${c.print_design}` : ""}
-                      </div>
-                      <div className="text-[11px] font-mono text-muted-foreground">{c.sku}</div>
-                    </div>
-                    <StatusBadge tone={s.tone} label={`${s.label} · ${c.stock}`} />
-                  </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground">Aging {c.aging_days}d</span>
-                    <span className="font-medium">{currency(Number(c.price))}</span>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 flex-1"
-                      onClick={() => onEditVariant(c)}
-                    >
-                      <Pencil className="mr-1 h-3 w-3" /> Editar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 flex-1"
-                      onClick={() => onMergeVariant(c)}
-                    >
-                      <Merge className="mr-1 h-3 w-3" /> Fusionar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 flex-1 text-destructive hover:text-destructive"
-                      onClick={() => onDeleteVariant(c)}
-                    >
-                      <Trash2 className="mr-1 h-3 w-3" /> Eliminar
-                    </Button>
-                  </div>
-                </div>
+                <VariantRow
+                  key={c.id}
+                  title={[c.base_color, c.size, c.print_design].filter(Boolean).join(", ")}
+                  sku={c.sku}
+                  stock={Number(c.stock)}
+                  tone={s.tone}
+                  statusLabel={s.label}
+                  meta={[currency(Number(c.price)), `Aging ${c.aging_days} d`]}
+                  onEdit={() => onEditVariant(c)}
+                  onMerge={() => onMergeVariant(c)}
+                  onDelete={() => onDeleteVariant(c)}
+                />
               );
             })
           )}
         </CollapsibleContent>
       </Collapsible>
     </Card>
+  );
+}
+
+const stockTone = { green: "text-foreground", yellow: "text-warning-ink dark:text-warning", red: "text-danger", neutral: "text-foreground", info: "text-foreground" } as const;
+
+/** Fila de variante: tocar abre edición; fusionar/eliminar en el menú. */
+function VariantRow({
+  title,
+  sku,
+  stock,
+  tone,
+  statusLabel,
+  meta,
+  onEdit,
+  onMerge,
+  onDelete,
+}: {
+  title: string;
+  sku: string;
+  stock: number;
+  tone: keyof typeof stockTone;
+  statusLabel: string;
+  meta: (string | null)[];
+  onEdit: () => void;
+  onMerge: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 pr-1">
+      <button type="button" onClick={onEdit} className="flex min-w-0 flex-1 items-center gap-3 px-3.5 py-3 text-left active:bg-surface-3">
+        <div className="min-w-0 flex-1">
+          <div className="line-clamp-2 text-sm font-medium">{title}</div>
+          <div className="tabular mt-0.5 truncate text-xs text-muted-foreground">
+            {[sku, ...meta].filter(Boolean).join(", ")}
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className={cn("tabular font-display text-xl font-semibold leading-none", stockTone[tone])}>{stock}</div>
+          <div className="text-2xs text-muted-foreground">{statusLabel}</div>
+        </div>
+      </button>
+      <OverflowMenu
+        label={`Acciones de ${title}`}
+        items={[
+          { label: "Editar variante", icon: Pencil, onSelect: onEdit },
+          { label: "Fusionar", icon: Merge, onSelect: onMerge },
+          { label: "Eliminar", icon: Trash2, destructive: true, onSelect: onDelete },
+        ]}
+      />
+    </div>
   );
 }

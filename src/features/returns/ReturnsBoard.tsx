@@ -24,10 +24,10 @@ interface Props {
 }
 
 const reasonTone: Record<string, string> = {
-  Textil: "bg-blue-500/10 text-blue-600 border-blue-500/30",
-  Estampado: "bg-purple-500/10 text-purple-600 border-purple-500/30",
-  "Logística": "bg-orange-500/10 text-orange-600 border-orange-500/30",
-  Inconformidad: "bg-pink-500/10 text-pink-600 border-pink-500/30",
+  Textil: "bg-chart-3/10 text-chart-3 border-chart-3/30",
+  Estampado: "bg-chart-6/10 text-chart-6 border-chart-6/30",
+  "Logística": "bg-brand-soft text-brand-ink border-brand/30",
+  Inconformidad: "bg-danger-soft text-danger-ink border-danger/30",
 };
 
 export function ReturnsBoard({ returns, onResolve }: Props) {
@@ -73,14 +73,14 @@ function ReturnCard({ ret, onResolve }: { ret: ReturnRow; onResolve: () => void 
     <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="font-mono text-xs text-muted-foreground">
+          <div className="tabular text-xs text-muted-foreground">
             {ret.order?.order_number ?? "Sin pedido"}
           </div>
           <div className="truncate text-base font-semibold">
             {ret.product?.name ?? "Producto eliminado"}
           </div>
           {ret.product?.sku && (
-            <div className="font-mono text-xs text-muted-foreground">SKU {ret.product.sku}</div>
+            <div className="tabular text-xs text-muted-foreground">SKU {ret.product.sku}</div>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1">

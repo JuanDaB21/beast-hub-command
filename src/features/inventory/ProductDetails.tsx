@@ -21,7 +21,7 @@ export function ProductDetails({ product }: { product: Product }) {
         {aging && <StatusBadge tone="yellow" label={`Aging ${product.aging_days}d`} />}
         <StatusBadge tone={product.active ? "green" : "neutral"} label={product.active ? "Activo" : "Inactivo"} />
         {isShopify && (
-          <Badge variant="outline" className="gap-1 text-xs border-green-300 text-green-700">
+          <Badge variant="outline" className="gap-1 text-xs border-success/40 text-success-ink">
             <ShoppingBag className="h-3 w-3" />
             Shopify
           </Badge>

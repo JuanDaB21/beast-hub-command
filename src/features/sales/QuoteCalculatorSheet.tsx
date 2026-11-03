@@ -260,7 +260,7 @@ export function QuoteCalculatorSheet({ open, onOpenChange }: QuoteCalculatorShee
           {/* WhatsApp message */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold">Mensaje para WhatsApp</Label>
-            <Textarea readOnly value={message} className="min-h-[180px] font-mono text-xs" />
+            <Textarea readOnly value={message} className="min-h-[180px] tabular text-xs" />
           </div>
         </div>
 

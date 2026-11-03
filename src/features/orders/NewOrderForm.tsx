@@ -36,7 +36,7 @@ interface DraftItem extends NewOrderItemInput {
 }
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 export function NewOrderForm({ onSuccess }: Props) {
   const { data: products = [], isLoading: loadingProducts } = useProductsForOrder();
@@ -184,7 +184,7 @@ export function NewOrderForm({ onSuccess }: Props) {
           <Input
             id="o-phone"
             type="tel"
-            placeholder="+52 55 1234 5678"
+            placeholder="+57 300 123 4567"
             value={customerPhone}
             onChange={(e) => setCustomerPhone(e.target.value)}
             required
@@ -207,7 +207,7 @@ export function NewOrderForm({ onSuccess }: Props) {
           <CityCombobox value={selectedCity} onChange={setSelectedCity} />
           {selectedCity && (
             <p className="text-xs text-muted-foreground">
-              DANE: <span className="font-mono">{selectedCity.dane_code}</span>
+              DANE: <span className="tabular">{selectedCity.dane_code}</span>
             </p>
           )}
         </div>

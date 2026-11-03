@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -22,6 +21,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Plus, Search, Trash2 } from "lucide-react";
+import { KpiCard } from "@/features/bi/KpiCard";
+import { OverflowMenu } from "@/components/shared/OverflowMenu";
+import { StatStrip } from "@/components/shared/StatStrip";
 import {
   BOARD_STATUSES,
   HISTORY_STATUSES,
@@ -43,7 +45,7 @@ import { toast } from "@/hooks/use-toast";
 import { matchesAllTokens } from "@/lib/textSearch";
 
 const currency = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 const BOARD_SET = new Set(BOARD_STATUSES.map((s) => s.value));
 const HISTORY_SET = new Set(HISTORY_STATUSES.map((s) => s.value));
@@ -149,49 +151,38 @@ export default function Orders() {
   );
 
   const headerActions = (
-    <div className="flex items-center gap-2">
-      <Button
-        size="sm"
-        variant="destructive"
-        className="gap-2"
-        disabled={orders.length === 0}
-        onClick={() => setDeleteAllOpen(true)}
-      >
-        <Trash2 className="h-4 w-4" />
-        <span className="hidden sm:inline">Eliminar todos</span>
-      </Button>
-      <Button size="sm" className="gap-2" onClick={() => setFormOpen(true)}>
+    <>
+      <Button size="sm" variant="brand" className="gap-1.5" onClick={() => setFormOpen(true)}>
         <Plus className="h-4 w-4" />
-        <span className="hidden sm:inline">Nuevo pedido</span>
+        Nuevo<span className="hidden sm:inline"> pedido</span>
       </Button>
-    </div>
+      <OverflowMenu
+        items={[
+          {
+            label: "Eliminar todos los pedidos",
+            icon: Trash2,
+            destructive: true,
+            disabled: orders.length === 0,
+            onSelect: () => setDeleteAllOpen(true),
+          },
+        ]}
+      />
+    </>
   );
 
   return (
     <AppShell
-      title="Módulo 2 · Órdenes"
-      description="OMS omnicanal — pedidos manuales (WhatsApp) y Shopify."
+      title="Órdenes"
+      description="Pedidos manuales (WhatsApp) y de Shopify."
       actions={headerActions}
     >
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <KPI label="Pedidos totales" value={String(stats.total)} />
-        <KPI label="Pendientes" value={String(stats.pending)} tone="yellow" />
-        <KPI label="COD por cobrar" value={String(stats.codPending)} tone="red" />
-        <KPI label="Pagos por verificar" value={String(stats.paymentPending)} tone="red" />
-        <KPI label="Ingresos entregados" value={currency(stats.revenue)} />
-      </div>
-
-      <div className="mb-3 flex items-center gap-2">
-        <div className="relative flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Filtrar por # pedido, cliente o teléfono..."
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-      </div>
+      <StatStrip cols={5} className="mb-5">
+        <KpiCard label="Pendientes" value={String(stats.pending)} tone={stats.pending ? "yellow" : "default"} size="compact" />
+        <KpiCard label="Pagos por verificar" value={String(stats.paymentPending)} tone={stats.paymentPending ? "red" : "default"} size="compact" />
+        <KpiCard label="COD por cobrar" value={String(stats.codPending)} tone={stats.codPending ? "red" : "default"} size="compact" />
+        <KpiCard label="Pedidos totales" value={String(stats.total)} size="compact" />
+        <KpiCard label="Ingresos entregados" value={currency(stats.revenue)} tone="primary" size="compact" />
+      </StatStrip>
 
       {isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -201,12 +192,22 @@ export default function Orders() {
         </div>
       ) : (
         <Tabs defaultValue="board">
-          <TabsList>
-            <TabsTrigger value="board">Tablero ({activeOrders.length})</TabsTrigger>
-            <TabsTrigger value="history">
-              Entregados / Historial ({historyOrders.length})
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
+              <TabsTrigger value="board">Activos ({activeOrders.length})</TabsTrigger>
+              <TabsTrigger value="history">Historial ({historyOrders.length})</TabsTrigger>
+            </TabsList>
+            <div className="relative sm:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Pedido, cliente o teléfono"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
           <TabsContent value="board" className="mt-4">
             <OrdersBoard
               orders={activeOrders}
@@ -229,7 +230,7 @@ export default function Orders() {
       />
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-3xl flex-col overflow-hidden p-0 sm:w-full">
+        <DialogContent className="flex max-h-[90vh] sm:w-[95vw] max-w-3xl flex-col overflow-hidden p-0 sm:w-full">
           <DialogHeader className="border-b px-6 py-4">
             <DialogTitle>Nuevo pedido manual</DialogTitle>
             <DialogDescription>
@@ -297,20 +298,5 @@ export default function Orders() {
         </AlertDialogContent>
       </AlertDialog>
     </AppShell>
-  );
-}
-
-function KPI({ label, value, tone }: { label: string; value: string; tone?: "red" | "yellow" }) {
-  const toneClass =
-    tone === "red"
-      ? "text-status-red"
-      : tone === "yellow"
-        ? "text-status-yellow"
-        : "text-foreground";
-  return (
-    <Card className="p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`mt-1 text-xl font-semibold tabular-nums sm:text-2xl ${toneClass}`}>{value}</div>
-    </Card>
   );
 }
