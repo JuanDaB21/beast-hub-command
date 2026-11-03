@@ -43,11 +43,9 @@ export default function Sourcing() {
       onOpenChange={tab === "suppliers" ? setSupplierOpen : setMaterialOpen}
     >
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
+        <Button size="sm" variant="brand" className="gap-1.5">
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">
-            {tab === "suppliers" ? "Nuevo proveedor" : "Nueva base"}
-          </span>
+          {tab === "suppliers" ? "Nuevo" : "Nueva"}<span className="hidden sm:inline">{tab === "suppliers" ? " proveedor" : " base"}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
@@ -72,8 +70,8 @@ export default function Sourcing() {
 
   return (
     <AppShell
-      title="Módulo 3 · Proveedores y Bases"
-      description="Administrador de proveedores y gestión de bases."
+      title="Proveedores y bases"
+      description="Proveedores e insumos base."
       actions={headerActions}
     >
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">

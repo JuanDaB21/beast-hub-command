@@ -12,7 +12,7 @@ export default function Config() {
   return (
     <AppShell
       title="Configuración"
-      description="Centro de configuración general del sistema."
+      description="Ajustes generales del sistema."
     >
       <Tabs defaultValue="staff" className="space-y-4">
         <TabsList className="flex flex-wrap h-auto">

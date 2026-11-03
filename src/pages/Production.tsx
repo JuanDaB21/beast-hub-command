@@ -3,8 +3,9 @@ import { Plus, Loader2, PackagePlus, Send, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
+import { StatTile } from "@/components/shared/StatTile";
+import { StatStrip } from "@/components/shared/StatStrip";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -28,15 +29,7 @@ import { useGenerateUnifiedSupply } from "@/features/supply-requests/api";
 import type { WorkOrderWithItems } from "@/features/production/api";
 
 function KPI({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-2xl font-semibold tabular-nums">{value}</p>
-        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
-      </CardContent>
-    </Card>
-  );
+  return <StatTile label={label} value={String(value)} hint={hint} size="compact" />;
 }
 
 /**
@@ -156,7 +149,7 @@ export default function Production() {
   return (
     <AppShell
       title="Producción"
-      description="Gestiona lotes (Órdenes de Trabajo) y recetas (BOM) de tus productos."
+      description="Lotes de producción y recetas de cada producto."
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <NegativeStockBatchDialog />
@@ -178,12 +171,12 @@ export default function Production() {
       }
     >
       <div className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatStrip cols={4}>
           <KPI label="Pendientes" value={kpis.pending} />
           <KPI label="En proceso" value={kpis.inProgress} />
           <KPI label="Completados" value={kpis.completed} />
           <KPI label="Unidades producidas" value={kpis.totalProducedUnits} hint="En lotes completados" />
-        </div>
+        </StatStrip>
 
         <Tabs defaultValue="lotes" className="space-y-4">
           <TabsList>

@@ -43,7 +43,7 @@ export default function Index() {
 
   return (
     <AppShell
-      title="Dashboard · BI & Finanzas"
+      title="Dashboard"
       description="Rentabilidad real, eficiencia operativa y salud del inventario."
       actions={
         <Tabs value={rangeKey} onValueChange={(v) => setRangeKey(v as RangeKey)}>

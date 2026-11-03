@@ -77,22 +77,22 @@ function ReceptionRow({ item }: { item: SupplyRequestItem }) {
   const complete = recQ >= confQ && confQ > 0;
 
   return (
-    <li className="flex items-center justify-between gap-3 p-3 text-sm">
-      <div className="flex items-start gap-3 min-w-0">
+    <li className={`flex items-center justify-between gap-3 px-3 py-3 text-sm ${complete ? "bg-success-soft/50" : ""}`}>
+      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
         <Checkbox
           checked={complete}
           disabled={!item.is_available || confQ <= 0 || receive.isPending}
           onCheckedChange={(v) => toggle(v === true)}
-          className="mt-1"
+          className="h-6 w-6 rounded-md"
           aria-label={`Recibir ${item.raw_material?.name ?? "insumo"}`}
         />
         <div className="min-w-0">
           <p className="font-medium truncate">{item.raw_material?.name ?? "—"}</p>
           <p className="text-xs text-muted-foreground">
-            Pedido {reqQ} · confirmado {confQ} {item.raw_material?.unit_of_measure ?? ""}
+            Pedido {reqQ}, confirmado {confQ} {item.raw_material?.unit_of_measure ?? ""}
           </p>
         </div>
-      </div>
+      </label>
       <div className="flex items-center gap-2 shrink-0">
         {!item.is_available ? (
           <StatusBadge tone="red" label="No disp." />
@@ -107,7 +107,8 @@ function ReceptionRow({ item }: { item: SupplyRequestItem }) {
               onChange={(e) => setDraft(e.target.value)}
               onBlur={commitDraft}
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-              className="h-8 w-20 text-right tabular-nums"
+              inputMode="decimal"
+              className="h-10 w-20 text-right tabular-nums sm:h-9"
               aria-label="Cantidad recibida"
             />
             {receive.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
@@ -209,7 +210,7 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
         </div>
       </div>
 
-      <div className="rounded-md border p-3 space-y-2 bg-muted/30">
+      <div className="space-y-2 rounded-xl bg-surface-2 p-3">
         <p className="text-xs text-muted-foreground">URL del portal del proveedor</p>
         <div className="flex flex-col sm:flex-row gap-2">
           <code className="flex-1 truncate text-xs bg-background border rounded px-2 py-2 tabular">
@@ -236,21 +237,22 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
       </div>
 
       {request.notes && (
-        <div className="rounded-md bg-muted/30 p-3 text-sm">
+        <div className="rounded-xl bg-surface-2 p-3 text-sm">
           <p className="text-xs text-muted-foreground mb-1">Notas</p>
           <p>{request.notes}</p>
         </div>
       )}
 
-      <div className="rounded-md border">
-        <div className="p-3 border-b bg-muted/30 flex items-center justify-between gap-3">
+      <div className="overflow-hidden rounded-xl border bg-card">
+        <div className="flex items-end justify-between gap-3 border-b px-3 py-3">
           <span className="text-sm font-medium">Recepción</span>
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {totalReceived} / {totalConfirmed} recibido
+          <span className="text-xs text-muted-foreground">
+            <span className="tabular font-display text-xl font-semibold leading-none text-foreground">{totalReceived}</span> de{" "}
+            {totalConfirmed} recibido
           </span>
         </div>
         {totalConfirmed > 0 && (
-          <Progress value={(totalReceived / totalConfirmed) * 100} className="h-1 rounded-none" />
+          <Progress value={(totalReceived / totalConfirmed) * 100} className="h-1.5 rounded-none [&>div]:bg-success" />
         )}
         <ul className="divide-y">
           {request.items.map((it) => (
@@ -259,9 +261,9 @@ export function SupplyRequestDetails({ request, onClose }: Props) {
         </ul>
       </div>
 
-      <div className="flex flex-wrap gap-2 pt-2">
+      <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:pt-2">
         {pendingToReceive > 0 && (
-          <Button onClick={markDelivered} disabled={complete.isPending}>
+          <Button variant="brand" className="h-11 flex-1 sm:h-10 sm:flex-none" onClick={markDelivered} disabled={complete.isPending}>
             {complete.isPending ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
             ) : (

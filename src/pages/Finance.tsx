@@ -46,8 +46,8 @@ export default function Finance() {
 
   return (
     <AppShell
-      title="Libro Mayor · Finanzas"
-      description="Registro unificado de ingresos y gastos del negocio."
+      title="Finanzas"
+      description="Libro de ingresos y gastos del negocio."
     >
       <Tabs defaultValue="ledger" className="space-y-4">
         <TabsList>

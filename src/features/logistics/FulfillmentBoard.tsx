@@ -27,7 +27,7 @@ interface Props {
 export function FulfillmentBoard({ orders, onShip }: Props) {
   if (orders.length === 0) {
     return (
-      <Card className="flex flex-col items-center justify-center gap-2 p-10 text-center">
+      <Card className="flex flex-col items-center justify-center gap-2 border-dashed p-10 text-center">
         <PackageCheck className="h-10 w-10 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">No hay pedidos en flujo de fulfillment.</p>
       </Card>
@@ -91,7 +91,7 @@ export function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: 
   };
 
   return (
-    <Card className="flex flex-col gap-3 p-4">
+    <Card className="flex flex-col gap-3 p-3.5 sm:p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="tabular text-xs text-muted-foreground">{order.order_number}</div>
@@ -107,49 +107,47 @@ export function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: 
         </Badge>
         <StatusBadge tone={statusTone(order.status)} label={STATUS_LABEL[order.status]} />
         {order.is_cod && (
-          <Badge variant={order.cod_confirmed ? "default" : "destructive"}>
-            {order.cod_confirmed ? "COD cobrado" : "COD por cobrar"}
-          </Badge>
+          <StatusBadge tone={order.cod_confirmed ? "green" : "yellow"} label={order.cod_confirmed ? "COD cobrado" : "COD por cobrar"} />
         )}
-        <span>·</span>
-        <span>{itemCount} pzs</span>
-        <span>·</span>
-        <span className="tabular-nums">{currency(Number(order.total))}</span>
+        <span>{itemCount} prenda{itemCount === 1 ? "" : "s"}</span>
+        <span className="tabular ml-auto font-display text-lg font-semibold leading-none text-foreground">
+          {currency(Number(order.total))}
+        </span>
       </div>
 
       {order.tracking_number ? (
-        <div className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1.5 text-xs">
+        <div className="flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-2 text-sm">
           {/* La guía es lo primero que busca el operativo para rastrear. */}
           <Hash className="h-3 w-3 text-muted-foreground" />
           <span className="tabular">{order.tracking_number}</span>
         </div>
       ) : (
         missingTracking && (
-          <div className="flex items-center gap-1.5 rounded-md border border-status-red/30 bg-status-red/5 px-2 py-1.5 text-xs">
-            <AlertTriangle className="h-3 w-3 text-status-red" />
-            <span className="font-medium text-status-red">Sin guía</span>
-            <span className="text-muted-foreground">· despachado sin registrarla</span>
+          <div className="flex items-center gap-2 rounded-lg bg-danger-soft px-2.5 py-2 text-sm text-danger-ink">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span className="font-semibold">Sin guía.</span>
+            <span>Despachado sin registrarla</span>
           </div>
         )
       )}
 
       {pendingConfirmation && (
-        <div className="rounded-md border border-status-yellow/30 bg-status-yellow/5 p-2 text-xs">
-          <div className="font-medium text-status-yellow">Pendiente de confirmación</div>
-          <div className="text-muted-foreground">
+        <div className="rounded-lg bg-warning-soft px-2.5 py-2 text-xs text-warning-ink">
+          <div className="text-sm font-semibold">Pendiente de confirmación</div>
+          <div>
             Confirma el pedido con el cliente antes de despacharlo.
           </div>
         </div>
       )}
 
       {order.customer_pays_shipping ? (
-        <div className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1 text-xs">
+        <div className="flex items-center justify-between rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs">
           <span className="text-muted-foreground">Envío</span>
           <span className="font-medium">Cliente paga envío</span>
         </div>
       ) : (
         Number(order.shipping_cost) > 0 && (
-          <div className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1 text-xs">
+          <div className="flex items-center justify-between rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs">
             <span className="text-muted-foreground">Costo de envío</span>
             <span className="tabular-nums font-medium">{currency(Number(order.shipping_cost))}</span>
           </div>
@@ -157,13 +155,13 @@ export function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: 
       )}
 
       {sla.tone === "red" && order.delay_reason && (
-        <div className="rounded-md border border-status-red/30 bg-status-red/5 p-2 text-xs">
-          <div className="font-medium text-status-red">Motivo del retraso</div>
-          <div className="text-muted-foreground">{order.delay_reason}</div>
+        <div className="rounded-lg bg-danger-soft px-2.5 py-2 text-xs text-danger-ink">
+          <div className="font-semibold">Motivo del retraso</div>
+          <div>{order.delay_reason}</div>
         </div>
       )}
 
-      <div className="mt-auto flex flex-wrap items-center gap-2">
+      <div className="mt-auto flex flex-wrap items-center gap-2 border-t pt-3 [&>*]:h-10 sm:[&>*]:h-9">
         <WhatsAppContactButton
           phone={order.customer_phone}
           message={
@@ -186,7 +184,7 @@ export function ShipmentCard({ order, onShip }: { order: ShipmentOrder; onShip: 
         )}
         <Button
           size="sm"
-          variant={isDispatched ? "outline" : "default"}
+          variant={isDispatched ? "outline" : "brand"}
           className="gap-1.5"
           onClick={onShip}
           disabled={pendingConfirmation}
