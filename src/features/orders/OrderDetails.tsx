@@ -313,9 +313,9 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
           <table className="stack-table w-full table-fixed text-sm">
             <colgroup>
               <col />
-              <col className="w-16" />
-              <col className="w-24" />
+              <col className="w-20" />
               <col className="w-28" />
+              <col className="w-32" />
               {editable && <col className="w-12" />}
             </colgroup>
             <thead className="bg-muted/40 text-xs text-muted-foreground">
@@ -372,40 +372,44 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
             </tbody>
             <tfoot>
               <tr className="border-t bg-muted/30">
-                <td colSpan={colCount - 1} className="px-3 py-2 text-right text-xs text-muted-foreground">
+                <td colSpan={3} className="px-3 py-2 text-right text-xs text-muted-foreground">
                   Total
                 </td>
-                <td className="px-3 py-2 text-right font-display text-xl font-semibold tabular-nums">
+                <td className="whitespace-nowrap px-3 py-2 text-right font-display text-xl font-semibold tabular-nums">
                   {currency(Number(order.total))}
                 </td>
+                {editable && <td />}
               </tr>
               {order.customer_pays_shipping ? (
                 <tr className="border-t bg-muted/10">
-                  <td colSpan={colCount - 1} className="px-3 py-1.5 text-right text-xs text-muted-foreground">
+                  <td colSpan={3} className="px-3 py-1.5 text-right text-xs text-muted-foreground">
                     Envío
                   </td>
-                  <td className="px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
+                  <td className="whitespace-nowrap px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
                     Pagado por el cliente
                   </td>
+                  {editable && <td />}
                 </tr>
               ) : (
                 Number(order.shipping_cost) > 0 && (
                   <>
                     <tr className="border-t bg-muted/10">
-                      <td colSpan={colCount - 1} className="px-3 py-1.5 text-right text-xs text-muted-foreground">
+                      <td colSpan={3} className="px-3 py-1.5 text-right text-xs text-muted-foreground">
                         Costo de envío
                       </td>
-                      <td className="px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
+                      <td className="whitespace-nowrap px-3 py-1.5 text-right text-sm tabular-nums text-muted-foreground">
                         -{currency(Number(order.shipping_cost))}
                       </td>
+                      {editable && <td />}
                     </tr>
                     <tr className="border-t bg-muted/30">
-                      <td colSpan={colCount - 1} className="px-3 py-2 text-right text-xs text-muted-foreground">
+                      <td colSpan={3} className="px-3 py-2 text-right text-xs text-muted-foreground">
                         Total - envío
                       </td>
-                      <td className="px-3 py-2 text-right text-sm font-semibold tabular-nums">
+                      <td className="whitespace-nowrap px-3 py-2 text-right text-sm font-semibold tabular-nums">
                         {currency(Number(order.total) - Number(order.shipping_cost))}
                       </td>
+                      {editable && <td />}
                     </tr>
                   </>
                 )
