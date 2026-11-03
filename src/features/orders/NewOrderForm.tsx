@@ -184,7 +184,7 @@ export function NewOrderForm({ onSuccess }: Props) {
           <Input
             id="o-phone"
             type="tel"
-            placeholder="+52 55 1234 5678"
+            placeholder="+57 300 123 4567"
             value={customerPhone}
             onChange={(e) => setCustomerPhone(e.target.value)}
             required

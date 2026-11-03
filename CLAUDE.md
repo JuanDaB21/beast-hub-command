@@ -53,6 +53,14 @@ Rama: `claude/fix-railway-deployment-AE5PT`.
   - **Rutas**: `GET /api/shopify/email-ingest/status`, `PATCH /email-ingest/config`, `POST /email-ingest/run`. UI: `src/features/config/EmailIngestCard.tsx` en el panel Shopify (switch, búsqueda, "Revisar ahora", log, alerta de faltantes). El import CSV queda como respaldo.
   - **Setup**: Google Cloud → Gmail API + consentimiento externo **publicado en Producción** (en Testing el refresh token vence a 7 días) + OAuth "App de escritorio" → `node scripts/gmail-auth.mjs` (lee `GMAIL_CLIENT_ID/SECRET` de `.env.local`) → vars en Railway. Cuenta conectada: `foxtradingllcsas@gmail.com`. La notificación de prueba (`#9999` + `john@example.com`) se descarta.
 
+- [x] FASE 14 — Rediseño frontend web + móvil (rama `claude/frontend-redesign`). Guía completa: `docs/design/DESIGN_SYSTEM.md`.
+  - **Sistema**: tokens claro/oscuro completos en `src/index.css` (`brand` naranja Beast ≠ `accent` de hover, `success/warning/danger/info` con `-soft`/`-ink`, `surface-2/3`, `chart-1..6`), Switzer + Khand autoalojadas (Fontshare) en `public/fonts`, curvas de easings.net como `ease-out-quint/expo`. `next-themes` con selector claro/oscuro/sistema. Un solo toaster (Sonner); `use-toast.ts` es un adaptador del API viejo.
+  - **Shell**: layout route `AppLayout` (sidebar persistente, `MobileBottomNav` con 4 accesos + "Más", paleta `Ctrl/⌘+K`, cierre de sesión). `AppShell` solo pinta encabezado + `<main>`. Navegación en `src/lib/modules.ts` (`NAV_SECTIONS`, `MOBILE_PRIMARY`).
+  - **Patrones**: `StatTile`/`StatStrip` (KPIs), `OverflowMenu`, `DetailPanel` (hoja inferior móvil / panel lateral desktop), diálogos que bajo `sm` son hojas inferiores (en `ui/dialog.tsx`), clase `stack-table` + `data-label` para tablas editables en móvil, `formatCOP`/`timeAgo` en `src/lib/format.ts`.
+  - **Reglas**: nada de colores Tailwind crudos, `hsl()` literales, MAYÚSCULAS ni monoespaciada en features; una acción `variant="brand"` por vista; destructivas en `OverflowMenu`. Moneda siempre COP (había 10 archivos formateando MXN).
+  - **Órdenes**: Kanban con pestañas por estado en móvil y "Mover a" por tarjeta (solo estados del tablero, igual que el arrastre; entregar/cancelar sigue en el detalle).
+  - Sin cambios de lógica de negocio, API ni migraciones.
+
 ## Convenciones clave
 
 - **CRUD**: `pickBody`/`buildInsert`/`buildUpdate` con `COLS` whitelist. Siempre `String(req.params.id)` (Express 5 tipa `string | string[]`).
