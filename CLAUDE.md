@@ -103,7 +103,16 @@ Rama: `claude/fix-railway-deployment-AE5PT`.
 ## Marketing / Meta Ads + tienda Shopify
 
 - **Plan vigente y línea base**: `docs/marketing/PLAN_META_ADS_OCT_2026.md` (Meta) y `docs/marketing/PLAN_CRO_OCT_2026.md` (tienda). Revisión periódica: skill `meta-review`.
-- **Black Week Beast (13–20 nov 2026)**: packs fijos con envío gratis, sin descuento a 1–2 prendas (TRÍO 169.900, TRAINING 199.900, OUTFIT 179.900, más los complementos de liquidación ACID GRIS y buzo compresión). Fuente única: `docs/marketing/black-week-2026/config.json`. Generadores: `scripts/analytics/black-week.cjs` (economía y reabastecimiento) y `scripts/marketing/black-week-doc.py` (genera `PLAN_BLACK_WEEK_BEAST_2026.md`/`.pdf`). Hoy solo está documentado: la web (Shopify Bundles + página `/pages/black-week-beast` con talla por prenda y compra directa) y la pauta Meta (60k/día) se implementan después, con OK del dueño.
+- **Black Week Beast (20–27 nov 2026, cierra en Black Friday)**: escalera de packs fijos; sin descuento a 1–2 prendas.
+  - Packs de 3 **sin** envío gratis: TRÍO 169.900, OUTFIT 189.900, TRAINING 199.900. **PACK 4 a 249.900 con envío gratis**: el umbral de la semana es 249.900, no 250.000.
+  - Complementos de liquidación: ACID GRIS y buzo compresión.
+  - El descuento se mide contra el precio tachado («precio de lista»).
+  - El margen descuenta la **nómina de 10k/prenda** (la v1 la omitía): un pack de 3 con envío gratis dejaba ~22k frente a 37k de un pedido normal.
+  - Creativos: estáticos con precio y carruseles (lo que vende en la cuenta), más UGC y un 3D ligero (giro de 360°).
+  - Fuente única: `docs/marketing/black-week-2026/config.json`.
+  - `scripts/analytics/black-week.cjs`: márgenes, P&L de la semana por escenario, reabastecimiento, fotos de Shopify y miniaturas de Meta.
+  - `scripts/marketing/black-week-doc.py`: PDF horizontal tipo diapositivas + MD, con imágenes en `img/`, maquetas y storyboards (Pillow) y gráficos (matplotlib).
+  - Solo documentado: la web (Shopify Bundles + `/pages/black-week-beast`) y la pauta Meta (60k/día) se implementan después, con OK del dueño.
 - **Precios y rentabilidad**: `docs/finanzas/ANALISIS_PRECIOS_2026-10.md`. Contribución de 42 % / 58k por pedido; no se recomienda bajar precios. Generadores de solo lectura en `scripts/analytics/`:
   - `db.cjs`: `readOnly()` sobre la BD prod vía `railway variables`.
   - `pricing-analysis.cjs`: tendencia semanal, margen por producto, equilibrio de recortes y conversión por banda de precio.
