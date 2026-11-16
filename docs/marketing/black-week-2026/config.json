@@ -581,7 +581,7 @@
     "fin_iso": "2026-11-27T23:59:59-05:00",
     "inicio_iso": "2026-11-20T00:00:00-05:00",
     "fotos": {
-      "version": "v1",
+      "version": "v2",
       "modelo": {
         "id": "mdl_rJfLkact2J1KphNGtDoz2Q_0",
         "nombre": "Jefte"
@@ -592,9 +592,27 @@
         "output_format": "webp"
       },
       "fidelidad": "Reproduce every garment exactly as in the reference photos: same base color, same print artwork, same lettering, same placement and scale. Do not invent, remove or alter any logo, text or graphic.",
-      "flat_lay": "Top-down flat lay of the three garments fanned out side by side on a dark textured concrete floor, neatly arranged with slight overlap (knolling style), every print fully visible, soft directional light, premium streetwear catalog look. No people, no extra objects, no added text.",
-      "en_modelo": "The model has an extremely muscular, massive bodybuilder physique like a classic physique champion: huge shoulders, arms and chest, very low body fat, visible veins. Keep the model's face identity. Setting: dark industrial gym with moody cinematic side lighting, black iron plates and racks softly blurred behind. Confident pose, three-quarter body framing so the whole print is visible.",
-      "outfit_short": "The model wears the tank top and the shorts together as one outfit. Full body framing so both garments are fully visible."
+      "flat_lay": "Top-down flat lay of exactly {n} garments, one of each reference product, all {n} visible and none missing, fanned out side by side on a dark textured concrete floor, neatly arranged with slight overlap (knolling style), every print fully visible, soft directional light, premium streetwear catalog look. No people, no extra objects, no added text.",
+      "en_modelo": "Candid photo of the model training in a real, busy commercial gym: natural available light from ceiling fixtures and windows, true-to-life colors and contrast, visible skin texture and pores, light sweat, no retouching, no dramatic or cinematic lighting. Slightly imperfect handheld framing, as if shot by a friend on a 35mm camera. The model has an extremely muscular, massive bodybuilder physique like a classic physique champion: huge shoulders, arms and chest, very low body fat, visible veins. Keep the model face identity. Three-quarter body framing so the whole print is visible.",
+      "outfit_short": "The model wears the tank top and the shorts together as one outfit. Full body framing so both garments are fully visible.",
+      "calce_oversized": "The t-shirt is an OVERSIZED boxy fit: dropped shoulders, wide loose short sleeves reaching the elbow, loose body that hangs straight, never tight or fitted, even on a muscular body.",
+      "estilo_id": "sty_gjH1ypXYmnFrNWg0FIbS1Q_0",
+      "estilos_prueba": [
+        {
+          "id": "sty_gjH1ypXYmnFrNWg0FIbS1Q_0",
+          "nombre": "BC Livestyle"
+        },
+        {
+          "id": "sty_K7IImYChrIG9xruMNrPm4Q_8",
+          "nombre": "Crushed Film Snapshot"
+        },
+        {
+          "id": "sty_tNfuU_jCUKFfln717f0hWw_61",
+          "nombre": "Field-Test Documentary"
+        }
+      ],
+      "toma_prueba": "gym-shark-training-shirt-negro-letras-rojas",
+      "estilo_nombre": "BC Livestyle"
     },
     "nota_bundles": "Shopify Bundles: máx. 3 opciones y 100 variantes por bundle. Un bundle por versión; solo tallas availableForSale. Tachado = suma del precio de lista (máx. entre precio y compareAtPrice). Con grupos, las prendas de un grupo comparten selector de talla (consolidatedOptions).",
     "historias": {

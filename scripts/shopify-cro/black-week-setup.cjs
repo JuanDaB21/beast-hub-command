@@ -6,6 +6,7 @@
 //   staging              Duplica el tema MAIN como «Beast BW – staging».
 //   bundles [--only=v]   Crea los 5 bundles (productBundleCreate), fija precio/tachado, metafields e imágenes.
 //   media [--only=v]     Rehace la galería del bundle (1 foto por prenda, en orden).
+//   retire               Pasa a borrador los bundles de la campaña que ya no están en config.
 //   page                 Crea la página /pages/black-week-beast con su plantilla.
 //   discount             Envío gratis automático en la ventana de la campaña desde el umbral.
 //   prices start|revert  Precio Black Week de los complementos y su reversión.
@@ -52,7 +53,7 @@ const PRODUCT_Q = `query($h: String!) { productByHandle(handle: $h) {
   featuredMedia { preview { image { url } } }
   media(first: 20) { nodes { ... on MediaImage { image { url } } } }
   options { id name values }
-  variants(first: 100) { nodes { id price availableForSale selectedOptions { name value } image { url } } }
+  variants(first: 100) { nodes { id price compareAtPrice availableForSale selectedOptions { name value } image { url } } }
 } }`;
 const cache = new Map();
 async function product(handle) {
@@ -81,7 +82,8 @@ async function plan() {
           .filter((s) => ofColor.some((x) => sizeOf(x) === s && x.availableForSale))
           .sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b));
         const out_ = ofColor.filter((x) => !x.availableForSale).map(sizeOf);
-        const price = Math.max(...ofColor.map((x) => Number(x.price)));
+        // Precio de lista: el más alto entre precio y tachado (compareAtPrice) de la prenda.
+        const price = Math.max(...ofColor.map((x) => Math.max(Number(x.price), Number(x.compareAtPrice || 0))));
         // Foto del color correcto: imagen de la variante; si el producto no tiene imágenes por variante,
         // config puede fijar `imagen_media` (índice en la galería); si no, la foto principal.
         const image = ofColor.find((x) => x.image)?.image.url
@@ -89,9 +91,18 @@ async function plan() {
           || p.featuredMedia?.preview?.image?.url || null;
         comps.push({ handle: c.handle, id: p.id, title: p.title, etiqueta: meta.etiquetas[i], colorOpt, colorVal, sizeOpt, sizes, out: out_, price, image });
       }
-      const variants = comps.reduce((n, c) => n * c.sizes.length, 1);
+      // Grupos de talla: las prendas de un grupo comparten selector (Shopify admite máx. 3 opciones por bundle).
+      const groups = (meta.grupos ?? comps.map((_, i) => [i])).map((idx, g) => ({
+        idx,
+        label: meta.grupo_etiquetas?.[g] ?? comps[idx[0]].etiqueta,
+        sizes: comps[idx[0]].sizes.filter((s) => idx.every((i) => comps[i].sizes.includes(s))),
+      }));
+      const variants = groups.reduce((n, g) => n * g.sizes.length, 1);
       const regular = comps.reduce((n, c) => n + c.price, 0);
-      out.push({ pack: pack.id, version: v.id, ...meta, price: pack.precio, regular, variants, comps, story: L.historias[pack.id] });
+      out.push({
+        pack: pack.id, version: v.id, ...meta, price: pack.precio, freeShipping: Boolean(pack.envio_gratis),
+        regular, variants, comps, groups, story: L.historias[pack.id],
+      });
     }
   }
   return out;
@@ -99,8 +110,9 @@ async function plan() {
 
 async function check() {
   for (const b of await plan()) {
-    const ok = b.variants <= 100 ? 'ok' : 'EXCEDE 100';
-    console.log(`\n${b.titulo} (${b.handle}) · ${b.variants} variantes [${ok}] · regular ${cop(b.regular)} → pack ${cop(b.price)} · ahorro ${cop(b.regular - b.price)}`);
+    const ok = b.variants <= 100 && b.groups.length <= 3 ? 'ok' : 'EXCEDE LÍMITES';
+    console.log(`\n${b.titulo} (${b.handle}) · ${b.groups.length} opciones · ${b.variants} variantes [${ok}] · lista ${cop(b.regular)} → pack ${cop(b.price)} · ahorro ${cop(b.regular - b.price)} (${Math.round((1 - b.price / b.regular) * 100)} %)${b.freeShipping ? ' · envío gratis' : ''}`);
+    for (const g of b.groups.filter((x) => x.idx.length > 1)) console.log(`  * selector compartido «${g.label}»: ${g.sizes.join('/')}`);
     for (const c of b.comps) {
       console.log(`  - ${c.etiqueta}: ${c.title} · ${c.colorVal ?? '(sin color)'} · tallas ${c.sizes.join('/')}${c.out.length ? ` · fuera: ${c.out.join('/')}` : ''} · ${cop(c.price)}`);
     }
@@ -129,22 +141,34 @@ async function bundles() {
     if (ONLY && b.version !== ONLY) continue;
     const existing = (await gql(PRODUCT_Q, { h: b.handle })).productByHandle;
     console.log(`\n${b.titulo} → ${b.handle} · ${b.variants} variantes · ${cop(b.price)} (tachado ${cop(b.regular)})${existing ? ' · YA EXISTE, solo se actualiza' : ''}`);
-    if (b.variants > 100) throw new Error(`${b.handle} excede 100 variantes`);
+    if (b.variants > 100 || b.groups.length > 3) throw new Error(`${b.handle} excede los límites de Shopify Bundles`);
     if (!APPLY) continue;
 
     let productId = existing?.id;
     if (!productId) {
-      const components = b.comps.map((c) => ({
+      const groupOf = (i) => b.groups.find((g) => g.idx.includes(i));
+      const components = b.comps.map((c, i) => ({
         productId: c.id,
         quantity: 1,
         optionSelections: [
           ...(c.colorOpt ? [{ componentOptionId: c.colorOpt.id, name: `Color · ${c.etiqueta}`, values: [c.colorVal] }] : []),
-          { componentOptionId: c.sizeOpt.id, name: `Talla · ${c.etiqueta}`, values: c.sizes },
+          { componentOptionId: c.sizeOpt.id, name: `Talla · ${groupOf(i).label}`, values: groupOf(i).sizes },
         ],
       }));
+      const input = { title: b.titulo, components };
+      // Con grupos, cada selector de talla del bundle mapea su valor a la talla de todas las prendas del grupo.
+      if (b.groups.some((g) => g.idx.length > 1)) {
+        input.consolidatedOptions = b.groups.map((g) => ({
+          optionName: `Talla · ${g.label}`,
+          optionSelections: g.sizes.map((s) => ({
+            optionValue: s,
+            components: g.idx.map((i) => ({ componentOptionId: b.comps[i].sizeOpt.id, componentOptionValue: s })),
+          })),
+        }));
+      }
       const op = errs((await gql(`mutation($input: ProductBundleCreateInput!) { productBundleCreate(input: $input) {
         productBundleOperation { id status } userErrors { field message } } }`,
-      { input: { title: b.titulo, components } })).productBundleCreate);
+      { input })).productBundleCreate);
       let st = op.productBundleOperation;
       for (let i = 0; i < 30 && st.status !== 'COMPLETE'; i++) {
         await sleep(2000);
@@ -160,6 +184,7 @@ async function bundles() {
       p: {
         id: productId,
         handle: b.handle,
+        title: b.titulo,
         status: 'ACTIVE',
         productType: 'Pack',
         vendor: 'Beast Club',
@@ -171,12 +196,14 @@ async function bundles() {
           { namespace: 'beast', key: 'pack_labels', type: 'list.single_line_text_field', value: JSON.stringify(b.comps.map((c) => c.etiqueta)) },
           { namespace: 'beast', key: 'pack_story', type: 'list.single_line_text_field', value: JSON.stringify(b.story) },
           { namespace: 'beast', key: 'pack_id', type: 'single_line_text_field', value: b.pack },
+          { namespace: 'beast', key: 'pack_option_items', type: 'json', value: JSON.stringify(b.groups.map((g) => g.idx)) },
+          { namespace: 'beast', key: 'free_shipping', type: 'boolean', value: String(b.freeShipping) },
         ],
       },
       m: existing?.featuredMedia ? null : b.comps.filter((c) => c.image).map((c) => ({ originalSource: c.image, mediaContentType: 'IMAGE', alt: c.etiqueta })),
     })).productUpdate);
 
-    // Precio fijo del pack y tachado = suma de precios vigentes de las prendas (regla SIC).
+    // Precio fijo del pack y tachado = suma del precio de lista de las prendas (máx. entre precio y tachado).
     const vs = (await gql(`query($id: ID!) { product(id: $id) { variants(first: 100) { nodes { id } } } }`, { id: productId })).product.variants.nodes;
     errs((await gqlRetry(`mutation($id: ID!, $v: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $id, variants: $v) {
       userErrors { field message } } }`, {
@@ -206,6 +233,17 @@ async function media() {
       p: { id: p.id },
       m: b.comps.filter((c) => c.image).map((c) => ({ originalSource: c.image, mediaContentType: 'IMAGE', alt: c.etiqueta })),
     })).productUpdate);
+  }
+}
+
+// Pasa a borrador los bundles de la campaña que ya no están en config (reversible: status ACTIVE).
+async function retire() {
+  const keep = new Set(L.bundles.map((b) => b.handle));
+  const { products } = await gql('{ products(first: 50, query: "tag:black-week status:active") { nodes { id handle title } } }');
+  for (const p of products.nodes.filter((x) => !keep.has(x.handle))) {
+    console.log(`Borrador: ${p.title} (${p.handle})`);
+    if (APPLY) errs((await gqlRetry(`mutation($p: ProductUpdateInput!) { productUpdate(product: $p) { userErrors { field message } } }`,
+      { p: { id: p.id, status: 'DRAFT' } })).productUpdate);
   }
 }
 
@@ -269,7 +307,7 @@ async function prices() {
 module.exports = { plan, CFG };
 
 if (require.main === module) {
-  const MODES = { check, staging, bundles, media, page, discount, prices };
+  const MODES = { check, staging, bundles, media, retire, page, discount, prices };
   if (!MODES[mode]) {
     console.error(`Modo desconocido. Opciones: ${Object.keys(MODES).join(', ')}`);
     process.exit(1);

@@ -4,6 +4,8 @@
 //
 // Uso: node scripts/shopify-cro/black-week-photos.cjs <modo> [--apply] [--only=clave]
 //   plan      Lista las tomas (flat lay por versión + prenda en modelo) y los créditos.
+//   test      Prueba de estilos: la toma `fotos.toma_prueba` con cada `fotos.estilos_prueba` (1 crédito c/u).
+//   test      Prueba de estilos: la toma `fotos.toma_prueba` con cada `fotos.estilos_prueba` (1 crédito c/u).
 //   run       Sube las fotos fuente, lanza las tomas (Idempotency-Key estable: no se cobra dos veces) y descarga.
 //             --redo=id1,id2 vuelve a generar esas tomas (1 crédito c/u).
 //   shopify   Sube las tomas descargadas a Shopify Files (fileCreate) y guarda el nombre de cada archivo.
@@ -64,7 +66,7 @@ async function shots() {
       const existing = list.find((s) => s.id === id);
       const slot = { version: b.version, n: `m${i + 1}` };
       if (existing) existing.slots.push(slot);
-      else list.push({ id, kind: isShort ? 'outfit' : 'model', sources, slots: [slot] });
+      else list.push({ id, kind: isShort ? 'outfit' : 'model', sources, slots: [slot], oversized: /oversized/i.test(c.etiqueta) });
     });
   }
   for (const c of CFG.complementos.filter((x) => x.handle)) {
@@ -75,12 +77,13 @@ async function shots() {
   return { list: ONLY ? list.filter((s) => s.id.includes(ONLY)) : list, garments };
 }
 
-function body(shot, assetIds) {
+function body(shot, assetIds, styleId = F.estilo_id) {
   const directions = shot.kind === 'flat'
-    ? `${F.flat_lay} ${F.fidelidad}`
-    : `${F.en_modelo} ${shot.kind === 'outfit' ? F.outfit_short : ''} ${F.fidelidad}`;
+    ? `${F.flat_lay.replaceAll("{n}", String(shot.sources.length))} ${F.fidelidad}`
+    : `${F.en_modelo} ${shot.kind === 'outfit' ? F.outfit_short : ''} ${shot.oversized ? F.calce_oversized : ''} ${F.fidelidad}`;
   return {
     asset_ids: assetIds,
+    ...(styleId && shot.kind !== 'flat' ? { photography_style_id: styleId } : {}),
     background: { type: 'automatic' },
     fashion_model: shot.kind === 'flat' ? { type: 'none' } : { type: 'selected', fashion_model_id: F.modelo.id },
     custom_directions: directions.replace(/\s+/g, ' ').trim(),
@@ -136,9 +139,10 @@ async function cmdRun() {
     }
     if (!st.gens[s.id]?.id) {
       const assetIds = s.sources.map((k) => st.assets[k]);
-      // La llave incluye las fotos fuente: la misma toma con las mismas fuentes nunca se cobra dos veces.
-      const fp = require('crypto').createHash('sha1').update(assetIds.join(',')).digest('hex').slice(0, 10);
-      const gen = await nj('POST', '/generations/product-photography', body(s, assetIds),
+      // La llave es la huella de la petición completa: la misma toma (fuentes + instrucciones) nunca se cobra dos veces.
+      const req = body(s, assetIds);
+      const fp = require('crypto').createHash('sha1').update(JSON.stringify(req)).digest('hex').slice(0, 12);
+      const gen = await nj('POST', '/generations/product-photography', req,
         { 'Idempotency-Key': `bw26-${F.version}-${s.id}`.slice(0, 100) + `-${fp}` });
       st.gens[s.id] = { id: gen.id, kind: s.kind };
       save(st);
@@ -157,11 +161,51 @@ async function cmdRun() {
     const o = gen.outputs?.find((x) => x.status === 'completed');
     if (!o) { console.log(`FALLÓ ${s.id}: ${JSON.stringify(gen.outputs?.map((x) => x.error))}`); continue; }
     const asset = o.asset.url ? o.asset : await nj('GET', `/assets/${o.asset.id}`);
-    const file = `bw-${s.id}.${F.formato.output_format}`.slice(0, 90);
+    // La versión va en el nombre: Shopify Files no reemplaza un archivo con el mismo nombre.
+    const file = `bw-${s.id}`.slice(0, 80) + (F.version === 'v1' ? '' : `-${F.version}`) + `.${F.formato.output_format}`;
     fs.writeFileSync(path.join(OUT, file), Buffer.from(await (await fetch(asset.url)).arrayBuffer()));
     Object.assign(rec, { file, url: asset.url, review: o.review, review_note: o.review_note });
     save(st);
     console.log(`listo ${s.id} → ${file} · revisión Nightjar: ${o.review ?? 'n/d'}`);
+  }
+}
+
+// Prueba de estilos: la misma toma con cada estilo de config.landing.fotos.estilos_prueba (1 crédito c/u).
+async function cmdTest() {
+  const st = state();
+  st.tests ??= {};
+  const { list, garments } = await shots();
+  const shot = list.find((s) => s.id === F.toma_prueba);
+  if (!shot) throw new Error(`No existe la toma ${F.toma_prueba}`);
+  console.log(`${F.estilos_prueba.length} variantes de ${shot.id} (${F.estilos_prueba.length} créditos)`);
+  if (!APPLY) return;
+  for (const k of shot.sources) {
+    if (st.assets[k]) continue;
+    st.assets[k] = await uploadSource(garments.get(k).image);
+    save(st);
+  }
+  const assetIds = shot.sources.map((k) => st.assets[k]);
+  const gens = [];
+  for (const s of F.estilos_prueba) {
+    const gen = await nj('POST', '/generations/product-photography', body(shot, assetIds, s.id),
+      { 'Idempotency-Key': `bw26-${F.version}-test-${slug(s.nombre)}-${assetIds.join('').slice(-12)}` });
+    gens.push({ s, id: gen.id });
+  }
+  for (const { s, id } of gens) {
+    let gen;
+    for (let i = 0; i < 90; i++) {
+      gen = await nj('GET', `/generations/${id}`);
+      if (gen.outputs?.length && gen.outputs.every((o) => o.status === 'completed' || o.status === 'failed')) break;
+      await sleep(5000);
+    }
+    const o = gen.outputs?.find((x) => x.status === 'completed');
+    if (!o) { console.log(`FALLÓ ${s.nombre}`); continue; }
+    const asset = o.asset.url ? o.asset : await nj('GET', `/assets/${o.asset.id}`);
+    const file = `test-${slug(s.nombre)}.${F.formato.output_format}`;
+    fs.writeFileSync(path.join(OUT, file), Buffer.from(await (await fetch(asset.url)).arrayBuffer()));
+    st.tests[s.id] = { nombre: s.nombre, file, url: asset.url };
+    save(st);
+    console.log(`listo ${s.nombre} → ${file}`);
   }
 }
 
@@ -183,7 +227,9 @@ async function cmdShopify() {
 async function cmdTheme() {
   const st = state();
   const { list } = await shots();
-  const tpl = JSON.parse(fs.readFileSync(THEME_TPL, 'utf8'));
+  const raw = fs.readFileSync(THEME_TPL, 'utf8');
+  const head = raw.match(/^\/\*[\s\S]*?\*\/\s*/)?.[0] ?? ''; // Shopify antepone un comentario a las plantillas
+  const tpl = JSON.parse(raw.slice(head.length));
   const blocks = tpl.sections.packs.blocks;
   const ref = (file) => `shopify://shop_images/${file}`;
   let n = 0;
@@ -201,10 +247,10 @@ async function cmdTheme() {
     }
   }
   console.log(`${n} imágenes asignadas en page.black-week.json`);
-  if (APPLY) fs.writeFileSync(THEME_TPL, `${JSON.stringify(tpl, null, 2)}\n`);
+  if (APPLY) fs.writeFileSync(THEME_TPL, `${head}${JSON.stringify(tpl, null, 2)}\n`);
 }
 
-const MODES = { plan: cmdPlan, run: cmdRun, shopify: cmdShopify, theme: cmdTheme };
+const MODES = { plan: cmdPlan, test: cmdTest, run: cmdRun, shopify: cmdShopify, theme: cmdTheme };
 if (!MODES[mode]) { console.error(`Modos: ${Object.keys(MODES).join(', ')}`); process.exit(1); }
 MODES[mode]()
   .then(() => { if (!APPLY && mode !== 'plan') console.log('\n(dry-run: agrega --apply)'); })
