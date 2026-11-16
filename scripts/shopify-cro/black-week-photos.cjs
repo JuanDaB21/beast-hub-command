@@ -74,6 +74,19 @@ async function shots() {
     garments.set(`${c.handle}|`, { label: c.nombre, image: p?.featuredMedia?.preview?.image?.url, handle: c.handle });
     list.push({ id: slug(c.handle), kind: 'model', sources: [`${c.handle}|`], slots: [{ addon: true }] });
   }
+  // Referencias extra (config.landing.fotos.referencias): varias fotos de la galería (ej. espalda + frente)
+  // en lugar de la foto de la variante, para las tomas en modelo de esa prenda.
+  for (const [handle, idxs] of Object.entries(F.referencias ?? {})) {
+    const p = (await gql(`query($h: String!) { productByHandle(handle: $h) { media(first: 20) { nodes { ... on MediaImage { image { url } } } } } }`, { h: handle })).productByHandle;
+    for (const [k, g] of [...garments]) {
+      if (g.handle !== handle || k.includes('#')) continue;
+      const keys = idxs.map((i) => {
+        garments.set(`${k}#${i}`, { ...g, image: p?.media.nodes[i]?.image?.url });
+        return `${k}#${i}`;
+      });
+      for (const s of list) if (s.kind !== 'flat') s.sources = s.sources.flatMap((x) => (x === k ? keys : [x]));
+    }
+  }
   return { list: ONLY ? list.filter((s) => s.id.includes(ONLY)) : list, garments };
 }
 

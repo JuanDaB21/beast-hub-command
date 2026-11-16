@@ -5,12 +5,12 @@
 //   check                Solo lectura: tallas que entran, variantes por bundle (máx. 100), regular vs pack.
 //   staging              Duplica el tema MAIN como «Beast BW – staging».
 //   bundles [--only=v]   Crea los bundles de los packs (productBundleCreate), fija precio/tachado, metafields e imágenes.
-//   cuartas [--only=id]  Crea los bundles de 1 prenda de la 4.ª (+70.000 con envío gratis por umbral). Antes que bundles.
+//   cuartas [--only=id] [--media]  Crea los bundles de 1 prenda de la 4.ª (+70.000 con envío gratis por umbral). Antes que bundles.
 //   media [--only=v]     Rehace la galería del bundle (1 foto por prenda, en orden).
 //   retire               Pasa a borrador los bundles de la campaña que ya no están en config.
 //   page                 Crea la página /pages/black-week-beast con su plantilla.
 //   discount             Envío gratis automático en la ventana de la campaña desde el umbral.
-//   prices start|revert  Precio Black Week de los complementos y su reversión.
+//   prices start|revert  Precio Black Week de los complementos y de config.ajustes_precio, y su reversión (--only=handle).
 const fs = require('fs');
 const path = require('path');
 const { gql, ROOT } = require('./shopifyCro.cjs');
@@ -21,6 +21,7 @@ const STATE_FILE = path.join(__dirname, '.out', 'black-week-state.json');
 const [mode, sub] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const APPLY = process.argv.includes('--apply');
 const ONLY = process.argv.find((a) => a.startsWith('--only='))?.slice(7); // bundles: una sola versión (ej. trio-negro)
+const REMEDIA = process.argv.includes('--media'); // cuartas: rehace la foto del bundle
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL'];
 const norm = (s) => String(s).toLowerCase().replace(/\s+/g, '');
@@ -78,12 +79,15 @@ async function resolveComp(c, etiqueta) {
   const out_ = ofColor.filter((x) => !x.availableForSale).map(sizeOf);
   // Precio de lista: el más alto entre precio y tachado (compareAtPrice) de la prenda.
   const price = Math.max(...ofColor.map((x) => Math.max(Number(x.price), Number(x.compareAtPrice || 0))));
+  // Precio y tachado que muestra hoy la ficha (el más alto entre las variantes del color).
+  const now = Math.max(...ofColor.map((x) => Number(x.price)));
+  const cmp = Math.max(0, ...ofColor.map((x) => Number(x.compareAtPrice || 0)));
   // Foto del color correcto: imagen de la variante; si el producto no tiene imágenes por variante,
   // config puede fijar `imagen_media` (índice en la galería); si no, la foto principal.
   const image = ofColor.find((x) => x.image)?.image.url
     || (c.imagen_media != null ? p.media.nodes[c.imagen_media]?.image?.url : null)
     || p.featuredMedia?.preview?.image?.url || null;
-  return { handle: c.handle, id: p.id, title: p.title, url: `/products/${p.handle}`, etiqueta, colorOpt, colorVal, sizeOpt, sizes, out: out_, price, image };
+  return { handle: c.handle, id: p.id, title: p.title, url: `/products/${p.handle}`, etiqueta, colorOpt, colorVal, sizeOpt, sizes, out: out_, price, now, cmp, image };
 }
 
 // Arma la definición de cada bundle cruzando config.packs (componentes) y config.landing.bundles (títulos/etiquetas).
@@ -120,15 +124,24 @@ async function cuartaPlan() {
   const out = [];
   for (const q of C?.productos ?? []) {
     const c = await resolveComp(q, q.producto);
-    out.push({ ...q, comp: c, handle: cuartaHandle(q.id), titulo: `4.ª prenda · ${c.title}`, price: C.precio, list: c.price });
+    out.push({ ...q, comp: c, handle: cuartaHandle(q.id), titulo: `4.ª prenda · ${c.title}`, price: c.now, list: c.cmp > c.now ? c.cmp : null });
   }
   return out;
 }
 
+const UMBRAL = CFG.envio.umbral_black_week;
+const reachesThreshold = (b, q) => b.price + q.price >= UMBRAL;
+
 async function check() {
-  for (const q of await cuartaPlan()) {
-    console.log(`
-${q.titulo} (${q.handle}) · ${cop(q.price)} · lista ${cop(q.list)} · ahorro con envío ${cop(q.list + CFG.envio.flete_promedio - q.price)} · tallas ${q.comp.sizes.join('/')}${q.comp.out.length ? ` · fuera: ${q.comp.out.join('/')}` : ''}`);
+  const qs = await cuartaPlan();
+  for (const q of qs) {
+    console.log(`\n${q.titulo} (${q.handle}) · ${q.comp.colorVal ?? ''} · ficha ${cop(q.price)}${q.list ? ` (tachado ${cop(q.list)})` : ''} · tallas ${q.comp.sizes.join('/')}${q.comp.out.length ? ` · fuera: ${q.comp.out.join('/')}` : ''}`);
+  }
+  for (const b of await plan()) {
+    for (const id of b.cuartas) {
+      const q = qs.find((x) => x.id === id);
+      if (q && !reachesThreshold(b, q)) console.log(`\nAVISO: ${b.titulo} + ${q.titulo} = ${cop(b.price + q.price)} < umbral ${cop(UMBRAL)} (se omite)`);
+    }
   }
   for (const b of await plan()) {
     const ok = b.variants <= 100 && b.groups.length <= 3 ? 'ok' : 'EXCEDE LÍMITES';
@@ -200,7 +213,10 @@ async function bundles() {
     }
 
     const cuartaIds = [];
+    const qs = await cuartaPlan();
     for (const id of b.cuartas) {
+      const plan4 = qs.find((x) => x.id === id);
+      if (plan4 && !reachesThreshold(b, plan4)) { console.log(`  aviso: ${plan4.titulo} no llega al umbral con este pack (se omite)`); continue; }
       const q = (await gql(PRODUCT_Q, { h: cuartaHandle(id) })).productByHandle;
       if (q) cuartaIds.push(q.id); else console.log(`  aviso: falta el bundle ${cuartaHandle(id)} (corre «cuartas --apply» antes)`);
     }
@@ -279,7 +295,7 @@ async function cuartas() {
   for (const q of await cuartaPlan()) {
     if (ONLY && q.id !== ONLY) continue;
     const existing = (await gql(PRODUCT_Q, { h: q.handle })).productByHandle;
-    console.log(`${q.titulo} → ${q.handle} · ${q.comp.sizes.length} tallas · ${cop(q.price)}${existing ? ' · YA EXISTE, solo se actualiza' : ''}`);
+    console.log(`${q.titulo} (${q.comp.colorVal ?? ''}) → ${q.handle} · ${q.comp.sizes.length} tallas · ${cop(q.price)}${q.list ? ` (tachado ${cop(q.list)})` : ''}${existing ? ' · YA EXISTE, solo se actualiza' : ''}`);
     if (!APPLY) continue;
     let productId = existing?.id;
     if (!productId) {
@@ -305,6 +321,11 @@ async function cuartas() {
       if (st.status !== 'COMPLETE' || !st.product) throw new Error(`Bundle ${q.handle}: ${st.status} ${JSON.stringify(st.userErrors)}`);
       productId = st.product.id;
     }
+    // --media: cambia la foto del bundle (ej. la del color correcto); borra la anterior.
+    if (REMEDIA && existing?.media.nodes.length) {
+      const m = (await gql(`query($id: ID!) { product(id: $id) { media(first: 20) { nodes { id } } } }`, { id: productId })).product.media.nodes.map((x) => x.id);
+      await gqlRetry(`mutation($id: ID!, $m: [ID!]!) { productDeleteMedia(productId: $id, mediaIds: $m) { mediaUserErrors { field message } } }`, { id: productId, m });
+    }
     errs((await gqlRetry(`mutation($p: ProductUpdateInput!, $m: [CreateMediaInput!]) { productUpdate(product: $p, media: $m) {
       product { id } userErrors { field message } } }`, {
       p: {
@@ -314,16 +335,15 @@ async function cuartas() {
           { namespace: 'seo', key: 'hidden', type: 'number_integer', value: '1' },
           { namespace: 'beast', key: 'pack_items', type: 'list.product_reference', value: JSON.stringify([q.comp.id]) },
           { namespace: 'beast', key: 'pack_labels', type: 'list.single_line_text_field', value: JSON.stringify([q.comp.title]) },
-          { namespace: 'beast', key: 'cuarta_list_price', type: 'number_integer', value: String(q.list) },
         ],
       },
-      m: existing?.featuredMedia || !q.comp.image ? null : [{ originalSource: q.comp.image, mediaContentType: 'IMAGE', alt: q.comp.title }],
+      m: (existing?.featuredMedia && !REMEDIA) || !q.comp.image ? null : [{ originalSource: q.comp.image, mediaContentType: 'IMAGE', alt: q.comp.title }],
     })).productUpdate);
     const vs = (await gql(`query($id: ID!) { product(id: $id) { variants(first: 100) { nodes { id } } } }`, { id: productId })).product.variants.nodes;
     errs((await gqlRetry(`mutation($id: ID!, $v: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $id, variants: $v) {
       userErrors { field message } } }`, {
       id: productId,
-      v: vs.map((x) => ({ id: x.id, price: String(q.price), compareAtPrice: q.list > q.price ? String(q.list) : null })),
+      v: vs.map((x) => ({ id: x.id, price: String(q.price), compareAtPrice: q.list ? String(q.list) : null })),
     })).productVariantsBulkUpdate);
     await publish(productId);
     saveState({ cuartas: { ...(state().cuartas || {}), [q.id]: productId } });
@@ -376,12 +396,16 @@ async function discount() {
 
 async function prices() {
   if (!['start', 'revert'].includes(sub)) throw new Error('Uso: prices start|revert');
-  for (const c of CFG.complementos.filter((x) => x.handle)) {
+  const items = [...CFG.complementos, ...(CFG.ajustes_precio ?? [])].filter((x) => x.handle && (!ONLY || x.handle === ONLY));
+  for (const c of items) {
     const p = await product(c.handle);
+    // Complementos: el tachado de la semana es el precio actual. Ajustes de precio: conservan su tachado.
+    const cmpStart = c.tachado ?? c.precio_actual;
+    const cmpRevert = c.tachado ?? null;
     const v = sub === 'start'
-      ? p.variants.nodes.map((x) => ({ id: x.id, price: String(c.precio_black_week), compareAtPrice: String(c.precio_actual) }))
-      : p.variants.nodes.map((x) => ({ id: x.id, price: String(c.precio_actual), compareAtPrice: null }));
-    console.log(`${p.title}: ${sub === 'start' ? `${cop(c.precio_black_week)} (tachado ${cop(c.precio_actual)})` : `${cop(c.precio_actual)} sin tachado`} · ${v.length} variantes`);
+      ? p.variants.nodes.map((x) => ({ id: x.id, price: String(c.precio_black_week), compareAtPrice: String(cmpStart) }))
+      : p.variants.nodes.map((x) => ({ id: x.id, price: String(c.precio_actual), compareAtPrice: cmpRevert == null ? null : String(cmpRevert) }));
+    console.log(`${p.title}: ${sub === 'start' ? `${cop(c.precio_black_week)} (tachado ${cop(cmpStart)})` : `${cop(c.precio_actual)}${cmpRevert ? ` (tachado ${cop(cmpRevert)})` : ' sin tachado'}`} · ${v.length} variantes`);
     if (!APPLY) continue;
     errs((await gqlRetry(`mutation($id: ID!, $v: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $id, variants: $v) {
       userErrors { field message } } }`, { id: p.id, v })).productVariantsBulkUpdate);

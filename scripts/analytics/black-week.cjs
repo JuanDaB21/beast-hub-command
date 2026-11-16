@@ -186,14 +186,14 @@ const splitBlank = (name) => name.split(' - ').at(-1);
         margen_con_envio: Math.round(before - flete), margen_sin_envio: Math.round(before),
         componentes: comps,
       });
-      // 4.ª prenda: línea aparte a precio fijo; con ella el subtotal pasa el umbral y el envío corre por la empresa.
+      // 4.ª prenda: línea aparte a su precio normal; con ella el subtotal pasa el umbral y el envío corre por la empresa.
       const x = packs.at(-1);
       x.cuartas = (C4.por_version[v.id] ?? []).map((id) => {
         const q = garment(C4.productos.find((y) => y.id === id));
-        const total = p.precio + C4.precio;
-        const margen4 = before - q.cost - (fee(total) - fee(p.precio)) - NOM + C4.precio - (p.envio_gratis ? 0 : flete);
-        return { id, title: q.title, costo: q.cost, lista: q.list, ...coBuy(comps, q.producto),
-          ahorro_cliente: q.list + flete - C4.precio, margen_4: Math.round(margen4), extra: Math.round(margen4 - x.margen) };
+        const total = p.precio + q.price;
+        const margen4 = before - q.cost - (fee(total) - fee(p.precio)) - NOM + q.price - (p.envio_gratis ? 0 : flete);
+        return { id, title: q.title, precio: q.price, costo: q.cost, ...coBuy(comps, q.producto),
+          llega_umbral: total >= cfg.envio.umbral_black_week, margen_4: Math.round(margen4), extra: Math.round(margen4 - x.margen) };
       });
       const mean4 = x.cuartas.length ? x.cuartas.reduce((t, c) => t + c.margen_4, 0) / x.cuartas.length : x.margen;
       x.margen_esperado = Math.round(x.margen + C4.tasa_mejora * (mean4 - x.margen));
@@ -266,9 +266,9 @@ const splitBlank = (name) => name.split(' - ').at(-1);
   for (const x of packs) {
     console.log(`${x.version_nombre} | ${k(x.precio)} | ${k(x.lista)} | ${(x.descuento_lista * 100).toFixed(0)}% | ${x.envio_gratis ? 'sí' : 'no'} | ${k(x.margen)} | ${k(x.margen_con_envio)} | ${k(x.margen_sin_envio)}`);
   }
-  console.log(`\n4.ª PRENDA (+${k(C4.precio)}) | pack | candidata | juntos/pedidos del pack | lista | ahorro cliente | margen 4 | extra vs 3`);
+  console.log(`\n4.ª PRENDA (precio normal; envío gratis desde ${k(cfg.envio.umbral_black_week)}) | pack | candidata | juntos/pedidos del pack | precio | llega al umbral | margen 4 | extra vs 3`);
   for (const x of packs) for (const c of x.cuartas ?? []) {
-    console.log(`${x.version_nombre} | ${c.title} | ${c.juntos}/${c.pedidos_pack} | ${k(c.lista)} | ${k(c.ahorro_cliente)} | ${k(c.margen_4)} | ${c.extra >= 0 ? '+' : ''}${k(c.extra)}`);
+    console.log(`${x.version_nombre} | ${c.title} | ${c.juntos}/${c.pedidos_pack} | ${k(c.precio)} | ${c.llega_umbral ? 'sí' : 'NO'} | ${k(c.margen_4)} | ${c.extra >= 0 ? '+' : ''}${k(c.extra)}`);
   }
   console.log('\nESCENARIO | pedidos | margen | pauta | UTILIDAD');
   for (const s of escenarios) console.log(`${s.nombre} | ${s.pedidos.toFixed(0)} | ${k(s.margen)} | ${k(s.pauta)} | ${k(s.utilidad)}`);
