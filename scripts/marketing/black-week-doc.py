@@ -52,13 +52,13 @@ def build():
     pa = CFG['pauta']
 
     b.append(('title', 'Black Week Beast 2026',
-              f"Plan de ofertas, creativos y página · del 13 al 20 de noviembre · documento interno, cifras al {DATA['generado'][:10]}"))
+              f"Plan de ofertas, creativos y página · del 20 al 27 de noviembre · documento interno, cifras al {DATA['generado'][:10]}"))
 
     b.append(('h1', '1. Resumen'))
     b.append(('ul', [
         'La campaña ofrece **packs de 3 prendas con envío gratis** en lugar de un descuento general. Las prendas sueltas y los pedidos de 2 prendas mantienen su precio.',
         'Tres packs: **TRÍO BEAST** (3 oversized, 169.900), **PACK TRAINING** (compresión + tank + oversized, 199.900) y **OUTFIT BEAST** (2 camisetas + short, 179.900).',
-        'Cada pack combina los diseños más vendidos con colores y prendas base que hoy rotan poco. Dos complementos liquidan stock estancado: ACID GRIS a 39.900 y buzo compresión a 59.900.',
+        'Cada pack combina los diseños más vendidos con colores y prendas base que hoy rotan poco. Un complemento liquida stock estancado: buzo compresión a 59.900 (solo L y XL).',
         f"Pauta de {cop(pa['diaria_black_week'])} COP/día (hoy {cop(pa['diaria_actual'])}). Todos los anuncios llevan a una página única de packs.",
         f"Meta de la semana: {kp['pedidos']} pedidos ({kp['packs']} en pack), {kp['prendas']} prendas y {cop(kp['contribucion_neta_pauta'])} de contribución después de pauta.",
     ]))
@@ -109,8 +109,8 @@ def build():
         ]))
         b.append(('table', ['Formato', 'Qué mostrar'], [[x['formato'], x['brief']] for x in cr['piezas']], [0.22, 0.78]))
 
-    b.append(('h2', 'Complementos de liquidación'))
-    b.append(('p', 'Se muestran en la página de packs, en stories y en retargeting; no llevan pauta propia de prospección.'))
+    b.append(('h2', 'Complemento de liquidación'))
+    b.append(('p', 'Se muestra en una franja debajo de los packs, en stories y en retargeting; no lleva pauta propia de prospección.'))
     b.append(('table', ['Producto', 'Precio hoy', 'Black Week', 'Por qué'],
               [[c['nombre'], cop(c['precio_actual']), cop(c['precio_black_week']), c['nota']] for c in CFG['complementos']],
               [0.28, 0.12, 0.12, 0.48]))
@@ -124,7 +124,7 @@ def build():
         'Con ese tope cada pack deja más de 18.000 después de pauta.',
     ]))
 
-    b.append(('h1', '6. Estrategia en la web (para implementar después)'))
+    b.append(('h1', '6. Estrategia en la web'))
     b.append(('ul', CFG['web']))
 
     b.append(('pagebreak',))
@@ -136,7 +136,7 @@ def build():
     b.append(('table', ['Fecha', 'Asunto', 'Contenido'], [[c['fecha'], c['asunto'], c['contenido']] for c in CFG['correos']], [0.14, 0.4, 0.46]))
 
     d = CFG['demanda']
-    b.append(('h1', '8. Reabastecimiento (pedir a más tardar el 3 o 4 de noviembre)'))
+    b.append(('h1', '8. Reabastecimiento'))
     b.append(('p', f"Supuesto: {d['pedidos_semana']} pedidos en la semana, {pct(d['participacion_packs'])} en pack, "
                    f"{str(d['prendas_por_pedido_sin_pack']).replace('.', ',')} prendas por pedido sin pack, "
                    f"{d['semanas_de_seguridad']} semana de seguridad y mínimo {d['minimo_por_talla']} unidades por talla en las bases de los packs. "
@@ -152,7 +152,6 @@ def build():
         ['Pedidos en pack', str(kp['packs']), '—'],
         ['Prendas vendidas', str(kp['prendas']), '~45 por semana hoy'],
         ['Contribución después de pauta', cop(kp['contribucion_neta_pauta']), '~950.000 por semana hoy'],
-        ['ACID GRIS vendidas', str(kp['acid_gris_vendidas']), '2 en 30 días'],
         ['Tank acid vendidos', str(kp['tank_acid_vendidos']), '18 en 30 días'],
         ['CPA real', f"≤ {cop(kp['cpa_real_max'])}", '~25.000 en octubre'],
     ], [0.4, 0.25, 0.35]))
