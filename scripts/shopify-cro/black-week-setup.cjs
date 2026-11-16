@@ -4,7 +4,8 @@
 // Uso: node scripts/shopify-cro/black-week-setup.cjs <modo> [--apply]
 //   check                Solo lectura: tallas que entran, variantes por bundle (máx. 100), regular vs pack.
 //   staging              Duplica el tema MAIN como «Beast BW – staging».
-//   bundles [--only=v]   Crea los 5 bundles (productBundleCreate), fija precio/tachado, metafields e imágenes.
+//   bundles [--only=v]   Crea los bundles de los packs (productBundleCreate), fija precio/tachado, metafields e imágenes.
+//   cuartas [--only=id]  Crea los bundles de 1 prenda de la 4.ª (+70.000 con envío gratis por umbral). Antes que bundles.
 //   media [--only=v]     Rehace la galería del bundle (1 foto por prenda, en orden).
 //   retire               Pasa a borrador los bundles de la campaña que ya no están en config.
 //   page                 Crea la página /pages/black-week-beast con su plantilla.
@@ -61,6 +62,30 @@ async function product(handle) {
   return cache.get(handle);
 }
 
+// Resuelve una prenda de config (handle + color) contra Shopify: tallas disponibles, precio de lista y foto del color.
+async function resolveComp(c, etiqueta) {
+  const p = await product(c.handle);
+  if (!p) throw new Error(`No existe el producto ${c.handle}`);
+  const colorOpt = p.options.find((o) => /color|colour/i.test(o.name));
+  const sizeOpt = p.options.find((o) => /talla|size/i.test(o.name));
+  const colorVal = colorOpt?.values.find((x) => norm(x) === norm(c.color));
+  if (colorOpt && !colorVal) throw new Error(`${c.handle}: color «${c.color}» no está en ${colorOpt.values.join(' | ')}`);
+  const ofColor = p.variants.nodes.filter((x) => !colorOpt || x.selectedOptions.some((o) => o.name === colorOpt.name && o.value === colorVal));
+  const sizeOf = (x) => x.selectedOptions.find((o) => o.name === sizeOpt.name).value;
+  const sizes = sizeOpt.values
+    .filter((s) => ofColor.some((x) => sizeOf(x) === s && x.availableForSale))
+    .sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b));
+  const out_ = ofColor.filter((x) => !x.availableForSale).map(sizeOf);
+  // Precio de lista: el más alto entre precio y tachado (compareAtPrice) de la prenda.
+  const price = Math.max(...ofColor.map((x) => Math.max(Number(x.price), Number(x.compareAtPrice || 0))));
+  // Foto del color correcto: imagen de la variante; si el producto no tiene imágenes por variante,
+  // config puede fijar `imagen_media` (índice en la galería); si no, la foto principal.
+  const image = ofColor.find((x) => x.image)?.image.url
+    || (c.imagen_media != null ? p.media.nodes[c.imagen_media]?.image?.url : null)
+    || p.featuredMedia?.preview?.image?.url || null;
+  return { handle: c.handle, id: p.id, title: p.title, url: `/products/${p.handle}`, etiqueta, colorOpt, colorVal, sizeOpt, sizes, out: out_, price, image };
+}
+
 // Arma la definición de cada bundle cruzando config.packs (componentes) y config.landing.bundles (títulos/etiquetas).
 async function plan() {
   const out = [];
@@ -69,28 +94,7 @@ async function plan() {
       const meta = L.bundles.find((b) => b.version === v.id);
       if (!meta) throw new Error(`Falta landing.bundles para ${v.id}`);
       const comps = [];
-      for (const [i, c] of v.componentes.entries()) {
-        const p = await product(c.handle);
-        if (!p) throw new Error(`No existe el producto ${c.handle}`);
-        const colorOpt = p.options.find((o) => /color|colour/i.test(o.name));
-        const sizeOpt = p.options.find((o) => /talla|size/i.test(o.name));
-        const colorVal = colorOpt?.values.find((x) => norm(x) === norm(c.color));
-        if (colorOpt && !colorVal) throw new Error(`${c.handle}: color «${c.color}» no está en ${colorOpt.values.join(' | ')}`);
-        const ofColor = p.variants.nodes.filter((x) => !colorOpt || x.selectedOptions.some((o) => o.name === colorOpt.name && o.value === colorVal));
-        const sizeOf = (x) => x.selectedOptions.find((o) => o.name === sizeOpt.name).value;
-        const sizes = sizeOpt.values
-          .filter((s) => ofColor.some((x) => sizeOf(x) === s && x.availableForSale))
-          .sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b));
-        const out_ = ofColor.filter((x) => !x.availableForSale).map(sizeOf);
-        // Precio de lista: el más alto entre precio y tachado (compareAtPrice) de la prenda.
-        const price = Math.max(...ofColor.map((x) => Math.max(Number(x.price), Number(x.compareAtPrice || 0))));
-        // Foto del color correcto: imagen de la variante; si el producto no tiene imágenes por variante,
-        // config puede fijar `imagen_media` (índice en la galería); si no, la foto principal.
-        const image = ofColor.find((x) => x.image)?.image.url
-          || (c.imagen_media != null ? p.media.nodes[c.imagen_media]?.image?.url : null)
-          || p.featuredMedia?.preview?.image?.url || null;
-        comps.push({ handle: c.handle, id: p.id, title: p.title, etiqueta: meta.etiquetas[i], colorOpt, colorVal, sizeOpt, sizes, out: out_, price, image });
-      }
+      for (const [i, c] of v.componentes.entries()) comps.push(await resolveComp(c, meta.etiquetas[i]));
       // Grupos de talla: las prendas de un grupo comparten selector (Shopify admite máx. 3 opciones por bundle).
       const groups = (meta.grupos ?? comps.map((_, i) => [i])).map((idx, g) => ({
         idx,
@@ -102,13 +106,30 @@ async function plan() {
       out.push({
         pack: pack.id, version: v.id, ...meta, price: pack.precio, freeShipping: Boolean(pack.envio_gratis),
         regular, variants, comps, groups, story: L.historias[pack.id],
+        cuartas: CFG.cuarta?.por_version?.[v.id] ?? [],
       });
     }
   }
   return out;
 }
 
+// La 4.ª prenda: un bundle oculto de 1 prenda a precio fijo (Shopify Bundles no admite 4 tallas independientes en un pack).
+const cuartaHandle = (id) => `cuarta-${id}`;
+async function cuartaPlan() {
+  const C = CFG.cuarta;
+  const out = [];
+  for (const q of C?.productos ?? []) {
+    const c = await resolveComp(q, q.producto);
+    out.push({ ...q, comp: c, handle: cuartaHandle(q.id), titulo: `4.ª prenda · ${c.title}`, price: C.precio, list: c.price });
+  }
+  return out;
+}
+
 async function check() {
+  for (const q of await cuartaPlan()) {
+    console.log(`
+${q.titulo} (${q.handle}) · ${cop(q.price)} · lista ${cop(q.list)} · ahorro con envío ${cop(q.list + CFG.envio.flete_promedio - q.price)} · tallas ${q.comp.sizes.join('/')}${q.comp.out.length ? ` · fuera: ${q.comp.out.join('/')}` : ''}`);
+  }
   for (const b of await plan()) {
     const ok = b.variants <= 100 && b.groups.length <= 3 ? 'ok' : 'EXCEDE LÍMITES';
     console.log(`\n${b.titulo} (${b.handle}) · ${b.groups.length} opciones · ${b.variants} variantes [${ok}] · lista ${cop(b.regular)} → pack ${cop(b.price)} · ahorro ${cop(b.regular - b.price)} (${Math.round((1 - b.price / b.regular) * 100)} %)${b.freeShipping ? ' · envío gratis' : ''}`);
@@ -178,6 +199,11 @@ async function bundles() {
       productId = st.product.id;
     }
 
+    const cuartaIds = [];
+    for (const id of b.cuartas) {
+      const q = (await gql(PRODUCT_Q, { h: cuartaHandle(id) })).productByHandle;
+      if (q) cuartaIds.push(q.id); else console.log(`  aviso: falta el bundle ${cuartaHandle(id)} (corre «cuartas --apply» antes)`);
+    }
     // Ficha: handle, estado, oculto de la búsqueda, metafields de la landing e imágenes de las prendas reales.
     errs((await gqlRetry(`mutation($p: ProductUpdateInput!, $m: [CreateMediaInput!]) { productUpdate(product: $p, media: $m) {
       product { id } userErrors { field message } } }`, {
@@ -193,7 +219,8 @@ async function bundles() {
         metafields: [
           { namespace: 'seo', key: 'hidden', type: 'number_integer', value: '1' },
           { namespace: 'beast', key: 'pack_items', type: 'list.product_reference', value: JSON.stringify(b.comps.map((c) => c.id)) },
-          { namespace: 'beast', key: 'pack_labels', type: 'list.single_line_text_field', value: JSON.stringify(b.comps.map((c) => c.etiqueta)) },
+          { namespace: 'beast', key: 'pack_labels', type: 'list.single_line_text_field', value: JSON.stringify(b.comps.map((c) => c.title)) },
+          ...(cuartaIds.length ? [{ namespace: 'beast', key: 'cuarta_options', type: 'list.product_reference', value: JSON.stringify(cuartaIds) }] : []),
           { namespace: 'beast', key: 'pack_story', type: 'list.single_line_text_field', value: JSON.stringify(b.story) },
           { namespace: 'beast', key: 'pack_id', type: 'single_line_text_field', value: b.pack },
           { namespace: 'beast', key: 'pack_option_items', type: 'json', value: JSON.stringify(b.groups.map((g) => g.idx)) },
@@ -238,12 +265,69 @@ async function media() {
 
 // Pasa a borrador los bundles de la campaña que ya no están en config (reversible: status ACTIVE).
 async function retire() {
-  const keep = new Set(L.bundles.map((b) => b.handle));
+  const keep = new Set([...L.bundles.map((b) => b.handle), ...(CFG.cuarta?.productos ?? []).map((q) => cuartaHandle(q.id))]);
   const { products } = await gql('{ products(first: 50, query: "tag:black-week status:active") { nodes { id handle title } } }');
   for (const p of products.nodes.filter((x) => !keep.has(x.handle))) {
     console.log(`Borrador: ${p.title} (${p.handle})`);
     if (APPLY) errs((await gqlRetry(`mutation($p: ProductUpdateInput!) { productUpdate(product: $p) { userErrors { field message } } }`,
       { p: { id: p.id, status: 'DRAFT' } })).productUpdate);
+  }
+}
+
+// Crea/actualiza los bundles de 1 prenda de la 4.ª (precio fijo, sin tachado si la lista es menor).
+async function cuartas() {
+  for (const q of await cuartaPlan()) {
+    if (ONLY && q.id !== ONLY) continue;
+    const existing = (await gql(PRODUCT_Q, { h: q.handle })).productByHandle;
+    console.log(`${q.titulo} → ${q.handle} · ${q.comp.sizes.length} tallas · ${cop(q.price)}${existing ? ' · YA EXISTE, solo se actualiza' : ''}`);
+    if (!APPLY) continue;
+    let productId = existing?.id;
+    if (!productId) {
+      const c = q.comp;
+      const input = {
+        title: q.titulo,
+        components: [{
+          productId: c.id,
+          quantity: 1,
+          optionSelections: [
+            ...(c.colorOpt ? [{ componentOptionId: c.colorOpt.id, name: 'Color', values: [c.colorVal] }] : []),
+            { componentOptionId: c.sizeOpt.id, name: 'Talla', values: c.sizes },
+          ],
+        }],
+      };
+      const op = errs((await gql(`mutation($input: ProductBundleCreateInput!) { productBundleCreate(input: $input) {
+        productBundleOperation { id status } userErrors { field message } } }`, { input })).productBundleCreate);
+      let st = op.productBundleOperation;
+      for (let i = 0; i < 30 && st.status !== 'COMPLETE'; i++) {
+        await sleep(2000);
+        st = (await gql(OP_Q, { id: op.productBundleOperation.id })).productOperation;
+      }
+      if (st.status !== 'COMPLETE' || !st.product) throw new Error(`Bundle ${q.handle}: ${st.status} ${JSON.stringify(st.userErrors)}`);
+      productId = st.product.id;
+    }
+    errs((await gqlRetry(`mutation($p: ProductUpdateInput!, $m: [CreateMediaInput!]) { productUpdate(product: $p, media: $m) {
+      product { id } userErrors { field message } } }`, {
+      p: {
+        id: productId, handle: q.handle, title: q.titulo, status: 'ACTIVE', productType: 'Pack', vendor: 'Beast Club',
+        tags: ['black-week', 'cuarta'], templateSuffix: 'pack',
+        metafields: [
+          { namespace: 'seo', key: 'hidden', type: 'number_integer', value: '1' },
+          { namespace: 'beast', key: 'pack_items', type: 'list.product_reference', value: JSON.stringify([q.comp.id]) },
+          { namespace: 'beast', key: 'pack_labels', type: 'list.single_line_text_field', value: JSON.stringify([q.comp.title]) },
+          { namespace: 'beast', key: 'cuarta_list_price', type: 'number_integer', value: String(q.list) },
+        ],
+      },
+      m: existing?.featuredMedia || !q.comp.image ? null : [{ originalSource: q.comp.image, mediaContentType: 'IMAGE', alt: q.comp.title }],
+    })).productUpdate);
+    const vs = (await gql(`query($id: ID!) { product(id: $id) { variants(first: 100) { nodes { id } } } }`, { id: productId })).product.variants.nodes;
+    errs((await gqlRetry(`mutation($id: ID!, $v: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $id, variants: $v) {
+      userErrors { field message } } }`, {
+      id: productId,
+      v: vs.map((x) => ({ id: x.id, price: String(q.price), compareAtPrice: q.list > q.price ? String(q.list) : null })),
+    })).productVariantsBulkUpdate);
+    await publish(productId);
+    saveState({ cuartas: { ...(state().cuartas || {}), [q.id]: productId } });
+    console.log(`  listo: ${productId} · ${vs.length} variantes`);
   }
 }
 
@@ -307,7 +391,7 @@ async function prices() {
 module.exports = { plan, CFG };
 
 if (require.main === module) {
-  const MODES = { check, staging, bundles, media, retire, page, discount, prices };
+  const MODES = { check, staging, bundles, cuartas, media, retire, page, discount, prices };
   if (!MODES[mode]) {
     console.error(`Modo desconocido. Opciones: ${Object.keys(MODES).join(', ')}`);
     process.exit(1);

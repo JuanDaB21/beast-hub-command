@@ -1,4 +1,4 @@
-// Economía de los packs de Black Week, envío gratis sí/no, P&L de la semana y reabastecimiento
+// Economía de los packs de Black Week, la 4.ª prenda (compra conjunta + margen), P&L de la semana y reabastecimiento
 // (solo lectura: BD prod + Shopify Admin + Meta).
 // Uso: node scripts/analytics/black-week.cjs
 // Lee docs/marketing/black-week-2026/config.json; el detalle queda en scripts/analytics/.out/black-week.json.
@@ -19,6 +19,7 @@ const MAIN_SIZES = ['S', 'M', 'L', 'XL'];
 const bases = [...new Set([
   ...cfg.packs.flatMap((p) => p.versiones.flatMap((v) => v.componentes.map((c) => c.base))),
   ...cfg.complementos.map((c) => c.base),
+  ...(cfg.cuarta?.productos ?? []).map((c) => c.base),
   'Camiseta Oversized 200 gr - 989-Nude', 'Camiseta Oversized 200 gr - Gris', 'Camiseta C4 200 gr - 001-Blanco', 'Camiseta C4 200 gr - 011-Negro',
   'Tank Oversized acid - Acid_negro',
 ])];
@@ -108,7 +109,11 @@ const splitBlank = (name) => name.split(' - ').at(-1);
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
-  const handles = [...new Set(cfg.packs.flatMap((p) => p.versiones.flatMap((v) => v.componentes.map((c) => c.handle))))];
+  const C4 = cfg.cuarta ?? { productos: [], por_version: {}, tasa_mejora: 0, precio: 0 };
+  const handles = [...new Set([
+    ...cfg.packs.flatMap((p) => p.versiones.flatMap((v) => v.componentes.map((c) => c.handle))),
+    ...C4.productos.map((c) => c.handle),
+  ])];
   const [db, shop, anuncios] = await Promise.all([fromDb(), shopifyProducts(handles), metaAds()]);
   const flete = cfg.envio.flete_promedio;
   const NOM = db.nomina;
@@ -138,20 +143,35 @@ const splitBlank = (name) => name.split(' - ').at(-1);
   };
 
   // ---- Economía por pack ----
+  const garment = (c) => {
+    const ids = db.variants.filter((x) => x.parent.includes(c.producto) && x.base_name.startsWith(c.base)).map((x) => x.id);
+    const cost = median(ids.map((id) => db.costs.get(id)).filter((x) => x != null));
+    const sp = shop[c.handle];
+    const byColor = sp?.variants.filter((x) => x.opts.some((o) => sameOpt(o.value, c.color))) || [];
+    const vs = byColor.length ? byColor : sp?.variants || [];
+    if (cost == null) warnings.push(`Sin costo en BH: ${c.producto} sobre ${c.base}`);
+    if (!sp) warnings.push(`Sin producto en Shopify: ${c.handle}`);
+    else if (!byColor.length) warnings.push(`Color «${c.color}» no encontrado en Shopify: ${c.handle}`);
+    return { ...c, title: sp?.title, image: sp?.image, cost: cost || 0, price: median(vs.map((x) => x.price)) || 0, list: median(vs.map((x) => x.list)) || 0 };
+  };
+
+  // Compra conjunta (90 d): de los pedidos con alguna prenda del pack, cuántos llevaron también la candidata.
+  const parentOf = new Map(db.variants.map((x) => [x.id, x.parent]));
+  const orderParents = new Map();
+  for (const l of db.lines) {
+    const par = l.kind === 'product' ? parentOf.get(l.product_id) : null;
+    if (par) (orderParents.get(l.id) || orderParents.set(l.id, new Set()).get(l.id)).add(par);
+  }
+  const has = (set, producto) => [...set].some((x) => x.includes(producto));
+  const coBuy = (comps, producto) => {
+    const withPack = [...orderParents.values()].filter((set) => set.size > 1 && comps.some((c) => has(set, c.producto)));
+    return { pedidos_pack: withPack.length, juntos: withPack.filter((set) => has(set, producto)).length };
+  };
+
   const packs = [];
   for (const p of cfg.packs) {
     for (const v of p.versiones) {
-      const comps = v.componentes.map((c) => {
-        const ids = db.variants.filter((x) => x.parent.includes(c.producto) && x.base_name.startsWith(c.base)).map((x) => x.id);
-        const cost = median(ids.map((id) => db.costs.get(id)).filter((x) => x != null));
-        const sp = shop[c.handle];
-        const byColor = sp?.variants.filter((x) => x.opts.some((o) => sameOpt(o.value, c.color))) || [];
-        const vs = byColor.length ? byColor : sp?.variants || [];
-        if (cost == null) warnings.push(`Sin costo en BH: ${c.producto} sobre ${c.base}`);
-        if (!sp) warnings.push(`Sin producto en Shopify: ${c.handle}`);
-        else if (!byColor.length) warnings.push(`Color «${c.color}» no encontrado en Shopify: ${c.handle}`);
-        return { ...c, title: sp?.title, image: sp?.image, cost: cost || 0, price: median(vs.map((x) => x.price)) || 0, list: median(vs.map((x) => x.list)) || 0 };
-      });
+      const comps = v.componentes.map(garment);
       const n = comps.length;
       const regular = comps.reduce((s, c) => s + c.price, 0);
       const lista = comps.reduce((s, c) => s + c.list, 0);
@@ -166,6 +186,17 @@ const splitBlank = (name) => name.split(' - ').at(-1);
         margen_con_envio: Math.round(before - flete), margen_sin_envio: Math.round(before),
         componentes: comps,
       });
+      // 4.ª prenda: línea aparte a precio fijo; con ella el subtotal pasa el umbral y el envío corre por la empresa.
+      const x = packs.at(-1);
+      x.cuartas = (C4.por_version[v.id] ?? []).map((id) => {
+        const q = garment(C4.productos.find((y) => y.id === id));
+        const total = p.precio + C4.precio;
+        const margen4 = before - q.cost - (fee(total) - fee(p.precio)) - NOM + C4.precio - (p.envio_gratis ? 0 : flete);
+        return { id, title: q.title, costo: q.cost, lista: q.list, ...coBuy(comps, q.producto),
+          ahorro_cliente: q.list + flete - C4.precio, margen_4: Math.round(margen4), extra: Math.round(margen4 - x.margen) };
+      });
+      const mean4 = x.cuartas.length ? x.cuartas.reduce((t, c) => t + c.margen_4, 0) / x.cuartas.length : x.margen;
+      x.margen_esperado = Math.round(x.margen + C4.tasa_mejora * (mean4 - x.margen));
     }
   }
 
@@ -177,13 +208,13 @@ const splitBlank = (name) => name.split(' - ').at(-1);
   const looseMargin = base.margen_pedido - base.nuevos_envio_gratis * flete;
   const week = (perPack) => (N) => N * d.participacion_packs * perPack + N * (1 - d.participacion_packs) * looseMargin;
   const bwPauta = pauta(cfg.pauta.diaria_black_week, cfg.periodo.dias);
-  const ladder = week(packMargin('margen'));
+  const ladder = week(packMargin('margen_esperado'));
   const allFree = week(packMargin('margen_con_envio'));
   const escenarios = [
     { id: 'normal', nombre: 'Semana normal (sin campaña)', pedidos: base.pedidos_semana, margen: base.pedidos_semana * base.margen_pedido,
       pauta: pauta(cfg.pauta.diaria_actual, 7) },
     { id: 'todo_gratis', nombre: 'Packs con envío gratis', pedidos: d.pedidos_semana, margen: allFree(d.pedidos_semana), pauta: bwPauta },
-    { id: 'escalera', nombre: `Escalera: envío gratis desde ${k(cfg.envio.umbral_black_week)}`, pedidos: d.pedidos_semana, margen: ladder(d.pedidos_semana), pauta: bwPauta },
+    { id: 'escalera', nombre: `Packs de 3 + la 4.ª con envío gratis (${Math.round(C4.tasa_mejora * 100)} % la suma)`, pedidos: d.pedidos_semana, margen: ladder(d.pedidos_semana), pauta: bwPauta },
   ].map((s) => ({ ...s, utilidad: s.margen - s.pauta }));
   const target = escenarios.find((s) => s.id === 'escalera').utilidad;
   const perOrderFree = allFree(1);
@@ -204,6 +235,13 @@ const splitBlank = (name) => name.split(' - ').at(-1);
   const demand = {};
   for (const p of cfg.packs) for (const v of p.versiones) for (const c of v.componentes) {
     demand[c.base] = (demand[c.base] || 0) + packsWeek * p.mezcla * v.participacion;
+  }
+  for (const p of cfg.packs) for (const v of p.versiones) {
+    const ids = C4.por_version[v.id] ?? [];
+    for (const id of ids) {
+      const b = C4.productos.find((y) => y.id === id).base;
+      demand[b] = (demand[b] || 0) + (packsWeek * p.mezcla * v.participacion * C4.tasa_mejora) / ids.length;
+    }
   }
   const looseUnits = d.pedidos_semana * (1 - d.participacion_packs) * d.prendas_por_pedido_sin_pack;
   const totalU90 = [...usedBy.values()].reduce((s, x) => s + x.u90, 0);
@@ -227,6 +265,10 @@ const splitBlank = (name) => name.split(' - ').at(-1);
   console.log('\nPACK | precio | lista | desc. lista | envío gratis | MARGEN | con envío | sin envío');
   for (const x of packs) {
     console.log(`${x.version_nombre} | ${k(x.precio)} | ${k(x.lista)} | ${(x.descuento_lista * 100).toFixed(0)}% | ${x.envio_gratis ? 'sí' : 'no'} | ${k(x.margen)} | ${k(x.margen_con_envio)} | ${k(x.margen_sin_envio)}`);
+  }
+  console.log(`\n4.ª PRENDA (+${k(C4.precio)}) | pack | candidata | juntos/pedidos del pack | lista | ahorro cliente | margen 4 | extra vs 3`);
+  for (const x of packs) for (const c of x.cuartas ?? []) {
+    console.log(`${x.version_nombre} | ${c.title} | ${c.juntos}/${c.pedidos_pack} | ${k(c.lista)} | ${k(c.ahorro_cliente)} | ${k(c.margen_4)} | ${c.extra >= 0 ? '+' : ''}${k(c.extra)}`);
   }
   console.log('\nESCENARIO | pedidos | margen | pauta | UTILIDAD');
   for (const s of escenarios) console.log(`${s.nombre} | ${s.pedidos.toFixed(0)} | ${k(s.margen)} | ${k(s.pauta)} | ${k(s.utilidad)}`);

@@ -80,7 +80,7 @@ async function shots() {
 function body(shot, assetIds, styleId = F.estilo_id) {
   const directions = shot.kind === 'flat'
     ? `${F.flat_lay.replaceAll("{n}", String(shot.sources.length))} ${F.fidelidad}`
-    : `${F.en_modelo} ${shot.kind === 'outfit' ? F.outfit_short : ''} ${shot.oversized ? F.calce_oversized : ''} ${F.fidelidad}`;
+    : `${F.en_modelo} ${shot.kind === 'outfit' ? F.outfit_short : ''} ${shot.oversized ? F.calce_oversized : ''} ${F.ajustes?.[shot.id] ?? ''} ${F.fidelidad}`;
   return {
     asset_ids: assetIds,
     ...(styleId && shot.kind !== 'flat' ? { photography_style_id: styleId } : {}),
@@ -108,7 +108,10 @@ async function uploadSource(url) {
 
 async function cmdPlan() {
   const { list } = await shots();
-  for (const s of list) console.log(`${s.id.padEnd(58)} ${s.kind.padEnd(6)} fuentes=${s.sources.length} → ${(s.slots ?? [s.slot]).map((x) => x.addon ? 'complemento' : `${x.version}/${x.n}`).join(', ')}`);
+  for (const s of list) {
+    const b = body(s, []);
+    console.log(`${s.id.padEnd(58)} ${s.kind.padEnd(6)} fuentes=${s.sources.length} estilo=${b.photography_style_id ?? '-'}${F.ajustes?.[s.id] ? ' +ajuste' : ''} → ${(s.slots ?? [s.slot]).map((x) => x.addon ? 'complemento' : `${x.version}/${x.n}`).join(', ')}`);
+  }
   console.log(`\n${list.length} tomas · ${list.length} créditos (1 por imagen a ${F.formato.resolution})`);
 }
 

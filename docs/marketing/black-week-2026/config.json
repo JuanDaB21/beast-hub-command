@@ -45,8 +45,8 @@
     "minimo_por_talla": 3
   },
   "resumen": [
-    "Packs fijos medidos contra el precio de lista (tachado): 3 prendas desde 169.900 y 4 prendas por 239.900 con envío gratis.",
-    "El envío gratis solo aparece desde 239.900 (el precio del Pack 4). En los packs de 3 se comería la mitad del margen.",
+    "Packs de 3 prendas medidos contra el precio de lista (tachado): Trío 169.900, Outfit 189.900 y Training 199.900. Cada pack ofrece la 4.ª prenda por +70.000 con envío gratis.",
+    "El envío gratis solo aparece desde 239.900 (Trío + la 4.ª). En los packs de 3 se comería la mitad del margen.",
     "La pauta empuja estáticos con precio grande y carruseles, el formato que mejor vende en nuestra cuenta. El video y el 3D ligero suman alcance.",
     "Del 20 al 27 de noviembre, cerrando en el Black Friday, con pauta de 60.000/día.",
     "Antes del 10-nov hay que reabastecer la oversized negra, la pantaloneta y la compresión."
@@ -58,7 +58,7 @@
       "rol": "Entrada y gancho de la pauta",
       "precio": 169900,
       "envio_gratis": false,
-      "mezcla": 0.4,
+      "mezcla": 0.5,
       "versiones": [
         {
           "id": "trio-negro",
@@ -119,7 +119,7 @@
       "rol": "Look completo con short",
       "precio": 189900,
       "envio_gratis": false,
-      "mezcla": 0.2,
+      "mezcla": 0.28,
       "versiones": [
         {
           "id": "outfit",
@@ -154,7 +154,7 @@
       "rol": "Kit de gym; mueve el tank acid estancado",
       "precio": 199900,
       "envio_gratis": false,
-      "mezcla": 0.15,
+      "mezcla": 0.22,
       "versiones": [
         {
           "id": "training",
@@ -182,49 +182,64 @@
           ]
         }
       ]
-    },
-    {
-      "id": "pack4",
-      "nombre": "PACK 4 BEAST",
-      "rol": "Mejora con envío gratis (≥ 239.900)",
-      "precio": 239900,
-      "envio_gratis": true,
-      "mezcla": 0.25,
-      "versiones": [
-        {
-          "id": "pack4",
-          "nombre": "Pack 4 Beast",
-          "participacion": 1,
-          "componentes": [
-            {
-              "producto": "\"GYMSHARK\" Training Shirt",
-              "handle": "gym-shark-training-shirt",
-              "color": "Negro / Letras Rojas",
-              "base": "Camiseta Oversized 200 gr - 011-Negro"
-            },
-            {
-              "producto": "\"NECKLACE SHARK\" Training Shirt",
-              "handle": "gymshark-necklace-training-shirt",
-              "color": "Negro / Letras Rojas",
-              "base": "Camiseta Oversized 200 gr - 011-Negro"
-            },
-            {
-              "producto": "\"GMTHARK CBUM",
-              "handle": "gymthark-cbum-training-shirt",
-              "color": "Negro / Letras Blancas",
-              "base": "Camiseta Oversized 200 gr - 011-Negro"
-            },
-            {
-              "producto": "\"CHAOS TEE\" Training Shirt",
-              "handle": "chaos-tee-training-shirt",
-              "color": "Blanco / Estampado Negro",
-              "base": "Camiseta Oversized 200 gr - 001-Blanco"
-            }
-          ]
-        }
-      ]
     }
   ],
+  "cuarta": {
+    "precio": 70000,
+    "envio_gratis": true,
+    "tasa_mejora": 0.3,
+    "titulo": "Envío gratis llevando la 4.ª",
+    "subtitulo": "+70.000 por la 4.ª prenda y el envío va por nuestra cuenta",
+    "nota": "Línea aparte (bundle oculto de 1 prenda a 70.000): Shopify Bundles no admite 4 tallas independientes. El envío gratis sale del umbral de 239.900 (Trío 169.900 + 70.000). Elegidas por compra conjunta (120 d), margen extra (38,4k − costo) y ahorro al cliente (lista + 19k − 70k). Short excluido por stock.",
+    "productos": [
+      {
+        "id": "chaos",
+        "producto": "\"CHAOS TEE\" Training Shirt",
+        "handle": "chaos-tee-training-shirt",
+        "color": "Blanco / Estampado Negro",
+        "base": "Camiseta Oversized 200 gr - 001-Blanco"
+      },
+      {
+        "id": "gs-tank",
+        "producto": "\"GS-TANK\"",
+        "handle": "gs-tank-training-tank-top",
+        "color": "Negro / Letras rojas",
+        "base": "Camiseta Oversized 200 gr - 011-Negro"
+      },
+      {
+        "id": "gymshark",
+        "producto": "\"GYMSHARK\" Training Shirt",
+        "handle": "gym-shark-training-shirt",
+        "color": "Negro / Letras Rojas",
+        "base": "Camiseta Oversized 200 gr - 011-Negro"
+      },
+      {
+        "id": "necklace",
+        "producto": "\"NECKLACE SHARK\" Training Shirt",
+        "handle": "gymshark-necklace-training-shirt",
+        "color": "Negro / Letras Rojas",
+        "base": "Camiseta Oversized 200 gr - 011-Negro"
+      }
+    ],
+    "por_version": {
+      "trio-negro": [
+        "chaos",
+        "gs-tank"
+      ],
+      "trio-color": [
+        "gymshark",
+        "gs-tank"
+      ],
+      "outfit": [
+        "gymshark",
+        "necklace"
+      ],
+      "training": [
+        "necklace",
+        "chaos"
+      ]
+    }
+  },
   "complementos": [
     {
       "nombre": "Buzo compresión icon",
@@ -308,7 +323,7 @@
       "gancho": "3 × $169.900",
       "texto_pantalla": "BLACK WEEK BEAST · 3 × $169.900 · Precio de lista $239.700 · Pagas al recibir",
       "titulo": "3 camisetas por $169.900",
-      "copy": "Black Week Beast: 3 oversized de 200 g por $169.900. Eliges la talla de cada una y pagas al recibir. Del 20 al 27 de noviembre. Lleva 4 y el envío es gratis.",
+      "copy": "Black Week Beast: 3 oversized de 200 g por $169.900. Eliges la talla de cada una y pagas al recibir. Del 20 al 27 de noviembre. Suma la 4.ª por +70.000 y el envío es gratis.",
       "cta": "Comprar",
       "destino": "/pages/black-week-beast#trio",
       "tomas": [
@@ -320,16 +335,16 @@
       "clave": "E2",
       "segmento": "Prospección",
       "formato": "Estático 4:5",
-      "pack": "pack4",
-      "version": "pack4",
-      "concepto": "Escalera: 3 o 4, y la 4.ª trae envío gratis",
+      "pack": "trio",
+      "version": "trio-negro",
+      "concepto": "Escalera: 3 por 169.900 y la 4.ª por +70.000 con envío gratis",
       "por_que": "Réplica del Banner «2 × 129.900»; empuja el ticket",
       "gancho": "¿3 o 4?",
-      "texto_pantalla": "3 × $169.900 · 4 × $239.900 + ENVÍO GRATIS · Pagas al recibir",
-      "titulo": "4 camisetas + envío gratis",
-      "copy": "¿3 o 4? En Black Week Beast llevas 3 oversized por $169.900, o 4 por $239.900 con envío gratis a toda Colombia. Pagas al recibir. Hasta el 27 de noviembre.",
+      "texto_pantalla": "3 × $169.900 · LA 4.ª +$70.000 CON ENVÍO GRATIS · Pagas al recibir",
+      "titulo": "La 4.ª con envío gratis",
+      "copy": "¿3 o 4? En Black Week Beast llevas 3 oversized por $169.900, y la 4.ª por +70.000 con envío gratis a toda Colombia. Pagas al recibir. Hasta el 27 de noviembre.",
       "cta": "Comprar",
-      "destino": "/pages/black-week-beast#pack4",
+      "destino": "/pages/black-week-beast#trio",
       "tomas": [
         "Las 4 camisetas dobladas en fila, la 4.ª separada con un sello «envío gratis»"
       ]
@@ -343,7 +358,7 @@
       "concepto": "Una tarjeta por prenda y cierre con el Pack 4",
       "por_que": "Réplica de N2, el CPA más bajo",
       "gancho": "Outfit completo $189.900",
-      "texto_pantalla": "1: OUTFIT COMPLETO $189.900 · 2–4: cada prenda, frente y espalda · 5: ¿Mejor 4? $239.900 + envío gratis",
+      "texto_pantalla": "1: OUTFIT COMPLETO $189.900 · 2–4: cada prenda, frente y espalda · 5: la 4.ª por +70.000 con envío gratis",
       "titulo": "Outfit completo por $189.900",
       "copy": "Tank, oversized y short por $189.900. Cada prenda en tu talla y pagas al recibir. Black Week Beast, hasta el 27 de noviembre.",
       "cta": "Comprar",
@@ -390,15 +405,15 @@
       "clave": "V2",
       "segmento": "Prospección",
       "formato": "3D ligero 9:16 · 6–10 s",
-      "pack": "pack4",
-      "version": "pack4",
+      "pack": "trio",
+      "version": "trio-negro",
       "concepto": "Giro de 360° de las 4 camisetas (frente → espalda)",
       "por_que": "La prueba de 3D: muestra los estampados de espalda sin costo de CGI",
-      "gancho": "4 × $239.900 · ENVÍO GRATIS",
+      "gancho": "3 × $169.900 · LA 4.ª CON ENVÍO GRATIS",
       "guion": [
         [
           "0–1 s",
-          "La primera camiseta ya girando. Texto: «4 × $239.900 · envío gratis»."
+          "La primera camiseta ya girando. Texto: «3 × $169.900 · la 4.ª con envío gratis»."
         ],
         [
           "1–7 s",
@@ -409,11 +424,11 @@
           "Las 4 juntas. Texto: «Black Week Beast · Pagas al recibir»."
         ]
       ],
-      "texto_pantalla": "4 × $239.900 · ENVÍO GRATIS → Pagas al recibir",
-      "titulo": "4 camisetas + envío gratis",
-      "copy": "Cuatro oversized, frente y espalda, por $239.900 con envío gratis. Black Week Beast, hasta el 27 de noviembre. Pagas al recibir.",
+      "texto_pantalla": "3 × $169.900 · la 4.ª +$70.000 con envío gratis → Pagas al recibir",
+      "titulo": "La 4.ª con envío gratis",
+      "copy": "Cuatro oversized, frente y espalda: 3 por $169.900 y la 4.ª por +70.000 con envío gratis. Black Week Beast, hasta el 27 de noviembre. Pagas al recibir.",
       "cta": "Comprar",
-      "destino": "/pages/black-week-beast#pack4",
+      "destino": "/pages/black-week-beast#trio",
       "tomas": [
         "Base giratoria (o silla giratoria) con maniquí o percha rígida",
         "Fondo negro mate, luz lateral, vertical 4K a 60 fps",
@@ -457,14 +472,14 @@
       "clave": "R1",
       "segmento": "Retargeting",
       "formato": "Estático 4:5 + 9:16",
-      "pack": "pack4",
-      "version": "pack4",
+      "pack": "trio",
+      "version": "trio-negro",
       "concepto": "Cuenta regresiva",
       "por_que": "Urgencia para quien ya visitó",
       "gancho": "Quedan 2 días / Hoy es Black Friday",
-      "texto_pantalla": "QUEDAN 2 DÍAS · 3 × $169.900 · 4 × $239.900 + envío gratis",
+      "texto_pantalla": "QUEDAN 2 DÍAS · 3 × $169.900 · la 4.ª +70.000 con envío gratis",
       "titulo": "Últimos días de Black Week",
-      "copy": "Lo que viste ahora viene en pack: 3 por $169.900 o 4 por $239.900 con envío gratis. Pagas al recibir. Termina el 27 de noviembre.",
+      "copy": "Lo que viste ahora viene en pack: 3 por $169.900 y la 4.ª por +70.000 con envío gratis. Pagas al recibir. Termina el 27 de noviembre.",
       "cta": "Comprar",
       "destino": "/pages/black-week-beast",
       "tomas": [
@@ -477,12 +492,12 @@
       "formato": "Carrusel 1:1 (4 tarjetas)",
       "pack": "trio",
       "version": "trio-negro",
-      "concepto": "Los 4 packs, uno por tarjeta",
+      "concepto": "Los 3 packs, uno por tarjeta, y cierre con la 4.ª",
       "por_que": "Que el visitante elija su pack",
       "gancho": "Elige tu pack",
-      "texto_pantalla": "Trío $169.900 · Outfit $189.900 · Training $199.900 · Pack 4 $239.900 + envío gratis",
+      "texto_pantalla": "Trío $169.900 · Outfit $189.900 · Training $199.900 · la 4.ª +70.000 con envío gratis",
       "titulo": "Elige tu pack",
-      "copy": "Trío, Outfit, Training o Pack 4: elige el tuyo hasta el 27 de noviembre. Pagas al recibir.",
+      "copy": "Trío, Outfit o Training: elige el tuyo y suma la 4.ª con envío gratis hasta el 27 de noviembre. Pagas al recibir.",
       "cta": "Comprar",
       "destino": "/pages/black-week-beast",
       "tomas": [
@@ -510,9 +525,9 @@
   ],
   "web": [
     "Una página única de campaña, /pages/black-week-beast, como destino de todos los anuncios.",
-    "Una tarjeta por pack: foto, talla por prenda, precio de lista tachado y precio del pack. El botón «Comprar ahora» lleva directo al pago.",
-    "Junto al Trío, la mejora: «+70.000 = 4.ª camiseta + envío gratis».",
-    "Envío gratis desde 239.900 durante la semana (no 250.000: el Pack 4 quedaría por fuera), con la barra del carrito alineada a ese monto.",
+    "Una tarjeta por pack de 3: foto, nombre oficial de cada prenda con link a su ficha, talla por prenda, precio de lista tachado y precio del pack. El botón «Comprar ahora» lleva directo al pago.",
+    "Debajo de cada pack, «Envío gratis llevando la 4.ª»: 2 prendas sugeridas (compra conjunta y margen) por +70.000, cada una con su talla.",
+    "Envío gratis desde 239.900 durante la semana (Trío + la 4.ª), con la barra del carrito alineada a ese monto.",
     "Mecanismo previsto: packs fijos con la app Shopify Bundles. Se valida con un pedido de prueba en Beast Hub."
   ],
   "fases": [
@@ -554,7 +569,7 @@
     },
     {
       "fecha": "20-nov",
-      "asunto": "3 camisetas por $169.900 · 4 con envío gratis"
+      "asunto": "3 camisetas por $169.900 · la 4.ª con envío gratis"
     },
     {
       "fecha": "24-nov",
@@ -581,7 +596,7 @@
     "fin_iso": "2026-11-27T23:59:59-05:00",
     "inicio_iso": "2026-11-20T00:00:00-05:00",
     "fotos": {
-      "version": "v2",
+      "version": "v3",
       "modelo": {
         "id": "mdl_rJfLkact2J1KphNGtDoz2Q_0",
         "nombre": "Jefte"
@@ -612,7 +627,11 @@
         }
       ],
       "toma_prueba": "gym-shark-training-shirt-negro-letras-rojas",
-      "estilo_nombre": "BC Livestyle"
+      "estilo_nombre": "BC Livestyle",
+      "ajustes": {
+        "basic-gymshark-short-con-gs-tank-training-tank-top": "FRONT VIEW: the model faces the camera, standing, full body from head to feet, so the small logo on the front left leg of the shorts is clearly visible. The tank top front is PLAIN BLACK with no lettering and no logo: its red lettering exists only on the back, which is not visible in this shot.",
+        "chaos-tee-training-shirt-blanco-estampado-negro": "BACK VIEW: the back print is LARGE, covering most of the back from just below the collar to the lower back and almost shoulder to shoulder, exactly the scale of the reference photo. Never shrink the print."
+      }
     },
     "nota_bundles": "Shopify Bundles: máx. 3 opciones y 100 variantes por bundle. Un bundle por versión; solo tallas availableForSale. Tachado = suma del precio de lista (máx. entre precio y compareAtPrice). Con grupos, las prendas de un grupo comparten selector de talla (consolidatedOptions).",
     "historias": {
@@ -630,12 +649,6 @@
         "CALIENTA",
         "ENTRENA",
         "PUMP"
-      ],
-      "pack4": [
-        "LUN",
-        "MAR",
-        "JUE",
-        "SÁB"
       ]
     },
     "bundles": [
@@ -677,34 +690,6 @@
           "Compresión",
           "Tank acid gris",
           "Oversized letras rojas"
-        ]
-      },
-      {
-        "version": "pack4",
-        "handle": "pack-4-beast",
-        "titulo": "PACK 4 BEAST",
-        "etiquetas": [
-          "Oversized letras rojas",
-          "Oversized cadena",
-          "Oversized letras blancas",
-          "Oversized blanca"
-        ],
-        "grupos": [
-          [
-            0
-          ],
-          [
-            1,
-            2
-          ],
-          [
-            3
-          ]
-        ],
-        "grupo_etiquetas": [
-          "Oversized letras rojas",
-          "Oversized cadena y letras blancas",
-          "Oversized blanca"
         ]
       }
     ]
