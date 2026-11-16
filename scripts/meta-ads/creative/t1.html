@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+__TOKENS__
+#stage { position: absolute; inset: 0; background: #1a2340; overflow: hidden; }
+#scene { position: absolute; inset: 0; transform-origin: 50% 62%; }
+.bg { position: absolute; inset: -80px; background: url("__NOV__/Beast Club Posts (1).png") center/cover; filter: blur(44px) brightness(.8); }
+.lock { position: absolute; left: 0; top: var(--mid); width: 1080px; height: 1350px; }
+body[data-fmt="916"] .lock { -webkit-mask-image: linear-gradient(transparent, #000 70px, #000 calc(100% - 90px), transparent); }
+#notif { position: absolute; left: 4px; top: calc(var(--mid) + 760px); width: 1072px; height: 264px; border-radius: 58px; background: #252a33; color: #fff; display: flex; align-items: center; gap: 34px; padding: 0 44px; box-shadow: 0 26px 70px rgba(0,0,0,.42); }
+.avatar { position: relative; width: 138px; height: 138px; flex: none; border-radius: 50%; background: linear-gradient(#d9dde5, #aeb4bf); }
+.avatar svg { position: absolute; inset: 0; }
+.badge { position: absolute; right: -10px; bottom: -8px; width: 56px; height: 56px; border-radius: 15px; overflow: hidden; background: url("__NOV__/Beast Club Posts (1).png") -119px -899px; }
+.text { flex: 1; }
+.who { display: flex; justify-content: space-between; font: 700 54px Switzer; }
+.who span { font: 500 42px Switzer; color: #aab0ba; }
+.msg { font: 500 49px/1.16 Switzer; margin-top: 8px; }
+#cart { position: absolute; inset: 0; background: #fff; transform: translateY(100%); }
+#cart img { position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; }
+body[data-fmt="916"] #cart img { top: 150px; }
+#ring { position: absolute; left: 12px; top: 1262px; width: 1056px; height: 84px; border: 7px solid var(--red); border-radius: 22px; opacity: 0; }
+body[data-fmt="916"] #ring { top: 1412px; }
+#end { position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, #e6e6e6, #b9b9b9); clip-path: inset(100% 0 0 0); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+body[data-fmt="916"] #end { padding-bottom: 200px; }
+.brand { font: 700 78px Khand; letter-spacing: .14em; color: var(--ink); margin-bottom: 70px; }
+.from { font-size: 92px; color: var(--ink); }
+.big { font-size: 208px; color: var(--red); margin: 10px 0 56px; }
+.pill { background: var(--ink); color: #fff; font-size: 66px; padding: 26px 58px; border-radius: 100px; }
+.sub { margin-top: 42px; font: 500 46px Switzer; color: var(--ink); }
+</style>
+<body data-fmt="__FMT__">
+<div id="stage">
+  <div id="scene">
+    <div class="bg"></div>
+    <img class="lock" src="__NOV__/Beast Club Posts (1).png">
+    <div id="notif">
+      <div class="avatar">
+        <svg viewBox="0 0 138 138"><circle cx="69" cy="52" r="25" fill="#6f7681"/><path d="M22 124c6-34 28-46 47-46s41 12 47 46z" fill="#6f7681"/></svg>
+        <div class="badge"></div>
+      </div>
+      <div class="text">
+        <div class="who">Papá<span>ahora</span></div>
+        <div class="msg">Te mandé 140k<br>para tu recibo de la luz</div>
+      </div>
+    </div>
+  </div>
+  <div id="cart"><img src="__NOV__/Beast Club Posts.png"><div id="ring"></div></div>
+  <div id="end">
+    <div class="brand">BEAST CLUB</div>
+    <div class="price from">DESDE</div>
+    <div class="price big">$64.900</div>
+    <div class="label pill">Pagas al recibir</div>
+    <div class="sub">Envío a toda Colombia</div>
+  </div>
+</div>
+<script>
+const clamp = (x) => Math.min(1, Math.max(0, x));
+const expo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));
+const CART = 2.3, RING = 3.7, END = 5.5;
+const $ = (id) => document.getElementById(id);
+window.seek = (t) => {
+  // La notificación está desde el primer fotograma: es el gancho.
+  const buzz = t < 0.5 ? Math.sin(t * 78) * 7 * (1 - t / 0.5) : 0;
+  $('notif').style.transform = `translateX(${buzz}px)`;
+  $('scene').style.transform = `scale(${1 + 0.05 * clamp(t / CART)})`;
+  $('cart').style.transform = `translateY(${(1 - expo(clamp((t - CART) / 0.6))) * 100}%)`;
+  const ring = clamp((t - RING) / 0.25);
+  $('ring').style.opacity = ring;
+  $('ring').style.transform = `scale(${1.05 - 0.05 * ring})`;
+  $('end').style.clipPath = `inset(${(1 - expo(clamp((t - END) / 0.5))) * 100}% 0 0 0)`;
+};
+seek(0);
+</script>

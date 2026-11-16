@@ -1,0 +1,13 @@
+/* Tokens de los creativos de Meta. Misma línea visual del Anuncio 5: gris claro, rojo y Montserrat Black. */
+@font-face { font-family: Montserrat; font-weight: 900; src: url("__MEDIA__/_fonts/Montserrat-Black.ttf"); }
+@font-face { font-family: Switzer; font-weight: 500; src: url("__FONTS__/switzer-500.woff2"); }
+@font-face { font-family: Switzer; font-weight: 700; src: url("__FONTS__/switzer-700.woff2"); }
+@font-face { font-family: Khand; font-weight: 700; src: url("__FONTS__/khand-700.woff2"); }
+
+:root { --red: #df0c13; --ink: #0f0f0f; --paper: #ffffff; --w: __W__px; --h: __H__px; --mid: calc((var(--h) - 1350px) / 2); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: var(--w); height: var(--h); overflow: hidden; background: transparent; }
+.abs { position: absolute; }
+.fill { position: absolute; inset: 0; }
+.price { font-family: Montserrat; font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
+.label { font-family: Switzer; font-weight: 700; line-height: 1.1; }

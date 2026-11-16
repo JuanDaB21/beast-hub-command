@@ -1,0 +1,22 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api-local",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx", "server/index.ts"],
+      "port": 3000,
+      "env": {
+        "DATABASE_URL": "postgres://postgres:devpass@localhost:54329/beasthub",
+        "JWT_SECRET": "local-dev-only-secret-not-for-production-0001",
+        "PORT": "3000"
+      }
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 8080
+    }
+  ]
+}

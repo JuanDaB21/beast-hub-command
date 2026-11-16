@@ -1,0 +1,25 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+__TOKENS__
+#card { position: absolute; left: 60px; right: 60px; top: 950px; background: var(--paper); border-radius: 34px; text-align: center; padding: 56px 30px 34px; box-shadow: 0 22px 60px rgba(0,0,0,.4); }
+body[data-fmt="45"] #card { top: 930px; }
+.tag { position: absolute; left: 50%; top: -38px; transform: translateX(-50%); background: var(--red); color: #fff; font: 700 54px Khand; letter-spacing: .08em; padding: 8px 40px; border-radius: 16px; white-space: nowrap; }
+#price { font-size: 158px; color: var(--red); }
+.pay { font-size: 72px; color: var(--ink); margin-top: 14px; }
+</style>
+<body data-fmt="__FMT__">
+<div id="card">
+  <div class="tag">DESDE</div>
+  <div id="price" class="price">$59.900</div>
+  <div class="label pay">Pagas al recibir</div>
+</div>
+<script>
+// El precio se ve completo desde el primer fotograma y late cada 2,4 s para recuperar la atención.
+window.seek = (t) => {
+  const phase = (t % 2.4) / 0.32;
+  const pulse = phase < 1 ? Math.sin(phase * Math.PI) * 0.06 : 0;
+  document.getElementById('price').style.transform = `scale(${1 + pulse})`;
+};
+seek(0);
+</script>

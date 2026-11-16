@@ -20,6 +20,16 @@
   "url_tags": "utm_source=meta&utm_medium=paid&utm_campaign={{campaign.name}}&utm_content={{ad.name}}",
   "creatives_dir": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Octubre 2026/listos",
   "video_src": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Octubre 2025 Q2/Chica camisa reel .mov",
+  "test": {
+    "name": "BC | Test | Nov26",
+    "adsets": [
+      { "key": "t1", "name": "Test Nov26 | T1 Meme Papá", "daily_budget": 4000 },
+      { "key": "t2", "name": "Test Nov26 | T2 Perchero 44.900", "daily_budget": 4000 },
+      { "key": "t3", "name": "Test Nov26 | T3 Figura gigante", "daily_budget": 4000 },
+      { "key": "t4", "name": "Test Nov26 | T4 Video desde 59.900", "daily_budget": 4000 }
+    ]
+  },
+  "catalog_set": "1390143091991205",
   "new_ads": [
     {
       "key": "N1",
@@ -119,6 +129,66 @@
       "type": "clone",
       "source_creative": "1090220080009075",
       "ad_id": "120253265578950684"
+    },
+    {
+      "key": "T1",
+      "name": "T1 — Meme Papá (carrito)",
+      "type": "placement_video",
+      "test_adset": "t1",
+      "catalog": "28981375324850797",
+      "feed_video": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Noviembre 2026/listos/T1_45.mp4",
+      "vertical_video": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Noviembre 2026/listos/T1_916.mp4",
+      "link": "https://beastclub.store/collections/monster-gym-training-shirt-unleash-the-beast",
+      "body": "Camisetas desde $64.900 · Pagas al recibir 💵\nEl recibo de la luz puede esperar. Tu próximo entreno, no. 😅",
+      "title": "Desde $64.900 · Pagas al recibir"
+    },
+    {
+      "key": "T2",
+      "name": "T2 — Perchero desde 44.900",
+      "type": "placement_image",
+      "test_adset": "t2",
+      "catalog": true,
+      "feed": "../../Noviembre 2026/listos/A5P2_45.jpg",
+      "vertical": "../../Noviembre 2026/listos/A5P2_916.jpg",
+      "link": "https://beastclub.store/collections/desde-44900",
+      "body": "Oversized desde $54.900 · Tanks desde $44.900 · Pagas al recibir 💵\nTu outfit del gym favorito. Envío a toda Colombia en 1 a 3 días hábiles 🚚",
+      "title": "Desde $44.900 · Pagas al recibir"
+    },
+    {
+      "key": "T3",
+      "name": "T3 — Figura gigante (frente)",
+      "type": "placement_image",
+      "test_adset": "t3",
+      "catalog": true,
+      "feed": "../../Noviembre 2026/listos/T3_45.jpg",
+      "vertical": "../../Noviembre 2026/listos/T3_916.jpg",
+      "link": "https://beastclub.store/collections/hombre",
+      "body": "Camisetas desde $54.900 · Pagas al recibir 💵\nHasta los gigantes entrenan con Beast Club. Envío a toda Colombia en 1 a 3 días hábiles 🚚",
+      "title": "Desde $54.900 · Pagas al recibir"
+    },
+    {
+      "key": "T3b",
+      "name": "T3b — Figura gigante (espalda)",
+      "type": "placement_image",
+      "test_adset": "t3",
+      "catalog": true,
+      "feed": "../../Noviembre 2026/listos/T3b_45.jpg",
+      "vertical": "../../Noviembre 2026/listos/T3b_916.jpg",
+      "link": "https://beastclub.store/collections/hombre",
+      "body": "Camisetas desde $54.900 · Pagas al recibir 💵\nHasta los gigantes entrenan con Beast Club. Envío a toda Colombia en 1 a 3 días hábiles 🚚",
+      "title": "Desde $54.900 · Pagas al recibir"
+    },
+    {
+      "key": "T4",
+      "name": "T4 — Video desde 59.900",
+      "type": "placement_video",
+      "test_adset": "t4",
+      "catalog": true,
+      "feed_video": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Noviembre 2026/listos/T4_45.mp4",
+      "vertical_video": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Noviembre 2026/listos/T4_916.mp4",
+      "link": "https://beastclub.store/collections/best-sellers",
+      "body": "Camisetas desde $59.900 · Pagas al recibir 💵\nEnvío a toda Colombia en 1 a 3 días hábiles 🚚",
+      "title": "Desde $59.900 · Pagas al recibir"
     }
   ]
 }

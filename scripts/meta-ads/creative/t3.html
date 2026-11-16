@@ -1,0 +1,28 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+__TOKENS__
+#stage { position: absolute; inset: 0; background: #0b0b0b; overflow: hidden; }
+.bg { position: absolute; inset: -80px; background: url("__NOV__/__PHOTO__") center/cover; filter: blur(46px) brightness(.55); }
+.photo { position: absolute; left: 0; top: -44px; width: 1080px; height: 1440px; }
+body[data-fmt="916"] .photo { top: 240px; -webkit-mask-image: linear-gradient(transparent, #000 90px, #000 calc(100% - 120px), transparent); }
+.shade { position: absolute; left: 0; right: 0; bottom: 0; height: 560px; background: linear-gradient(transparent, rgba(0,0,0,.9) 62%); }
+body[data-fmt="916"] .shade { height: 1060px; background: linear-gradient(transparent, rgba(0,0,0,.92) 48%); }
+.offer { position: absolute; left: 0; right: 0; bottom: 56px; text-align: center; color: #fff; }
+body[data-fmt="916"] .offer { bottom: 440px; }
+.kicker { font: 700 64px Khand; letter-spacing: .1em; }
+.big { font-size: 146px; margin: 2px 0 28px; }
+.big span { font-size: 66px; display: inline-block; vertical-align: 22px; margin-right: 18px; }
+.pill { display: inline-block; background: var(--red); font-size: 56px; padding: 20px 50px; border-radius: 100px; }
+</style>
+<body data-fmt="__FMT__">
+<div id="stage">
+  <div class="bg"></div>
+  <img class="photo" src="__NOV__/__PHOTO__">
+  <div class="shade"></div>
+  <div class="offer">
+    <div class="kicker">CAMISETAS</div>
+    <div class="price big"><span>DESDE</span>$54.900</div>
+    <div class="label pill">Pagas al recibir</div>
+  </div>
+</div>

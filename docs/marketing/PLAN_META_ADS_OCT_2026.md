@@ -129,6 +129,62 @@ Todos los anuncios llevan `utm_source=meta&utm_medium=paid&utm_campaign={{campai
   - **Aplicado 30-oct (aprobado por el dueño):** `--status PAUSED U1,U2,U3,U4`. Quedan activos A5, Banner, N2, N5, N3 y N4. Presupuesto sin cambios (30k/día).
   - Próxima revisión: 2–3-nov, con `report.cjs last_7d 2026-10-30`. Éxito: CPA pixel ≤ 10k y CPA real con impuestos ≤ 20k. Ese día también se compara la conversión por landing y se corre `collection-order.cjs` en dry-run con los productos de BF.
 
+- **Revisión 8-nov (7 d, 1→7-nov; `report.cjs last_7d 2026-11-01`):**
+  - Gasto 209,8k · CPA pixel 11,7k · frecuencia 2,61. Shopify: 19 pedidos (27 la semana anterior), 10 de Meta por último clic → **CPA real 23,4k** (19,5k a 14 d). Móvil: conversión 1,4 % (igual que antes del 1-nov) y carrito→checkout 57 %.
+  - La caída es de pedidos, no de la tasa de la tienda. Dos días explican unos 6 de los 8 perdidos: 1-nov (0 pedidos; carrito desde la home 1,2 %) y 7-nov (Meta pasó el 37 % del gasto a N2, 0 compras). Los miércoles concentran el 24 % de los pedidos desde el 7-sep; causa desconocida. QA móvil completo (producto → cajón → checkout con contra entrega): sin fallas. Tema sin cambios desde el 21-oct.
+  - A 24 d (15-oct→7-nov), CPA real: N2 9,3k · Banner 12,9k · N4 14,8k · A5 18,2k · N5 18,9k. A5 dispara la regla de rotar por CTR (1,70 frente a 2,46), pero mantiene 13–14 compras pixel por semana: se busca relevo, no se apaga.
+  - **Decisión (aprobada por el dueño):** la campaña principal no se toca (30k/día). Los anuncios nuevos no entran ahí: cuando Meta se fue a lo nuevo, los pedidos cayeron (29-oct y 7-nov). Días con A5 en 50–75 % del gasto: 4,3 pedidos/día; con menos de 50 %: 2,4. No se recorta el presupuesto.
+  - **Prueba ABO `BC | Test | Nov26`** (`120254289977390684`), +8k/día (38k en total), hasta la llegada de los anuncios de Black Week, cerca del 20-nov (`black-week-2026/config.json` aún dice 13-nov):
+
+    | Clave | Pieza | Conjunto / anuncio | Landing | Tanda |
+    |---|---|---|---|---|
+    | T1 | Meme «Papá» (video 7,5 s, `creative/t1.html`) | `120254289977490684` / `120254289978130684` | `/collections/monster-gym-training-shirt-unleash-the-beast` | Todas juntas |
+    | T2 | Perchero «DESDE 44.900» (`a5-price-variant.py`) | `120254289978220684` / `120254289978600684` | `/collections/desde-44900` (colección nueva, 12 productos) | Todas juntas |
+    | T3 / T3b | Figura gigante (`creative/t3.html`) | `120254290548160684` / `120254290549330684` y `120254290550740684` | `/collections/hombre` | Todas juntas |
+    | T4 | Video «DESDE $59.900» (`creative/t4.html`) | `120254290550840684` / `120254290554980684` | `/collections/best-sellers` | Todas juntas |
+
+  - **Actualización 8-nov (aprobada por el dueño):** las 4 piezas se activan juntas a 4k/día cada una (+16k/día, tope de 46k/día en total) y los dos cortes de tanda quedan reemplazados por esta regla. Día 3 (12k gastados): sigue con ≥ 1 compra o ≥ 8 carritos. Día 5 (20k): gana con CPA pixel ≤ 10k y ≥ 2 compras; con 0 compras se pausa. Hasta el 19-nov el dinero de las pausadas pasa a las ganadoras, con tope de 8k/día por pieza. Las ganadoras alimentan la campaña de fin de mes. Si A5 cae por la prueba, se reduce la prueba.
+  - **Catálogo bajo el anuncio prendido por decisión del dueño** (`product_extensions` en `OPT_IN`), con `All Products` (`1390143091991205`) y, en T1, `Monster club`. No aplica a carruseles (N2). Comando: `apply.cjs --catalog <claves>`; los creativos previos quedan en `.out/state.json` (`prev_creatives`). N5 y Banner conservaron el post; N3 y N4 quedaron con post nuevo porque Meta no aceptó reusarlo. A5: **pendiente**, se aplica de noche con `apply.cjs --catalog A5` (después de las 22:30, fuera del horario de compra).
+  - **Corrección:** la lectura de «CTR −31 % = fatiga» de A5 no es sólida. El A5 original tenía el catálogo prendido y el reemplazo del 15-oct lo apagó; desde entonces su CTR pasó de 2,45 a 1,80, mientras su CPA pixel mejoró de 11,6k a 9,5k. Ese mismo día también cambió el público, así que el efecto no se puede aislar. Históricamente, 14 anuncios con catálogo: CPA pixel 11,95k frente a 12,6k sin él.
+  - Creativos: `scripts/meta-ads/creative/render.py` (plantillas HTML + Playwright + ffmpeg). T4 muestra varias prendas de distintos precios: por eso va «desde», no «la más vendida».
+  - Riesgos aceptados por el dueño: T1 muestra «BASIC Gymshark Short» en la imagen y T2 lleva logos de terceros y un «desde» menor al precio de las prendas que se ven. Si Meta rechaza, se corrige el arte.
+  - Sin cambios en las colecciones existentes (reorden semanal rechazado). Próximas revisiones: 12, 15, 17 y 19-nov.
+
+- **Revisión 13-nov (7 d, 6→12-nov; `report.cjs last_7d 2026-11-08`):**
+  - **Cuenta:** gasto 276k · 15 compras pixel · CPA pixel 18,4k · frecuencia 3,04 (3,49 a 14 d).
+  - **Shopify:** 17 pedidos, 11 de Meta por último clic → **CPA real de 27,9k con impuestos** (la meta es 20k). La semana del 9-nov va en 14 pedidos, frente a 20 y 24 de las dos anteriores.
+  - **El quiebre fue el 8-nov.** En el conjunto principal el CPA pixel pasó de ~11,7k (1→7-nov, ~18 compras) a ~21,7k (8→12-nov, ~6 compras). A5 no tuvo compras el 8, 9 ni 10-nov. Ese día coincidieron dos cambios:
+    - la edición del catálogo en N3, N4, N5 y Banner (N3 y N4 quedaron con post nuevo, o sea anuncios nuevos dentro del conjunto);
+    - el arranque de la prueba ABO sobre el mismo público.
+
+    **Hipótesis: editar creativos del conjunto principal también reinicia el aprendizaje.** El 11 y el 12-nov se recuperó en parte (9 compras pixel).
+  - **Prueba ABO, día 5:**
+    - **gana T3b** (figura gigante, espalda): 2 compras, CPA pixel 8,3k, 1 pedido real;
+    - T1: 0 compras y 0 checkouts, gancho de 7,9 %;
+    - T2 y T4: 1 compra cada uno, con CPA de ~19k;
+    - T3 (frente): Meta no le dio gasto (1,6k).
+  - **Principal a 14 d:**
+    - A5: 13,0k (23 compras);
+    - Banner: 8,8k (4 compras, 0 en los últimos 7 d);
+    - **N2: 30k con 1 compra** (24k sin compras en 7 d), y se llevaba los picos de gasto en días malos;
+    - N3: 9,7k con 0 compras.
+  - **Embudo móvil:** carrito→checkout 59,1 % desde el 8-nov (70,4 % antes). Por día es ruidoso: entre 5 y 19 carritos diarios, con 60 % y 68 % el 11 y el 12-nov. Tema MAIN sin cambios desde el 21-oct. QA móvil del 13-nov (producto → cajón → checkout, con contra entrega visible): sin fallas.
+  - **Aplicado 13-nov (aprobado por el dueño):**
+    - pausados los conjuntos de prueba T1, T2 y T4, y el anuncio T3;
+    - el conjunto de T3b (`120254290548160684`) sube a **8k/día**;
+    - pausado N2 en el principal.
+    - Gasto total ≈ 38k/día (30k principal + 8k T3b). Sin anuncios ni ediciones nuevas en el principal antes del 20-nov.
+    - **A5 sin catálogo hasta después de BF** (no se toca).
+  - **Cortes en las revisiones del 15, 17 y 19-nov** (`report.cjs last_3d 2026-11-13`):
+    - N3 se pausa con 20k sin compras;
+    - Banner se pausa con 20k a 7 d sin compras;
+    - T3b se pausa con CPA pixel acumulado mayor de 15k;
+    - si el principal sigue por encima de 20k de CPA pixel a 3 d el 17-nov, se pausa T3b y se vuelve a 30k.
+  - **Para BF (anuncios nuevos hacia el 20-nov; la web no tendrá oferta antes de esa fecha):**
+    - T3b es el creativo base, adaptado a packs o «lleva 3», sin descuento porcentual;
+    - el conjunto de A5 sigue vivo durante BF (≥ 10k/día);
+    - las fechas de `black-week-2026/config.json` (13–20-nov) están pendientes de actualizar.
+
 ## 5.1 Incidente 15-oct: 3 anuncios sin entregar
 | Anuncio | Problema | Corrección (`apply.cjs --replace N2,N5,A5`) |
 |---|---|---|

@@ -17,7 +17,7 @@ Contexto fijo: `docs/marketing/PLAN_META_ADS_OCT_2026.md` (decisiones, CPA objet
    - **Rotar el creativo:** frecuencia a 7 d mayor que 3, CTR −30 % frente a su primera semana o hook (video) menor de 20 %.
    - **Escalar (solo proponer):** CPA real con impuestos ≤ 20k durante 14 d, en escalones de +20 %. Si a 7 d supera 20k, se vuelve al presupuesto anterior. Subir el presupuesto requiere aprobación.
    - **Destino:** ningún anuncio nuevo a la home ni a `/collections/compresion` (A5 es la excepción histórica).
-   - **Estructura:** no se agregan anuncios al conjunto principal (cada tanda reinicia el aprendizaje y Meta deja sin gasto a lo nuevo frente al ganador). Las piezas nuevas se prueban en una campaña ABO aparte con presupuesto propio (2–3 piezas, unos 4k/día cada una, 5 días). Se gradúa la que logre CPA pixel ≤ 10k con al menos 2 compras.
+   - **Estructura:** no se agregan anuncios al conjunto principal (cada tanda reinicia el aprendizaje y Meta deja sin gasto a lo nuevo frente al ganador). Las piezas nuevas se prueban en una campaña ABO aparte con presupuesto propio (2–3 piezas, unos 4k/día cada una, 5 días). Se gradúa la que logre CPA pixel ≤ 10k con al menos 2 compras. Tampoco se editan los creativos del conjunto principal (por ejemplo, para prender el catálogo) en semanas de campaña: el 8-nov, editar N3, N4, N5 y Banner coincidió con que el CPA pixel del conjunto pasara de 11,7k a 21,7k.
    - Revisa el gasto diario por anuncio (`time_ranges` por día) si un anuncio nuevo le quita gasto al ganador: el 29-oct U2 se llevó el 91 % y las compras cayeron de 10 a 2.
 3. Revisa el embudo móvil: si carrito→checkout baja de 60 %, revisa el cajón y los mensajes de envío del tema.
 4. **Propón** los cambios en una tabla (anuncio · evidencia · acción) y pide confirmación con AskUserQuestion.
@@ -28,7 +28,8 @@ Contexto fijo: `docs/marketing/PLAN_META_ADS_OCT_2026.md` (decisiones, CPA objet
 ## Reglas de contenido
 - Los textos nunca nombran marcas de terceros.
 - La primera línea lleva el precio y «Pagas al recibir» (en video: en los primeros 2 s). Este público compra por oferta clara, no por contenido de estilo de vida.
-- Catálogo bajo el anuncio (`product_extensions`): solo con un conjunto de productos de línea propia; los títulos del catálogo llevan marcas de terceros.
+- Catálogo bajo el anuncio (`product_extensions`): prendido por decisión del dueño (8-nov) en imagen o video único, con `catalog` en `plan.json` o `apply.cjs --catalog <claves>`. Meta no lo permite en carruseles. Editar un anuncio activo lo manda a revisión: hacerlo de noche.
+- Creativos con plantillas HTML: `python scripts/meta-ads/creative/render.py [clave]`.
 - Black Friday: nada de descuento porcentual general (un 15 % se come la utilidad por pedido); mejor regalo o «lleva 3».
 - Cada pieza en 4:5 (feed) y 9:16 (Stories y Reels): `python -I scripts/meta-ads/prep-creatives.py`.
 - No inventar datos (stock, materiales, tiempos): preguntar.
