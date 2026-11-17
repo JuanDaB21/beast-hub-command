@@ -61,6 +61,10 @@ Rama: `claude/fix-railway-deployment-AE5PT`.
   - **Órdenes**: Kanban con pestañas por estado en móvil y "Mover a" por tarjeta (solo estados del tablero, igual que el arrastre; entregar/cancelar sigue en el detalle).
   - Sin cambios de lógica de negocio, API ni migraciones.
 
+- [x] FASE 15 — Edición de cliente y nuevo pedido en panel lateral (rama `claude/order-customer-edit`, solo frontend):
+  - **Editar cliente**: botón "Editar" en la tarjeta Cliente de `OrderDetails` abre `EditCustomerDialog.tsx` (nombre, teléfono, dirección, ciudad DANE) → `useUpdateOrderCustomer()` hace `PATCH /orders/:id` con `customer_*` (ya en `COLS`) e invalida órdenes + logística. Editable en cualquier estado. Ciudades de Shopify sin código DANE se conservan si no se elige otra.
+  - **Nuevo pedido**: `Orders.tsx` lo abre en `DetailPanel` (lateral desktop / hoja móvil). Cada línea de `NewOrderForm` va en dos filas: producto a ancho completo con `wrapLabel` (sublabel `SKU · stock N`) y debajo cantidad/precio/total; pie fijo con total + "Crear pedido".
+
 ## Convenciones clave
 
 - **CRUD**: `pickBody`/`buildInsert`/`buildUpdate` con `COLS` whitelist. Siempre `String(req.params.id)` (Express 5 tipa `string | string[]`).

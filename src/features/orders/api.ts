@@ -304,6 +304,27 @@ export function useUpdateOrderStatus() {
   });
 }
 
+export interface OrderCustomerPatch {
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string | null;
+  customer_city: string | null;
+  customer_city_dane_code: string | null;
+}
+
+/** Corrige los datos del cliente (nombre, teléfono, dirección, ciudad). */
+export function useUpdateOrderCustomer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: OrderCustomerPatch }) =>
+      api.patch<Order>(`/orders/${id}`, patch),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK_ORDERS });
+      qc.invalidateQueries({ queryKey: QK_LOGISTICS });
+    },
+  });
+}
+
 /** Corrige la vía de cobro de un pedido ya pagado (histórico sin método). */
 export function useUpdatePaymentMethod() {
   const qc = useQueryClient();

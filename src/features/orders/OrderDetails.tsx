@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info, Plus, Trash2 } from "lucide-react";
+import { Info, Pencil, Plus, Trash2 } from "lucide-react";
+import { EditCustomerDialog } from "./EditCustomerDialog";
 import {
   Select,
   SelectContent,
@@ -69,6 +70,7 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
   // Vía por la que entró la plata. Se captura al verificar el pago; este estado
   // alimenta ese selector.
   const [verifyMethod, setVerifyMethod] = useState<PaymentMethod | "">("");
+  const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   // Prepago (no COD) cuya transferencia aún no se verifica (Nequi u otra).
   const pendingVerification =
     !order.is_cod && order.payment_status === "pending_verification";
@@ -268,7 +270,19 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
       </div>
 
       <div className="rounded-xl border bg-card p-3.5">
-        <div className="mb-2 text-xs font-medium text-muted-foreground">Cliente</div>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-xs font-medium text-muted-foreground">Cliente</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="-my-1 h-7 gap-1.5 px-2 text-xs"
+            onClick={() => setEditCustomerOpen(true)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Editar
+          </Button>
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="font-medium">{order.customer_name}</div>
@@ -284,6 +298,7 @@ export function OrderDetails({ order, onChangeStatus, onRequestShip, onDelete }:
             message={`Hola ${order.customer_name}, te contacto sobre tu pedido ${order.order_number}.`}
           />
         </div>
+        <EditCustomerDialog order={order} open={editCustomerOpen} onOpenChange={setEditCustomerOpen} />
       </div>
 
       <div>
