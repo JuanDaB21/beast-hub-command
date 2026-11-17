@@ -3,13 +3,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DetailPanel } from "@/components/shared/DetailPanel";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -229,19 +223,14 @@ export default function Orders() {
         targetStatus={shipTarget?.targetStatus}
       />
 
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="flex max-h-[90vh] sm:w-[95vw] max-w-3xl flex-col overflow-hidden p-0 sm:w-full">
-          <DialogHeader className="border-b px-6 py-4">
-            <DialogTitle>Nuevo pedido manual</DialogTitle>
-            <DialogDescription>
-              Registra los datos del cliente y agrega productos del catálogo.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            <NewOrderForm onSuccess={() => setFormOpen(false)} />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DetailPanel
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        title="Nuevo pedido"
+        description="Registra los datos del cliente y agrega productos del catálogo."
+      >
+        <NewOrderForm onSuccess={() => setFormOpen(false)} />
+      </DetailPanel>
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>

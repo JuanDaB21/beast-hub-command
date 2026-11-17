@@ -26,6 +26,7 @@ import {
 } from "./api";
 import { useGlobalConfigs } from "@/features/production/configApi";
 import { toast } from "@/hooks/use-toast";
+import { formatCOP } from "@/lib/format";
 
 interface Props {
   onSuccess?: () => void;
@@ -35,8 +36,6 @@ interface DraftItem extends NewOrderItemInput {
   uid: string;
 }
 
-const currency = (n: number) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 export function NewOrderForm({ onSuccess }: Props) {
   const { data: products = [], isLoading: loadingProducts } = useProductsForOrder();
@@ -62,7 +61,7 @@ export function NewOrderForm({ onSuccess }: Props) {
       products.map((p) => ({
         value: p.id,
         label: p.name,
-        sublabel: p.sku,
+        sublabel: `${p.sku} · stock ${p.stock ?? 0}`,
       })),
     [products],
   );
@@ -289,7 +288,7 @@ export function NewOrderForm({ onSuccess }: Props) {
           {items.map((it) => {
             const lineTotal = (Number(it.quantity) || 0) * (Number(it.unit_price) || 0);
             return (
-              <div key={it.uid} className="grid gap-2 rounded-md border p-2 sm:grid-cols-[1fr_90px_120px_auto] sm:items-end">
+              <div key={it.uid} className="min-w-0 space-y-2 rounded-md border p-2.5">
                 <div className="space-y-1">
                   <Label className="text-xs">Producto</Label>
                   <StandardCombobox
@@ -298,30 +297,33 @@ export function NewOrderForm({ onSuccess }: Props) {
                     onChange={(v) => onPickProduct(it.uid, v)}
                     placeholder="Seleccionar producto"
                     allowClear={false}
+                    wrapLabel
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Cantidad</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={it.quantity}
-                    onChange={(e) => updateItem(it.uid, { quantity: Number(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Precio unit.</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={it.unit_price}
-                    onChange={(e) => updateItem(it.uid, { unit_price: Number(e.target.value) })}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-2 sm:flex-col sm:items-end">
-                  <span className="text-xs text-muted-foreground sm:text-right">
-                    {currency(lineTotal)}
+                <div className="grid grid-cols-[72px_minmax(0,1fr)_auto_auto] items-end gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Cantidad</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={it.quantity}
+                      onChange={(e) => updateItem(it.uid, { quantity: Number(e.target.value) })}
+                      className="tabular-nums"
+                    />
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <Label className="text-xs">Precio unit.</Label>
+                    <Input
+                      type="number"
+                      step="1"
+                      min="0"
+                      value={it.unit_price}
+                      onChange={(e) => updateItem(it.uid, { unit_price: Number(e.target.value) })}
+                      className="tabular-nums"
+                    />
+                  </div>
+                  <span className="pb-2.5 text-right text-sm font-medium tabular-nums">
+                    {formatCOP(lineTotal)}
                   </span>
                   <Button
                     type="button"
@@ -342,7 +344,7 @@ export function NewOrderForm({ onSuccess }: Props) {
       <div className="space-y-1 rounded-md bg-muted/40 p-3">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Subtotal productos</span>
-          <span className="tabular-nums">{currency(subtotal)}</span>
+          <span className="tabular-nums">{formatCOP(subtotal)}</span>
         </div>
         {isCod && codSurcharge > 0 && (
           <div className="flex items-center justify-between text-sm">
@@ -357,24 +359,32 @@ export function NewOrderForm({ onSuccess }: Props) {
                 </TooltipContent>
               </Tooltip>
             </span>
-            <span className="tabular-nums">{currency(codSurcharge)}</span>
+            <span className="tabular-nums">{formatCOP(codSurcharge)}</span>
           </div>
         )}
         {shippingCharge > 0 && (
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Envío estándar</span>
-            <span className="tabular-nums">{currency(shippingCharge)}</span>
+            <span className="tabular-nums">{formatCOP(shippingCharge)}</span>
           </div>
         )}
         <div className="flex items-center justify-between border-t pt-2">
           <span className="text-sm font-medium">{isCod ? "Total a cobrar al cliente" : "Total estimado"}</span>
-          <span className="text-lg font-semibold tabular-nums">{currency(total)}</span>
+          <span className="text-lg font-semibold tabular-nums">{formatCOP(total)}</span>
         </div>
       </div>
 
-      <Button type="submit" disabled={create.isPending} className="w-full sm:w-auto">
-        {create.isPending ? "Creando..." : "Crear pedido"}
-      </Button>
+      <div className="sticky bottom-0 -mx-1 flex items-center justify-between gap-3 border-t bg-background px-1 py-3">
+        <div className="min-w-0">
+          <div className="text-xs text-muted-foreground">
+            {items.length} {items.length === 1 ? "línea" : "líneas"}
+          </div>
+          <div className="text-lg font-semibold tabular-nums">{formatCOP(total)}</div>
+        </div>
+        <Button type="submit" variant="brand" disabled={create.isPending}>
+          {create.isPending ? "Creando..." : "Crear pedido"}
+        </Button>
+      </div>
     </form>
   );
 }
