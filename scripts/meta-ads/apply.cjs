@@ -10,18 +10,22 @@
 //   node scripts/meta-ads/apply.cjs --catalog N3,Banner → prende el catálogo en anuncios ya publicados (vuelven a revisión)
 //   node scripts/meta-ads/apply.cjs --test-status ACTIVE t1,t2 → activa/pausa conjuntos de plan.test (al activar, también la campaña de prueba)
 // --activate NO es idempotente (re-etiqueta y reactiva todo): para correcciones usar --replace.
+//   node scripts/meta-ads/apply.cjs <modo> ... --plan=black-week.plan.json → otro plan (estado propio en .out/state-<plan>.json)
 // Guarda IDs creados en .out/state.json para ser idempotente.
 const fs = require('fs');
 const path = require('path');
 const { get, post, upload, all, ACCOUNT, PAGE_ID, IG_ID } = require('./metaApi.cjs');
 
-const plan = JSON.parse(fs.readFileSync(path.join(__dirname, 'plan.json'), 'utf8'));
+const PLAN_FILE = process.argv.find((a) => a.startsWith('--plan='))?.slice(7) || 'plan.json';
+const ARGS = process.argv.filter((a) => !a.startsWith('--plan='));
+const plan = JSON.parse(fs.readFileSync(path.join(__dirname, PLAN_FILE), 'utf8'));
 const OUT = path.join(__dirname, '.out');
-const STATE = path.join(OUT, 'state.json');
+const STATE = path.join(OUT, PLAN_FILE === 'plan.json' ? 'state.json' : `state-${path.basename(PLAN_FILE, '.json')}.json`);
+const PREVIEWS = PLAN_FILE === 'plan.json' ? 'previews.html' : `previews-${path.basename(PLAN_FILE, '.json')}.html`;
 fs.mkdirSync(OUT, { recursive: true });
 const state = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, 'utf8')) : { images: {}, video: null, creatives: {}, ads: {} };
 const save = () => fs.writeFileSync(STATE, JSON.stringify(state, null, 2));
-const mode = process.argv[2] || '--dry';
+const mode = ARGS[2] || '--dry';
 
 const FEED = { facebook_positions: ['feed', 'profile_feed', 'instream_video'], instagram_positions: ['stream', 'profile_feed', 'explore_home', 'ig_search'] };
 const VERT = { facebook_positions: ['story', 'facebook_reels'], instagram_positions: ['story', 'reels'] };
@@ -134,6 +138,13 @@ async function creativeSpec(ad) {
 }
 
 // Campaña ABO de prueba (plan.test): copia público y optimización del conjunto principal, sin modificarlo.
+// Opcional: plan.test.end_time (ISO) y por conjunto `targeting_patch` (ej. géneros/edades; null borra la clave).
+function patchTargeting(t, patch = {}) {
+  const out = { ...t };
+  for (const [k, v] of Object.entries(patch)) { if (v === null) delete out[k]; else out[k] = v; }
+  return out;
+}
+
 async function testAdset(key) {
   state.test ??= { campaign: null, adsets: {} };
   if (state.test.adsets[key]) return state.test.adsets[key];
@@ -149,7 +160,8 @@ async function testAdset(key) {
   const s = await post(`${ACCOUNT}/adsets`, {
     name: def.name, campaign_id: state.test.campaign, daily_budget: def.daily_budget, status: 'PAUSED', bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
     billing_event: base.billing_event, optimization_goal: base.optimization_goal, promoted_object: { pixel_id, custom_event_type },
-    targeting: base.targeting, attribution_spec: base.attribution_spec,
+    targeting: patchTargeting(base.targeting, def.targeting_patch), attribution_spec: base.attribution_spec,
+    ...(plan.test.end_time ? { end_time: plan.test.end_time } : {}),
   });
   state.test.adsets[key] = s.id; save();
   console.log(`  conjunto ${def.name} ${s.id} (PAUSA, ${def.daily_budget}/día)`);
@@ -247,8 +259,8 @@ async function previews(keys) {
     }
     html += '</div>';
   }
-  fs.writeFileSync(path.join(OUT, 'previews.html'), html);
-  console.log(`previews → ${path.join(OUT, 'previews.html')}`);
+  fs.writeFileSync(path.join(OUT, PREVIEWS), html);
+  console.log(`previews → ${path.join(OUT, PREVIEWS)}`);
 }
 
 async function activate() {
@@ -283,12 +295,12 @@ async function activate() {
     for (const ad of plan.new_ads) console.log(`+ ${ad.name} [${ad.type}] conjunto ${ad.test_adset ?? 'principal'} → ${ad.link ?? ad.source_creative}${state.ads[ad.key] || ad.ad_id ? ` (ya creado ${state.ads[ad.key] ?? ad.ad_id})` : ''}\n    "${ad.title ?? ''}" | ${(ad.body ?? '').replace(/\n/g, ' / ')}`);
     return;
   }
-  if (mode === '--create') return create((process.argv[3] || '').split(',').filter(Boolean));
-  if (mode === '--catalog') return enableCatalog((process.argv[3] || '').split(',').filter(Boolean));
-  if (mode === '--test-status') return setTestStatus(process.argv[3], (process.argv[4] || '').split(',').filter(Boolean));
-  if (mode === '--replace') return replace((process.argv[3] || '').split(',').filter(Boolean));
-  if (mode === '--previews') return previews((process.argv[3] || '').split(',').filter(Boolean));
-  if (mode === '--status') return setStatus(process.argv[3], (process.argv[4] || '').split(',').filter(Boolean));
+  if (mode === '--create') return create((ARGS[3] || '').split(',').filter(Boolean));
+  if (mode === '--catalog') return enableCatalog((ARGS[3] || '').split(',').filter(Boolean));
+  if (mode === '--test-status') return setTestStatus(ARGS[3], (ARGS[4] || '').split(',').filter(Boolean));
+  if (mode === '--replace') return replace((ARGS[3] || '').split(',').filter(Boolean));
+  if (mode === '--previews') return previews((ARGS[3] || '').split(',').filter(Boolean));
+  if (mode === '--status') return setStatus(ARGS[3], (ARGS[4] || '').split(',').filter(Boolean));
   if (mode === '--activate') return activate();
   throw new Error(`modo desconocido ${mode}`);
 })().catch((e) => { console.error('ERR', e.message); process.exit(1); });

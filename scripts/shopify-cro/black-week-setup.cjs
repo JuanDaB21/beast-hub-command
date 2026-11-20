@@ -386,16 +386,44 @@ async function discount() {
     destination: { all: true },
     combinesWith: { productDiscounts: true, orderDiscounts: true },
   };
-  console.log(JSON.stringify(input, null, 2));
+  const { discountId } = state();
+  console.log(`${discountId ? `Actualiza ${discountId}` : 'Crea'}:\n${JSON.stringify(input, null, 2)}`);
   if (!APPLY) return;
+  if (discountId) { // Re-ejecutar (ej. cambio de fechas) actualiza el mismo descuento: no duplica.
+    errs((await gql(`mutation($id: ID!, $d: DiscountAutomaticFreeShippingInput!) {
+      discountAutomaticFreeShippingUpdate(id: $id, freeShippingAutomaticDiscount: $d) { userErrors { field message } } }`,
+    { id: discountId, d: input })).discountAutomaticFreeShippingUpdate);
+    console.log(`Actualizado ${discountId}`);
+    return;
+  }
   const r = errs((await gql(`mutation($d: DiscountAutomaticFreeShippingInput!) { discountAutomaticFreeShippingCreate(freeShippingAutomaticDiscount: $d) {
     automaticDiscountNode { id } userErrors { field message } } }`, { d: input })).discountAutomaticFreeShippingCreate);
   saveState({ discountId: r.automaticDiscountNode.id });
   console.log(`Creado ${r.automaticDiscountNode.id}`);
 }
 
+// Precio suelto permanente de mujer (config.precios_mujer.productos): no se revierte al cierre.
+// El tachado se conserva si queda al menos 5 % por encima del precio nuevo; si no, se quita (60.000 sobre 59.900 no es oferta).
+async function pricesWomen() {
+  const M = CFG.precios_mujer;
+  for (const c of M.productos.filter((x) => !ONLY || x.handle === ONLY)) {
+    const p = await product(c.handle);
+    const v = p.variants.nodes.map((x) => {
+      const cmp = Number(x.compareAtPrice || 0);
+      return { id: x.id, price: String(c.precio), compareAtPrice: cmp >= c.precio * 1.05 ? String(cmp) : null };
+    });
+    const same = v.every((x, i) => Number(p.variants.nodes[i].price) === c.precio && (p.variants.nodes[i].compareAtPrice ? Number(p.variants.nodes[i].compareAtPrice) : null) === (x.compareAtPrice ? Number(x.compareAtPrice) : null));
+    const now = Math.max(...p.variants.nodes.map((x) => Number(x.price)));
+    console.log(`${p.title}: ${cop(now)} → ${cop(c.precio)} · costo ${cop(c.costo)} · margen ${cop(c.precio * (1 - M.comision) - c.costo)}${same ? ' (sin cambio)' : ''}`);
+    if (!APPLY || same) continue;
+    errs((await gqlRetry(`mutation($id: ID!, $v: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $id, variants: $v) {
+      userErrors { field message } } }`, { id: p.id, v })).productVariantsBulkUpdate);
+  }
+}
+
 async function prices() {
-  if (!['start', 'revert'].includes(sub)) throw new Error('Uso: prices start|revert');
+  if (sub === 'women') return pricesWomen();
+  if (!['start', 'revert'].includes(sub)) throw new Error('Uso: prices start|revert|women');
   const items = [...CFG.complementos, ...(CFG.ajustes_precio ?? [])].filter((x) => x.handle && (!ONLY || x.handle === ONLY));
   for (const c of items) {
     const p = await product(c.handle);

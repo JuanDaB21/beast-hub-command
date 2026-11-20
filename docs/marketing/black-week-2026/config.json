@@ -2,10 +2,10 @@
   "campana": "Black Week Beast",
   "periodo": {
     "inicio": "2026-11-20",
-    "fin": "2026-11-27",
+    "fin": "2026-11-30",
     "teaser": "2026-11-17",
-    "dias": 8,
-    "texto": "20 al 27 de noviembre"
+    "dias": 11,
+    "texto": "20 al 30 de noviembre"
   },
   "envio": {
     "flete_promedio": 19000,
@@ -15,7 +15,7 @@
   "nomina_por_prenda": 10000,
   "pauta": {
     "diaria_actual": 30000,
-    "diaria_black_week": 60000,
+    "diaria_black_week": 45000,
     "factor_impuestos": 1.114,
     "cpa_real_max": 20000,
     "estructura": [
@@ -34,7 +34,22 @@
         "diaria": 12000,
         "detalle": "R1 y R2 sobre visitantes de 30 días, interacciones y clientes."
       }
-    ]
+    ],
+    "reasignacion_20nov": {
+      "total": 45000,
+      "evergreen": 15000,
+      "test_t3b": 8000,
+      "black_week_hombre": 16000,
+      "black_week_mujer": 6000,
+      "pausados": [
+        "N3 Receta prohibida",
+        "N4 Nuevas oversized",
+        "conjunto T4 Video desde 59.900"
+      ],
+      "catalogo": "Anuncio 5 con catálogo (mismo post); N5, Banner y T3b ya lo tenían.",
+      "campana": "BC | Black Week | Nov26 (ABO, fin 30-nov 23:59). Plan: scripts/meta-ads/black-week.plan.json; estado .out/state-black-week.plan.json. Creada en PAUSA: activar con OK del dueño cuando el tema esté publicado.",
+      "motivo": "CPM +50 % por el Black Friday (4,1k → 6,3–7,1k) con CTR estable ~3 % y CPA real ~16,5k: se recorta lo que no convierte en lugar de subir presupuesto."
+    }
   },
   "demanda": {
     "pedidos_semana": 55,
@@ -48,7 +63,7 @@
     "Packs de 3 prendas medidos contra el precio de lista (tachado): Trío 169.900, Outfit 189.900 y Training 199.900. Cada pack ofrece «Añade la 4.ª y recibe envío gratis»: la 4.ª va a su precio normal.",
     "El envío gratis solo aparece desde 239.800 (Trío + una 4.ª de 69.900). En los packs de 3 se comería la mitad del margen.",
     "La pauta empuja estáticos con precio grande y carruseles, el formato que mejor vende en nuestra cuenta. El video y el 3D ligero suman alcance.",
-    "Del 20 al 27 de noviembre, cerrando en el Black Friday, con pauta de 60.000/día.",
+    "Del 20 al 30 de noviembre (extendida el 20-nov: el Black Friday queda en medio), con pauta de 45.000/día reasignada.",
     "Antes del 10-nov hay que reabastecer la oversized negra, la pantaloneta y la compresión."
   ],
   "packs": [
@@ -182,6 +197,78 @@
           ]
         }
       ]
+    },
+    {
+      "id": "mujer-gris",
+      "genero": "mujer",
+      "nombre": "PACK MUJER GRIS",
+      "rol": "Pack de mujer: 2 oversized más vendidas + tank acid gris. Margen igual al de hombre (~25k por prenda).",
+      "precio": 179900,
+      "envio_gratis": false,
+      "mezcla": 0.5,
+      "versiones": [
+        {
+          "id": "mujer-gris",
+          "nombre": "Pack Mujer Gris",
+          "participacion": 1,
+          "componentes": [
+            {
+              "producto": "\"POWER\" Oversized training shirt",
+              "handle": "power-oversized-training-shirt",
+              "color": "Negro / Letras Rojas",
+              "base": "Camiseta Oversized 200 gr - 011-Negro"
+            },
+            {
+              "producto": "\"LIFTING SHARK\" Oversized mujer shirt",
+              "handle": "lifting-shark-oversized-training-shirt",
+              "color": "Negro/ Letras Crema",
+              "base": "Camiseta Oversized 200 gr - 011-Negro"
+            },
+            {
+              "producto": "LOYAL WOLF Training Tank Fem",
+              "handle": "loyal-wolf-training-tank-top-1",
+              "color": "Acid gris claro / Letras blancas",
+              "base": "Camiseta Oversize Acid 220 gr - Acid_gris_claro"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mujer-negro",
+      "genero": "mujer",
+      "nombre": "PACK MUJER NEGRO",
+      "rol": "Pack de mujer todo negro: 2 oversized + tank negro. Margen igual al de hombre (~25k por prenda).",
+      "precio": 179900,
+      "envio_gratis": false,
+      "mezcla": 0.5,
+      "versiones": [
+        {
+          "id": "mujer-negro",
+          "nombre": "Pack Mujer Negro",
+          "participacion": 1,
+          "componentes": [
+            {
+              "producto": "\"FRACTION GYMSHARK\" Oversized training shirt",
+              "handle": "fraction-gymshark-oversized-training-shirt",
+              "color": "Negro/ Letras Blancas",
+              "base": "Camiseta Oversized 200 gr - 011-Negro"
+            },
+            {
+              "producto": "\"INQUEBRANTABLE\" Oversized training shirt",
+              "handle": "inquebrantable-camiseta-oversized-para-mujeres",
+              "color": "Negro / Letra Blanca",
+              "base": "Camiseta Oversized 200 gr - 011-Negro"
+            },
+            {
+              "producto": "WARWOLF DARKSTRIKE Training Tank Fem",
+              "handle": "warwolf-darkstrike-training-tank-top-1",
+              "color": "Negro/ Letras Blancas",
+              "base": "Camiseta Oversized 200 gr - 011-Negro"
+            }
+          ]
+        }
+      ]
     }
   ],
   "cuarta": {
@@ -218,6 +305,34 @@
         "color": "Negro",
         "base": "Camiseta Oversized 200 gr - 011-Negro",
         "imagen_media": 1
+      },
+      {
+        "id": "loyal-mujer",
+        "producto": "LOYAL WOLF Training Tank Fem",
+        "handle": "loyal-wolf-training-tank-top-1",
+        "color": "Acid gris claro / Letras blancas",
+        "base": "Camiseta Oversize Acid 220 gr - Acid_gris_claro"
+      },
+      {
+        "id": "warwolf-mujer",
+        "producto": "WARWOLF DARKSTRIKE Training Tank Fem",
+        "handle": "warwolf-darkstrike-training-tank-top-1",
+        "color": "Negro/ Letras Blancas",
+        "base": "Camiseta Oversized 200 gr - 011-Negro"
+      },
+      {
+        "id": "strength-mujer",
+        "producto": "\"STRENGTH GRAPHIC\" Oversized training shirt",
+        "handle": "strength-graphic-oversized-training-shirt",
+        "color": "Negro/ Letras Blancas",
+        "base": "Camiseta Oversized 200 gr - 011-Negro"
+      },
+      {
+        "id": "block-mujer",
+        "producto": "\"BLOCK\" Mujer Oversized training shirt",
+        "handle": "block-oversized-training-shirt",
+        "color": "Negro/ Letras Blancas",
+        "base": "Camiseta Oversized 200 gr - 011-Negro"
       }
     ],
     "por_version": {
@@ -240,6 +355,16 @@
         "chaos",
         "motor",
         "monster"
+      ],
+      "mujer-gris": [
+        "warwolf-mujer",
+        "strength-mujer",
+        "block-mujer"
+      ],
+      "mujer-negro": [
+        "loyal-mujer",
+        "strength-mujer",
+        "block-mujer"
       ]
     }
   },
@@ -326,7 +451,7 @@
       "gancho": "3 × $169.900",
       "texto_pantalla": "BLACK WEEK BEAST · 3 × $169.900 · Precio de lista $239.700 · Pagas al recibir",
       "titulo": "3 camisetas por $169.900",
-      "copy": "Black Week Beast: 3 oversized de 200 g por $169.900. Eliges la talla de cada una y pagas al recibir. Del 20 al 27 de noviembre. Añade la 4.ª y recibe envío gratis.",
+      "copy": "Black Week Beast: 3 oversized de 200 g por $169.900. Eliges la talla de cada una y pagas al recibir. Del 20 al 30 de noviembre. Añade la 4.ª y recibe envío gratis.",
       "cta": "Comprar",
       "destino": "/pages/black-week-beast#trio",
       "tomas": [
@@ -345,7 +470,7 @@
       "gancho": "¿3 o 4?",
       "texto_pantalla": "3 × $169.900 · AÑADE LA 4.ª Y RECIBE ENVÍO GRATIS · Pagas al recibir",
       "titulo": "Añade la 4.ª: envío gratis",
-      "copy": "¿3 o 4? En Black Week Beast llevas 3 oversized por $169.900. Añade la 4.ª y el envío es gratis a toda Colombia. Pagas al recibir. Hasta el 27 de noviembre.",
+      "copy": "¿3 o 4? En Black Week Beast llevas 3 oversized por $169.900. Añade la 4.ª y el envío es gratis a toda Colombia. Pagas al recibir. Hasta el 30 de noviembre.",
       "cta": "Comprar",
       "destino": "/pages/black-week-beast#trio",
       "tomas": [
@@ -363,7 +488,7 @@
       "gancho": "Outfit completo $189.900",
       "texto_pantalla": "1: OUTFIT COMPLETO $189.900 · 2–4: cada prenda, frente y espalda · 5: añade la 4.ª y recibe envío gratis",
       "titulo": "Outfit completo por $189.900",
-      "copy": "Tank, oversized y short por $189.900. Cada prenda en tu talla y pagas al recibir. Black Week Beast, hasta el 27 de noviembre.",
+      "copy": "Tank, oversized y short por $189.900. Cada prenda en tu talla y pagas al recibir. Black Week Beast, hasta el 30 de noviembre.",
       "cta": "Comprar",
       "destino": "/pages/black-week-beast#outfit",
       "tomas": [
@@ -391,7 +516,7 @@
         ],
         [
           "7–10 s",
-          "Las 3 dobladas. Texto: «Black Week Beast · 20–27 nov · Pagas al recibir»."
+          "Las 3 dobladas. Texto: «Black Week Beast · 20–30 nov · Pagas al recibir»."
         ]
       ],
       "texto_pantalla": "3 camisetas · $169.900 → Lunes / Miércoles / Viernes → Pagas al recibir",
@@ -429,7 +554,7 @@
       ],
       "texto_pantalla": "3 × $169.900 · añade la 4.ª y recibe envío gratis → Pagas al recibir",
       "titulo": "Añade la 4.ª: envío gratis",
-      "copy": "Cuatro prendas, frente y espalda: 3 por $169.900 y añade la 4.ª para recibir envío gratis. Black Week Beast, hasta el 27 de noviembre. Pagas al recibir.",
+      "copy": "Cuatro prendas, frente y espalda: 3 por $169.900 y añade la 4.ª para recibir envío gratis. Black Week Beast, hasta el 30 de noviembre. Pagas al recibir.",
       "cta": "Comprar",
       "destino": "/pages/black-week-beast#trio",
       "tomas": [
@@ -458,7 +583,7 @@
         ],
         [
           "8–11 s",
-          "Las 3 prendas sobre el banco. Texto: «Pagas al recibir · hasta el 27-nov»."
+          "Las 3 prendas sobre el banco. Texto: «Pagas al recibir · hasta el 30-nov»."
         ]
       ],
       "texto_pantalla": "Kit training $199.900 → Calienta / Entrena / Pump",
@@ -482,7 +607,7 @@
       "gancho": "Quedan 2 días / Hoy es Black Friday",
       "texto_pantalla": "QUEDAN 2 DÍAS · 3 × $169.900 · añade la 4.ª y recibe envío gratis",
       "titulo": "Últimos días de Black Week",
-      "copy": "Lo que viste ahora viene en pack: 3 por $169.900, y si añades la 4.ª el envío es gratis. Pagas al recibir. Termina el 27 de noviembre.",
+      "copy": "Lo que viste ahora viene en pack: 3 por $169.900, y si añades la 4.ª el envío es gratis. Pagas al recibir. Termina el 30 de noviembre.",
       "cta": "Comprar",
       "destino": "/pages/black-week-beast",
       "tomas": [
@@ -500,7 +625,7 @@
       "gancho": "Elige tu pack",
       "texto_pantalla": "Trío $169.900 · Outfit $189.900 · Training $199.900 · añade la 4.ª y recibe envío gratis",
       "titulo": "Elige tu pack",
-      "copy": "Trío, Outfit o Training: elige el tuyo y suma la 4.ª con envío gratis hasta el 27 de noviembre. Pagas al recibir.",
+      "copy": "Trío, Outfit o Training: elige el tuyo y suma la 4.ª con envío gratis hasta el 30 de noviembre. Pagas al recibir.",
       "cta": "Comprar",
       "destino": "/pages/black-week-beast",
       "tomas": [
@@ -555,7 +680,7 @@
     {
       "fase": "Campaña",
       "inicio": "2026-11-20",
-      "fin": "2026-11-27",
+      "fin": "2026-11-30",
       "detalle": "60k/día; revisiones el 22 y el 24; Black Friday el 27"
     },
     {
@@ -596,7 +721,7 @@
       "titulo": "Black Week Beast",
       "template_suffix": "black-week"
     },
-    "fin_iso": "2026-11-27T23:59:59-05:00",
+    "fin_iso": "2026-11-30T23:59:59-05:00",
     "inicio_iso": "2026-11-20T00:00:00-05:00",
     "fotos": {
       "version": "v4",
@@ -659,6 +784,16 @@
         "CALIENTA",
         "ENTRENA",
         "PUMP"
+      ],
+      "mujer-gris": [
+        "LOOK 1",
+        "LOOK 2",
+        "EL TANK"
+      ],
+      "mujer-negro": [
+        "LOOK 1",
+        "LOOK 2",
+        "EL TANK"
       ]
     },
     "bundles": [
@@ -701,6 +836,26 @@
           "Tank acid gris",
           "Oversized letras rojas"
         ]
+      },
+      {
+        "version": "mujer-gris",
+        "handle": "pack-mujer-gris",
+        "titulo": "PACK MUJER · Gris",
+        "etiquetas": [
+          "Oversized letras rojas",
+          "Oversized letras crema",
+          "Tank acid gris"
+        ]
+      },
+      {
+        "version": "mujer-negro",
+        "handle": "pack-mujer-negro",
+        "titulo": "PACK MUJER · Negro",
+        "etiquetas": [
+          "Oversized negra",
+          "Oversized Inquebrantable",
+          "Tank negro"
+        ]
       }
     ]
   },
@@ -713,5 +868,61 @@
       "tachado": 99900,
       "nota": "Sube a 69.900 para que Trío + Monster llegue al umbral de 239.800. Se revierte en el cierre (prices revert)."
     }
-  ]
+  ],
+  "precios_mujer": {
+    "nota": "Precio suelto permanente (decisión del dueño 20-nov): cada prenda de mujer debe dejar cerca de 30k brutos (precio × 0,98 − costo Beast Hub). Regla: el menor precio terminado en 4.900/9.900 con margen ≥ 28,5k. No se revierte al cierre. Aplicar con black-week-setup.cjs prices women --apply.",
+    "comision": 0.02,
+    "productos": [
+      {
+        "handle": "power-oversized-training-shirt",
+        "costo": 30750,
+        "precio": 64900
+      },
+      {
+        "handle": "fraction-gymshark-oversized-training-shirt",
+        "costo": 29700,
+        "precio": 59900
+      },
+      {
+        "handle": "inquebrantable-camiseta-oversized-para-mujeres",
+        "costo": 36600,
+        "precio": 69900
+      },
+      {
+        "handle": "lifting-shark-oversized-training-shirt",
+        "costo": 32550,
+        "precio": 64900
+      },
+      {
+        "handle": "strength-graphic-oversized-training-shirt",
+        "costo": 33900,
+        "precio": 64900
+      },
+      {
+        "handle": "campus-oversized-training-shirt",
+        "costo": 32100,
+        "precio": 64900
+      },
+      {
+        "handle": "block-oversized-training-shirt",
+        "costo": 26250,
+        "precio": 59900
+      },
+      {
+        "handle": "simple-tee-oversized-training-shirt",
+        "costo": 26250,
+        "precio": 59900
+      },
+      {
+        "handle": "loyal-wolf-training-tank-top-1",
+        "costo": 36250,
+        "precio": 69900
+      },
+      {
+        "handle": "warwolf-darkstrike-training-tank-top-1",
+        "costo": 35250,
+        "precio": 69900
+      }
+    ]
+  }
 }

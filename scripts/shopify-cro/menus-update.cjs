@@ -24,6 +24,7 @@ const MAIN = [
   col('MUJER', '288421904474', { items: [
     col('EN TENDENCIA', '293251022938', { tags: ['Mujer'] }),
     col('CAMISETAS OVERSIZED', '288120569946', { tags: ['Mujer'] }),
+    col('TANKS', '295490125914'),
   ] }),
   col('LO ÚLTIMO', '287489228890', { items: [
     col('WARWOLF🐺', '295394705498'),
