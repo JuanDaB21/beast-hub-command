@@ -48,7 +48,16 @@
       ],
       "catalogo": "Anuncio 5 con catálogo (mismo post); N5, Banner y T3b ya lo tenían.",
       "campana": "BC | Black Week | Nov26 (ABO, fin 30-nov 23:59). Plan: scripts/meta-ads/black-week.plan.json; estado .out/state-black-week.plan.json. Creada en PAUSA: activar con OK del dueño cuando el tema esté publicado.",
-      "motivo": "CPM +50 % por el Black Friday (4,1k → 6,3–7,1k) con CTR estable ~3 % y CPA real ~16,5k: se recorta lo que no convierte en lugar de subir presupuesto."
+      "motivo": "CPM +50 % por el Black Friday (4,1k → 6,3–7,1k) con CTR estable ~3 % y CPA real ~16,5k: se recorta lo que no convierte en lugar de subir presupuesto.",
+      "calendario": {
+        "20-26 nov": "45k (Evergreen 15k, T3b 8k, BW Hombre 16k, BW Mujer 6k)",
+        "27-30 nov": "60k (Evergreen 12k, T3b 8k, BW Hombre 28k, BW Mujer 12k)",
+        "1-dic": "Evergreen 15k + T3b 8k"
+      },
+      "por_que": "Rendimientos decrecientes: de ~29k a ~44k/día el CPM subió (4,3k→6,2k) sin más compras. La subida se concentra en Black Friday + cierre + quincena del 30 (picos de pedidos los días 16 y 28).",
+      "destinos": "Packs → landing con ancla; BW5 y BWV3 («hasta 50 %») → /collections/descuentos; BW6 → portada. Comparar en la revisión del 23-nov.",
+      "videos": "1114 usado tal cual (BWV3). Chino 2 (44 s) solo orgánico; si retiene bien, pautar el mismo post.",
+      "tareas_programadas": "beast-bw-presupuesto-black-friday (27-nov 00:00, budgets.cjs bf) y beast-bw-cierre-1-dic (budgets post + revert MONSTER y buzo + sacar buzo de descuentos)."
     }
   },
   "demanda": {
@@ -375,7 +384,7 @@
       "base": "Buzo compresión - Negra",
       "precio_lista": 89900,
       "precio_black_week": 69900,
-      "nota": "Costo 48.500: a 69.900 deja ~8.600 tras comisión y nómina (a 59.900 perdía ~1.000). Solo L y XL.",
+      "nota": "Costo 48.500: a 69.900 deja ~8.600 tras comisión y nómina (a 59.900 perdía ~1.000). Solo L y XL. 20-nov: aplicado (69.900, tachado 89.900) y agregado de primero en /collections/descuentos; se revierte el 1-dic.",
       "precio_actual": 89900
     }
   ],

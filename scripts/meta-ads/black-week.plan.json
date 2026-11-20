@@ -33,14 +33,14 @@
       },
       {
         "key": "m",
-        "name": "BW | Mujer | 18-40 | Purchase",
+        "name": "BW | Mujer | 18-44 | Purchase",
         "daily_budget": 6000,
         "targeting_patch": {
           "genders": [
             2
           ],
           "age_min": 18,
-          "age_max": 40,
+          "age_max": 44,
           "age_range": null,
           "targeting_automation": {
             "advantage_audience": 0
@@ -106,9 +106,9 @@
       "catalog": true,
       "feed": "BW5_45.jpg",
       "vertical": "BW5_916.jpg",
-      "link": "https://beastclub.store/pages/black-week-beast",
-      "body": "Black Week Beast: packs desde $169.900 🖤\nEliges la talla de cada prenda, pagas al recibir y con la 4.ª el envío es gratis. Hasta el 30 de noviembre.",
-      "title": "Packs desde $169.900"
+      "link": "https://beastclub.store/collections/descuentos",
+      "body": "Black Week Beast: descuentos en camisetas, tanks y compresión 🖤 Y si vas por más, packs de 3 prendas desde $169.900.\nPagas al recibir. Hasta el 30 de noviembre.",
+      "title": "Black Week · Descuentos"
     },
     {
       "key": "BW6",
@@ -118,7 +118,7 @@
       "catalog": true,
       "feed": "BW6_45.jpg",
       "vertical": "BW6_916.jpg",
-      "link": "https://beastclub.store/pages/black-week-beast",
+      "link": "https://beastclub.store/",
       "body": "Arma tu pack de Black Week: 3 prendas desde $169.900 💪\nTodas las tallas · Pagas al recibir · Añade la 4.ª y el envío es gratis. Hasta el 30 de noviembre.",
       "title": "Black Week Beast · Packs"
     },
@@ -145,6 +145,17 @@
       "title": "Packs desde $169.900"
     },
     {
+      "key": "BWV3",
+      "name": "BWV3 — Video Black Friday hasta 50%",
+      "type": "video",
+      "test_adset": "h",
+      "catalog": true,
+      "video": "C:/Users/jefte/OneDrive/Documentos/BEAST CLUB/Meta Ads/Black week 2026/1114.mp4",
+      "link": "https://beastclub.store/collections/descuentos",
+      "body": "Black Friday en Beast Club 🔥 Descuentos en camisetas, tanks y compresión, y packs de 3 prendas desde $169.900.\nPagas al recibir. Hasta el 30 de noviembre.",
+      "title": "Black Friday · Descuentos"
+    },
+    {
       "key": "BWM1",
       "name": "BWM1 — Pack Mujer Gris 179.900",
       "type": "placement_image",
@@ -168,5 +179,64 @@
       "body": "Todo negro, todo combina: 2 oversized + 1 tank por $179.900 🔥 Cada prenda en tu talla y pagas al recibir.\nCon la 4.ª el envío es gratis. Hasta el 30 de noviembre.",
       "title": "Pack Mujer Negro · $179.900"
     }
-  ]
+  ],
+  "budget_phases": {
+    "base": [
+      {
+        "id": "120251830408650684",
+        "nombre": "Evergreen (CBO)",
+        "daily_budget": 15000
+      },
+      {
+        "id": "120254290548160684",
+        "nombre": "Test T3b",
+        "daily_budget": 8000
+      },
+      {
+        "id": "120254482691710684",
+        "nombre": "BW Hombre",
+        "daily_budget": 16000
+      },
+      {
+        "id": "120254482902180684",
+        "nombre": "BW Mujer",
+        "daily_budget": 6000
+      }
+    ],
+    "bf": [
+      {
+        "id": "120251830408650684",
+        "nombre": "Evergreen (CBO)",
+        "daily_budget": 12000
+      },
+      {
+        "id": "120254290548160684",
+        "nombre": "Test T3b",
+        "daily_budget": 8000
+      },
+      {
+        "id": "120254482691710684",
+        "nombre": "BW Hombre",
+        "daily_budget": 28000
+      },
+      {
+        "id": "120254482902180684",
+        "nombre": "BW Mujer",
+        "daily_budget": 12000
+      }
+    ],
+    "post": [
+      {
+        "id": "120251830408650684",
+        "nombre": "Evergreen (CBO)",
+        "daily_budget": 15000
+      },
+      {
+        "id": "120254290548160684",
+        "nombre": "Test T3b",
+        "daily_budget": 8000
+      }
+    ]
+  },
+  "_budget_doc": "Aprobado por el dueño el 20-nov: base 45k (20–26 nov), bf 60k (27–30 nov, Black Friday + cierre + quincena), post 1-dic (Black Week termina por end_time). Aplicar con budgets.cjs <fase> --apply."
 }
