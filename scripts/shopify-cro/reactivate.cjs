@@ -1,5 +1,6 @@
 // Reactiva colores agotados y crea variantes nuevas: Beast Hub (materia prima, estampados, producto, BOM,
 // procesos) + Shopify (variantes nuevas, SKU = SKU de Beast Hub, precio y "sin seguimiento").
+// Después: `collection-order.cjs --apply` para que lo reactivado no quede al final de las colecciones.
 // Config: reactivate.json. Idempotente: lo que ya existe (por nombre/SKU) no se duplica.
 // Uso: node scripts/shopify-cro/reactivate.cjs            dry-run: corre todo en una transacción y hace ROLLBACK;
 //                                                         Shopify no se toca. Imprime la tabla para revisión.

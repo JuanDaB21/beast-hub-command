@@ -5,6 +5,8 @@
 //   node scripts/shopify-cro/photos-run.cjs --sheet <tanda|handles>      hoja de contacto en .out/nightjar/sheet-<x>.jpg
 //   node scripts/shopify-cro/photos-run.cjs --upload <tanda|handles> [--apply]   sube a Shopify (sin --apply: solo plan)
 // Selección: nombre de tanda (p. ej. CP2) o handles separados por coma.
+// Rehacer una foto: subir `rev` en la entrada (producto Nightjar nuevo con refs/descripción nuevas), darle a la toma
+// una `key` nueva y `replaces: "<key vieja>"`; al subir con --apply las fotos de la toma vieja se desvinculan.
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -43,7 +45,8 @@ async function generateOne(state, p) {
   const assetIds = [];
   for (const r of p.refs) assetIds.push(await nj.assetFor(state, r.key, resolveSrc(r.src)));
   const garment = plan.garments?.[p.garment] ?? p.garment;
-  const productId = await nj.productFor(state, `${p.handle}|${p.color}`, {
+  // `rev` crea un producto Nightjar nuevo (con refs y descripción nuevas): el anterior queda cacheado por clave.
+  const productId = await nj.productFor(state, `${p.handle}|${p.color}${p.rev ? `|v${p.rev}` : ''}`, {
     name: `${p.handle} · ${p.color}`, description: `${garment}. Print: ${p.print}`, assetIds });
   for (const s of p.shots) {
     const key = `${p.handle}|${s.key}`;
@@ -129,16 +132,33 @@ async function upload(entries) {
       const gen = state.gens[`${handle}|${s.key}`];
       if (!gen?.outputs?.length) { console.log(`  ! ${handle}|${s.key} sin generar`); continue; }
       const views = viewsFor(s);
+      let first = true; // portada del color = primera salida no rechazada
       gen.outputs.forEach((o, i) => {
         if (!o.asset_id || (s.reject || []).includes(i)) return;
-        items.push({ key: `${handle}|${s.key}|${i}`, asset: o.asset_id, color: p.color, hero: i === 0,
+        items.push({ key: `${handle}|${s.key}|${i}`, asset: o.asset_id, color: p.color, hero: first,
           alt: `${prod.title} – ${p.color.replace(/\s+/g, ' ').trim()} – ${views[i] ?? 'detalle'}` });
+        first = false;
       });
     }
     const pending = items.filter((it) => !state.uploads[it.key]);
-    console.log(`\n${handle} (${prod.status}): ${items.length} fotos nuevas (${pending.length} por subir), ${prod.media.nodes.length} viejas`);
+    // Tomas reemplazadas (`replaces` en el plan): sus fotos ya subidas se desvinculan del producto.
+    const live = new Set(prod.media.nodes.map((n) => n.id));
+    const retire = list.flatMap((p) => p.shots.filter((s) => s.replaces).flatMap((s) =>
+      Object.entries(state.uploads).filter(([k, id]) => k.startsWith(`${handle}|${s.replaces}|`) && live.has(id)).map(([k, id]) => ({ key: k, id }))));
+    console.log(`\n${handle} (${prod.status}): ${items.length} fotos nuevas (${pending.length} por subir), ${prod.media.nodes.length} viejas, ${retire.length} a desvincular`);
     for (const it of items) console.log(`  ${state.uploads[it.key] ? '=' : '+'} ${it.alt}`);
+    for (const r of retire) console.log(`  - ${r.key}`);
     if (!apply) continue;
+
+    // Desvincular (el archivo queda en Contenido › Archivos; se revierte con referencesToAdd).
+    if (retire.length) {
+      const r = await gql(`mutation($f:[FileUpdateInput!]!){ fileUpdate(files:$f){ userErrors{ field message } } }`,
+        { f: retire.map((x) => ({ id: x.id, referencesToRemove: [prod.id] })) });
+      if (r.fileUpdate.userErrors.length) throw new Error(`${handle}: ${JSON.stringify(r.fileUpdate.userErrors)}`);
+      state.retired ??= {};
+      for (const x of retire) state.retired[x.key] = x.id;
+      nj.saveState(state);
+    }
 
     if (pending.length) {
       const media = [];

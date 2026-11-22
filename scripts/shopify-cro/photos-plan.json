@@ -948,9 +948,10 @@
       "handle": "street-tank-training-tank-top",
       "tanda": "C",
       "color": "Negro/ Estampado Gris",
+      "rev": 2,
       "model": "Theo",
       "garment": "oversizedTank",
-      "print": "front: 'youngla' in wide-spaced grey gothic lowercase letters across the chest, each letter ending in a long thin vertical drip line running down the torso, exactly as in the references; plain back",
+      "print": "solid deep JET-BLACK tank (true black, not charcoal, not faded or washed grey; the reference photos only look greyish because of the lighting). Front: 'youngla' in wide-spaced light-grey gothic lowercase letters across the chest, each letter ending in a long thin vertical drip line running down the torso, exactly as in the references; plain back",
       "refs": [
         {
           "key": "real:70",
@@ -963,9 +964,14 @@
       ],
       "shots": [
         {
-          "key": "shoot",
+          "key": "shoot-v2",
+          "replaces": "shoot",
           "mode": "photoshoot",
-          "extra": "Four frames of the same model and look: front view full body with the front print fully legible (hero); back view full body; three-quarter front view; close-up of the front print."
+          "colorway": {
+            "name": "jet black",
+            "hex": "#0D0D0D"
+          },
+          "extra": "Four frames of the same model and look: front view full body with the front print fully legible (hero); back view full body; three-quarter front view; close-up of the front print. The tank must read as pure black in every frame."
         }
       ]
     },
@@ -1137,22 +1143,33 @@
       "handle": "inquebrantable-training-shirt",
       "tanda": "C",
       "color": "Blanco / Letras Negras",
+      "rev": 2,
       "model": "Yusuf",
       "garment": "oversized200",
-      "print": "WHITE t-shirt. Back: large black gothic blackletter 'Inquebrantable' across the upper back, 'Hierro y Fuego' in black script below and a thin line of small capitals underneath, exactly as in the real photo",
+      "print": "WHITE t-shirt. Back: large very dark forest-green (almost black, about #1F2E26) gothic blackletter 'Inquebrantable' running HORIZONTALLY in a gentle arc across the upper back from shoulder to shoulder, reading left to right, never vertical, sideways or rotated; same layout as the black version of this shirt. Below it, centered, 'Hierro y Fuego' in the same dark green blackletter script, and under that a thin line of small dark green capitals 'DISCIPLINA • ENFOQUE • RESILIENCIA'. The first reference is the real white shirt (straightened); the second shows the correct horizontal layout on the black version",
       "refs": [
         {
-          "key": "real:7",
-          "src": "../../../Fotos Reales/33aebc12-d0de-47fa-b552-76fe268cc457.jpg"
+          "key": "real:7-recto",
+          "src": ".out/nightjar/refs/inquebrantable-blanco-recto.jpg"
+        },
+        {
+          "key": "shopify:inquebrantable-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC00129.webp"
         }
       ],
       "shots": [
         {
-          "key": "color-blanco",
+          "key": "color-blanco-v2",
+          "replaces": "color-blanco",
           "mode": "single",
-          "count": 1,
+          "count": 2,
+          "views": ["espalda", "espalda"],
           "camera_distance": "far",
-          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+          "extra": "Single frame: back view, full body, standing upright, the back print centered, flat, horizontal and fully legible.",
+          "colorway": {
+            "name": "white",
+            "hex": "#FFFFFF"
+          }
         }
       ]
     },
