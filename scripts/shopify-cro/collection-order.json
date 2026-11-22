@@ -7,7 +7,7 @@
     "nueva-coleccion-hombre": { "strategy": "newest", "ads": "Portada NEW DROP" },
     "nueva-coleccion-mujer": { "strategy": "newest" },
     "nove-coleccion": {
-      "strategy": "newest",
+      "_nota": "Landing de los anuncios N2/N4/N5: por ventas a propósito (por fecha el top 12 bajaba de 56 % a 9 % de ventas). Excluida del --apply del 2026-11-22.",
       "ads": "N2, N4, N5, menú LO ÚLTIMO",
       "pin": ["gymshark-necklace-training-shirt", "revenge-tee-training-shirt"]
     },
