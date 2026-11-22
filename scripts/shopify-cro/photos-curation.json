@@ -1,0 +1,2554 @@
+{
+  "gym-shark-training-shirt": {
+    "title": "GYMSHARK Training Shirt",
+    "colors": [
+      "Negro/ Letras Rojas",
+      "Negro/  Letras negras",
+      "Negro / Letras Verdes",
+      "Negro / Letras Azules"
+    ],
+    "sellable": [
+      "Negro/ Letras Rojas",
+      "Negro/  Letras negras",
+      "Negro / Letras Verdes",
+      "Negro / Letras Azules"
+    ],
+    "units90": {
+      "Negro/ Letras Rojas": 44,
+      "Negro/  Letras negras": 37,
+      "Negro / Letras Verdes": 0,
+      "Negro / Letras Azules": 0
+    },
+    "units730": {
+      "Negro/ Letras Rojas": 55,
+      "Negro/  Letras negras": 43,
+      "Negro / Letras Verdes": 0,
+      "Negro / Letras Azules": 0
+    },
+    "winner_auto": "Negro/ Letras Rojas",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609461149786": {
+        "isNew": true,
+        "color": "Negro/ Letras Rojas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75mrsxvydqnqbw723wppw0mn8jnk8f.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461182554": {
+        "isNew": true,
+        "color": "Negro/ Letras Rojas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd769bet1t72j610krhftg8cpx8jm9bp.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461215322": {
+        "isNew": true,
+        "color": "Negro/ Letras Rojas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd72ebz885hkq70ynbsxgn6azd8jnrek.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461248090": {
+        "isNew": true,
+        "color": "Negro/ Letras Rojas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd77kvhx809pwc3j12z39bq32x8jm989.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461346394": {
+        "isNew": true,
+        "color": "Negro/  Letras negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd793dkzyx672trz6bbjpz5y1s8jnz3r.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461280858": {
+        "isNew": true,
+        "color": "Negro / Letras Verdes",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd70th4kv6w1983n8kfxh3phbh8jnm5b.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461313626": {
+        "isNew": true,
+        "color": "Negro / Letras Azules",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd70bjbd8g98pwn1sqp774yxrn8jm31f.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "gymshark-cracked-training-shirt": {
+    "title": "\"GYMSHARK CRACKED\" Training Shirt",
+    "colors": [
+      "Negro/ Letras negras",
+      "Negro / Letras Azules",
+      "Negro/ Letras Rojas",
+      "Negro / Letras Verdes",
+      "Blanco / Letras Negras"
+    ],
+    "sellable": [
+      "Negro/ Letras negras",
+      "Negro / Letras Azules",
+      "Negro/ Letras Rojas",
+      "Negro / Letras Verdes",
+      "Blanco / Letras Negras"
+    ],
+    "units90": {
+      "Negro/ Letras negras": 0,
+      "Negro / Letras Azules": 0,
+      "Negro/ Letras Rojas": 0,
+      "Negro / Letras Verdes": 0,
+      "Blanco / Letras Negras": 0
+    },
+    "units730": {
+      "Negro/ Letras negras": 16,
+      "Negro / Letras Azules": 3,
+      "Negro/ Letras Rojas": 5,
+      "Negro / Letras Verdes": 3,
+      "Blanco / Letras Negras": 1
+    },
+    "winner_auto": "Negro/ Letras negras",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609461444698": {
+        "isNew": true,
+        "color": "Negro/ Letras negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd76xch2e000j8vk7br3xnx54n8jnnj0.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461477466": {
+        "isNew": true,
+        "color": "Negro/ Letras negras",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7b59sx92rtsf5ms3qg00gjqx8jnc9b.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461510234": {
+        "isNew": true,
+        "color": "Negro/ Letras negras",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7012sb9d6mffmaqzrcxae0vs8jm78g.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461543002": {
+        "isNew": true,
+        "color": "Negro/ Letras negras",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd72px9m72n4pjjnvqeggcrxk58jnhsy.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461608538": {
+        "isNew": true,
+        "color": "Negro / Letras Azules",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd74hp3snnncpf4ym86sgxy2ks8jnvz6.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461575770": {
+        "isNew": true,
+        "color": "Negro/ Letras Rojas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7am6yk8cq9vpk9pv3t0039858jmb0t.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461641306": {
+        "isNew": true,
+        "color": "Negro / Letras Verdes",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd778hkg17et697s5p3mdca14d8jmpx4.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609461674074": {
+        "isNew": true,
+        "color": "Blanco / Letras Negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd718gp5aqvkmw1m5asc9r4g2n8jnsng.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "chaos-tank-training-tank-top": {
+    "title": "CHAOS TANK Training Tank Top",
+    "colors": [
+      "Acid gris claro/ Letras Blancas",
+      "Acid Negro / Letras grises"
+    ],
+    "sellable": [
+      "Acid gris claro/ Letras Blancas",
+      "Acid Negro / Letras grises"
+    ],
+    "units90": {
+      "Acid gris claro/ Letras Blancas": 16,
+      "Acid Negro / Letras grises": 11
+    },
+    "units730": {
+      "Acid gris claro/ Letras Blancas": 32,
+      "Acid Negro / Letras grises": 28
+    },
+    "winner_auto": "Acid gris claro/ Letras Blancas",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609461968986": {
+        "isNew": true,
+        "color": "Acid gris claro/ Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ag39vy4mskcpkf9x3k3d1p18jnbzs.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462001754": {
+        "isNew": true,
+        "color": "Acid gris claro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd76432n6hxq1sc4w71dkmcnds8jm5zq.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462034522": {
+        "isNew": true,
+        "color": "Acid gris claro/ Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd755wbt0e6jj7fz6kcvwmwyhx8jmpf1.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462067290": {
+        "isNew": true,
+        "color": "Acid gris claro/ Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75qwf7g55tgkvnp5v955dpf58jms6q.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "essential-training-shirt": {
+    "title": "ESSENTIAL SHARK Training Shirt",
+    "colors": [
+      "Blanco/ Logo Negro",
+      "Negro / Logo Blanco",
+      "Jaspe / Letras Negras",
+      "Crema/ Letras Blancas"
+    ],
+    "sellable": [
+      "Blanco/ Logo Negro",
+      "Negro / Logo Blanco"
+    ],
+    "units90": {
+      "Blanco/ Logo Negro": 0,
+      "Negro / Logo Blanco": 0,
+      "Jaspe / Letras Negras": 0,
+      "Crema/ Letras Blancas": 0
+    },
+    "units730": {
+      "Blanco/ Logo Negro": 3,
+      "Negro / Logo Blanco": 7,
+      "Jaspe / Letras Negras": 8,
+      "Crema/ Letras Blancas": 2
+    },
+    "winner_auto": "Negro / Logo Blanco",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609462100058": {
+        "isNew": true,
+        "color": "Negro / Logo Blanco",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd78yayvbxgmw7w6sjkw8kqrhd8jnk1m.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462132826": {
+        "isNew": true,
+        "color": "Negro / Logo Blanco",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd76tr4eeqe3q5szj1rj1jf3ph8jnemq.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462165594": {
+        "isNew": true,
+        "color": "Negro / Logo Blanco",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd76prm37wag7vvc2cvtwskd4n8jmvq8.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462198362": {
+        "isNew": true,
+        "color": "Negro / Logo Blanco",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd700qw3ng1dfhe8tr5epw4vc98jna2g.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462231130": {
+        "isNew": true,
+        "color": "Blanco/ Logo Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd79fzy6jvz8c8a9baycvt51g58jmj9s.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/26354103877722": {
+        "isNew": false,
+        "color": "Jaspe / Letras Negras",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/EssentialOversizedT-Shirt-CharcoalGreyMarl-A1A3E-GBFH-1065_1920x_16507afe-0319-4294-8b59-348d1ebb817e.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26354104041562": {
+        "isNew": false,
+        "color": "Crema/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/EssentialShortSleeveT-ShirtGSPebbleGreyA1A3E-GB7P1027_1920x_d24bd974-723e-4af8-a570-f63822699e4c.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "slim-legacy-training-shirt": {
+    "title": "SLIM LEGACY Training Shirt",
+    "colors": [
+      "Negro/ Letra Negra",
+      "Negro/ Letra Roja",
+      "Blanco / Letra Negra"
+    ],
+    "sellable": [
+      "Negro/ Letra Negra",
+      "Negro/ Letra Roja",
+      "Blanco / Letra Negra"
+    ],
+    "units90": {
+      "Negro/ Letra Negra": 0,
+      "Negro/ Letra Roja": 0,
+      "Blanco / Letra Negra": 0
+    },
+    "units730": {
+      "Negro/ Letra Negra": 27,
+      "Negro/ Letra Roja": 16,
+      "Blanco / Letra Negra": 9
+    },
+    "winner_auto": "Negro/ Letra Negra",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609462558810": {
+        "isNew": true,
+        "color": "Negro/ Letra Negra",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7bjkam506pmwy5dd5t73e7b98jnd7t.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462591578": {
+        "isNew": true,
+        "color": "Negro/ Letra Negra",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ep6enjcf42cnht3hxxhhxnh8jmtqk.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462624346": {
+        "isNew": true,
+        "color": "Negro/ Letra Negra",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75whg93199158ya8b26c1a898jnzc2.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462657114": {
+        "isNew": true,
+        "color": "Negro/ Letra Negra",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd73v2msaggdpnrsad9wbrvx558jn3x1.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462689882": {
+        "isNew": true,
+        "color": "Negro/ Letra Roja",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd74tprqv0r0pmgrg307t7jnfd8jmrsx.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462722650": {
+        "isNew": true,
+        "color": "Blanco / Letra Negra",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7cqyq8vnk48dbp4g2nkx2ef58jn63v.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "spand-slim-training-shirt": {
+    "title": "SPAND SHARK Training Shirt",
+    "colors": [
+      "Blanco/ Logo Negro",
+      "Negro / Logo Blanco",
+      "Beige",
+      "Azul"
+    ],
+    "sellable": [
+      "Blanco/ Logo Negro",
+      "Negro / Logo Blanco"
+    ],
+    "units90": {
+      "Blanco/ Logo Negro": 0,
+      "Negro / Logo Blanco": 0,
+      "Beige": 0,
+      "Azul": 0
+    },
+    "units730": {
+      "Blanco/ Logo Negro": 14,
+      "Negro / Logo Blanco": 13,
+      "Beige": 0,
+      "Azul": 2
+    },
+    "winner_auto": "Blanco/ Logo Negro",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609462788186": {
+        "isNew": true,
+        "color": "Blanco/ Logo Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd78br2e8ejkn9ks966fmjmnjd8jnc8s.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462820954": {
+        "isNew": true,
+        "color": "Blanco/ Logo Negro",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7b7geqycz6ptr6336p9gkdvx8jmayv.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462853722": {
+        "isNew": true,
+        "color": "Blanco/ Logo Negro",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd74f6yvq51sreyhydx785wy9x8jngkh.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462886490": {
+        "isNew": true,
+        "color": "Blanco/ Logo Negro",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7127rv5gc7mrfh2g01sf98f58jmsec.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609462919258": {
+        "isNew": true,
+        "color": "Negro / Logo Blanco",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7bj3xq85e4qfq13qr5kvx1458jn6ae.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "gs-tank-training-tank-top": {
+    "title": "GS TANK Training Tank Top",
+    "colors": [
+      "Negro/ Letras rojas",
+      "Negro/ Letras negras",
+      "Verde/ letra verde",
+      "Arena/ Letras Blancas"
+    ],
+    "sellable": [
+      "Negro/ Letras rojas",
+      "Negro/ Letras negras",
+      "Arena/ Letras Blancas"
+    ],
+    "units90": {
+      "Negro/ Letras rojas": 12,
+      "Negro/ Letras negras": 13,
+      "Verde/ letra verde": 0,
+      "Arena/ Letras Blancas": 0
+    },
+    "units730": {
+      "Negro/ Letras rojas": 60,
+      "Negro/ Letras negras": 43,
+      "Verde/ letra verde": 8,
+      "Arena/ Letras Blancas": 14
+    },
+    "winner_auto": "Negro/ Letras negras",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609598283866": {
+        "isNew": true,
+        "color": "Negro/ Letras negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd77vq570e11gdxdpw9vgzd5ad8jqxbm.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609598316634": {
+        "isNew": true,
+        "color": "Negro/ Letras negras",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd710zf8jcbgd89zvffyrx49as8jpyy5.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609598349402": {
+        "isNew": true,
+        "color": "Negro/ Letras negras",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd73mak8qdbkrq1t3xkr40cmyd8jqf93.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609598382170": {
+        "isNew": true,
+        "color": "Negro/ Letras negras",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd78yr09xdhgte85v93yejpgf98jqakk.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609598414938": {
+        "isNew": true,
+        "color": "Negro/ Letras rojas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7edpeygm50dvy4w7a5jxz1d58jpcbx.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/26336008208474": {
+        "isNew": false,
+        "color": "Verde/ letra verde",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/A_PowerOriginalsCutOffTankGSStrengthGreenA2C9M-ECJH_1047_1920x_8caf0030-fa90-4607-88d5-5e53de9c4a43.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46609462984794": {
+        "isNew": true,
+        "color": "Arena/ Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7f8tpdxq6rqf9fqfg9s0n70n8jmfdr.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463017562": {
+        "isNew": true,
+        "color": "Arena/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd70re69eqn8hf9chpq4yvws5n8jm62z.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "heavy-duty-training-shirt": {
+    "title": "HEAVY DUTY Training Shirt",
+    "colors": [
+      "Negro/ Letras Crema",
+      "Blanco / Letras Negras"
+    ],
+    "sellable": [
+      "Negro/ Letras Crema",
+      "Blanco / Letras Negras"
+    ],
+    "units90": {
+      "Negro/ Letras Crema": 6,
+      "Blanco / Letras Negras": 6
+    },
+    "units730": {
+      "Negro/ Letras Crema": 14,
+      "Blanco / Letras Negras": 16
+    },
+    "winner_auto": "Negro/ Letras Crema",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609463312474": {
+        "isNew": true,
+        "color": "Negro/ Letras Crema",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7b9nbfq82awsgcgaj3mxds5s8jm3m0.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463345242": {
+        "isNew": true,
+        "color": "Negro/ Letras Crema",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7cfjdh6pmhc6xtykc5bq57zn8jm9r1.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463378010": {
+        "isNew": true,
+        "color": "Negro/ Letras Crema",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd718qjzhrz1z8sthtyy5f2d6x8jn0pb.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463410778": {
+        "isNew": true,
+        "color": "Negro/ Letras Crema",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7bea91r0tygej9nnabze2qq18jms48.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463443546": {
+        "isNew": true,
+        "color": "Blanco / Letras Negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd79432xgbc3kfdzaqyjbqwd0d8jmv69.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "runtech-tank-training-tank-top": {
+    "title": "RUNTECH TANK Training Tank Top",
+    "colors": [
+      "Negro/ Letras Blancas",
+      "Blanco / Letras Negras"
+    ],
+    "sellable": [
+      "Negro/ Letras Blancas",
+      "Blanco / Letras Negras"
+    ],
+    "units90": {
+      "Negro/ Letras Blancas": 7,
+      "Blanco / Letras Negras": 4
+    },
+    "units730": {
+      "Negro/ Letras Blancas": 35,
+      "Blanco / Letras Negras": 4
+    },
+    "winner_auto": "Negro/ Letras Blancas",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609463476314": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7aevxwdaghdmhqfftdypx3t58jn5ag.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463509082": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd769mmm5pbsrqpy1mhf9tyfs58jn27x.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463541850": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7f29y9w46srjvyxc2v1xsfrx8jmfbz.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463574618": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd70cx34aezwrayef8py6dem7n8jm0bw.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463607386": {
+        "isNew": true,
+        "color": "Blanco / Letras Negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd745vnenhddret7882k82gce18jnfvr.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "chaos-tee-training-shirt": {
+    "title": "CHAOS TEE Training Shirt",
+    "colors": [
+      "Blanco / Estampado Negro",
+      "Negro/ Estampado Gris",
+      "Gris / Estampado Crema"
+    ],
+    "sellable": [
+      "Blanco / Estampado Negro",
+      "Negro/ Estampado Gris"
+    ],
+    "units90": {
+      "Blanco / Estampado Negro": 15,
+      "Negro/ Estampado Gris": 11,
+      "Gris / Estampado Crema": 0
+    },
+    "units730": {
+      "Blanco / Estampado Negro": 32,
+      "Negro/ Estampado Gris": 53,
+      "Gris / Estampado Crema": 0
+    },
+    "winner_auto": "Blanco / Estampado Negro",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609463640154": {
+        "isNew": true,
+        "color": "Blanco / Estampado Negro",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd785v49gx87jt3rsgmktq6yz98jm29q.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463672922": {
+        "isNew": true,
+        "color": "Blanco / Estampado Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7bg81gk2pd9pfjye7f3m1v598jm3ga.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463705690": {
+        "isNew": true,
+        "color": "Blanco / Estampado Negro",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd747bz658p54fcpg4qcdwsb458jn0xh.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463738458": {
+        "isNew": true,
+        "color": "Blanco / Estampado Negro",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7412djv1nsw29b7524d2dqn98jnee5.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463771226": {
+        "isNew": true,
+        "color": "Negro/ Estampado Gris",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7b8mrwx82znmh7m42ws2f67d8jn7cd.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "basic-gs-tank-training-tank-top": {
+    "title": "BASIC GS TANK Training Tank Top",
+    "colors": [
+      "Blanco/ Logo Negro",
+      "Negro / Logo Blanco"
+    ],
+    "sellable": [
+      "Blanco/ Logo Negro",
+      "Negro / Logo Blanco"
+    ],
+    "units90": {
+      "Blanco/ Logo Negro": 12,
+      "Negro / Logo Blanco": 19
+    },
+    "units730": {
+      "Blanco/ Logo Negro": 22,
+      "Negro / Logo Blanco": 43
+    },
+    "winner_auto": "Negro / Logo Blanco",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609463869530": {
+        "isNew": true,
+        "color": "Negro / Logo Blanco",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7fr5ftea5n0p6zpv54gswzch8jmfed.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463902298": {
+        "isNew": true,
+        "color": "Negro / Logo Blanco",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7canz2m8hhdty3wg17hqgpex8jnk1z.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463935066": {
+        "isNew": true,
+        "color": "Negro / Logo Blanco",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7c5qgse99mmans53t97yfaq98jmws2.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609463967834": {
+        "isNew": true,
+        "color": "Negro / Logo Blanco",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7evqdztgx24zvsta9wq7h1kx8jnexw.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464000602": {
+        "isNew": true,
+        "color": "Blanco/ Logo Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd78c2erdav9083t39fwqj8fxs8jmdr9.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "huge-tank-training-tank-top": {
+    "title": "HUGE TANK Training Tank Top",
+    "colors": [
+      "Acid Negro/Letras Blancas",
+      "Acid Claro/ Letras Blancas",
+      "Blanco/ Letras Negras",
+      "Negro/ Letras Blancas"
+    ],
+    "sellable": [
+      "Acid Negro/Letras Blancas",
+      "Acid Claro/ Letras Blancas",
+      "Blanco/ Letras Negras",
+      "Negro/ Letras Blancas"
+    ],
+    "units90": {
+      "Acid Negro/Letras Blancas": 11,
+      "Acid Claro/ Letras Blancas": 4,
+      "Blanco/ Letras Negras": 1,
+      "Negro/ Letras Blancas": 4
+    },
+    "units730": {
+      "Acid Negro/Letras Blancas": 13,
+      "Acid Claro/ Letras Blancas": 11,
+      "Blanco/ Letras Negras": 4,
+      "Negro/ Letras Blancas": 4
+    },
+    "winner_auto": "Acid Negro/Letras Blancas",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609464131674": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7c8mycamceanm2009j47wy1h8jn1wk.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464164442": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd70csr6tej2rka6zt8d57xgxx8jngw4.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464197210": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75v3be3te8mzpwt56mfmwarh8jny7k.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464229978": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7dfs0nd08n0z3az7ytwjcz798jngfp.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464262746": {
+        "isNew": true,
+        "color": "Acid Claro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd74nzbdnp1as627bxpa1mmkxx8jnacc.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464295514": {
+        "isNew": true,
+        "color": "Blanco/ Letras Negras",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd77d9gtgzm8hhv8gwy63hafz58jm29s.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "cropped-tee-training-shirt": {
+    "title": "CROPPED TEE Training Shirt",
+    "colors": [
+      "Acid Negro/Letras Blancas"
+    ],
+    "sellable": [
+      "Acid Negro/Letras Blancas"
+    ],
+    "units90": {
+      "Acid Negro/Letras Blancas": 13
+    },
+    "units730": {
+      "Acid Negro/Letras Blancas": 15
+    },
+    "winner_auto": "Acid Negro/Letras Blancas",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609464361050": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75y3pcary2bpn0jt9y7nz4en8jm8mc.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464393818": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd70bp4nq09wgxbbfbfbvg9vsx8jmga5.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464426586": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd76081geaa7e3hq4r50dm2b958jn20k.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464459354": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd74cc2hhe3sq4a64n08drha3d8jnpe9.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "motor-youngla-training-tank-top": {
+    "title": "Motor Youngla Training Tank Top",
+    "colors": [
+      "Acid Negro / Estampado Motor"
+    ],
+    "sellable": [
+      "Acid Negro / Estampado Motor"
+    ],
+    "units90": {
+      "Acid Negro / Estampado Motor": 11
+    },
+    "units730": {
+      "Acid Negro / Estampado Motor": 18
+    },
+    "winner_auto": "Acid Negro / Estampado Motor",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609464492122": {
+        "isNew": true,
+        "color": "Acid Negro / Estampado Motor",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd74qqymn1v940a8enrw12s7bn8jma3t.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464524890": {
+        "isNew": true,
+        "color": "Acid Negro / Estampado Motor",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd79jsvn47fgf2x48twrecy0h18jma1f.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464557658": {
+        "isNew": true,
+        "color": "Acid Negro / Estampado Motor",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd788h6yffvygnt0am34k82nmx8jmmtj.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464590426": {
+        "isNew": true,
+        "color": "Acid Negro / Estampado Motor",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7d0ntp3ngwcd0haac17bs77s8jn4vg.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "shadow-toffer-training-shirt": {
+    "title": "SHADOW TOFFER Training Shirt",
+    "colors": [
+      "Acid Negro/Letras Blancas"
+    ],
+    "sellable": [
+      "Acid Negro/Letras Blancas"
+    ],
+    "units90": {
+      "Acid Negro/Letras Blancas": 8
+    },
+    "units730": {
+      "Acid Negro/Letras Blancas": 9
+    },
+    "winner_auto": "Acid Negro/Letras Blancas",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609464655962": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7esq710pxrrknyy5nnmn3hyn8jnv8x.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464688730": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7efvtg7t2ya57bfzp94m1ry98jng63.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464721498": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75y8jm415e16pkw46tm3wme58jnd4a.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609464754266": {
+        "isNew": true,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd72qhqddhrkm8nbb15f6ezhc18jmqzg.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "twin-badass-tank-training-tank-top": {
+    "title": "TWIN BADASS TANK Training Tank Top",
+    "colors": [
+      "Acid negro/ Letras grises",
+      "Acid gris claro / Letras blancas"
+    ],
+    "sellable": [
+      "Acid negro/ Letras grises",
+      "Acid gris claro / Letras blancas"
+    ],
+    "units90": {
+      "Acid negro/ Letras grises": 6,
+      "Acid gris claro / Letras blancas": 3
+    },
+    "units730": {
+      "Acid negro/ Letras grises": 37,
+      "Acid gris claro / Letras blancas": 17
+    },
+    "winner_auto": "Acid negro/ Letras grises",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609503387738": {
+        "isNew": true,
+        "color": "Acid negro/ Letras grises",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd76nss0ta84x9q6hkgbjg2a9d8jm8ze.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503420506": {
+        "isNew": true,
+        "color": "Acid negro/ Letras grises",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7dy3kr8nz9rky05n1cz02ars8jm7ez.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503453274": {
+        "isNew": true,
+        "color": "Acid negro/ Letras grises",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7232v3cyg74d4v5ed4ka50b18jn0az.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503486042": {
+        "isNew": true,
+        "color": "Acid negro/ Letras grises",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd70656ngq0fbhsk5k5bqjsrys8jmhkc.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503518810": {
+        "isNew": true,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd791qz11nqe94mzzjcmsgm6ph8jmedc.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "training-beast-training-shirt": {
+    "title": "TRAINING BEAST Training Shirt",
+    "colors": [
+      "Negro /Letras Blancas",
+      "Negro/ Letras negras",
+      "Negro/ Letras Rojas",
+      "Blanco / Letras Negras"
+    ],
+    "sellable": [
+      "Negro /Letras Blancas",
+      "Negro/ Letras negras",
+      "Negro/ Letras Rojas",
+      "Blanco / Letras Negras"
+    ],
+    "units90": {
+      "Negro /Letras Blancas": 4,
+      "Negro/ Letras negras": 6,
+      "Negro/ Letras Rojas": 1,
+      "Blanco / Letras Negras": 0
+    },
+    "units730": {
+      "Negro /Letras Blancas": 6,
+      "Negro/ Letras negras": 10,
+      "Negro/ Letras Rojas": 1,
+      "Blanco / Letras Negras": 0
+    },
+    "winner_auto": "Negro/ Letras negras",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609582489690": {
+        "isNew": true,
+        "color": "Negro/ Letras negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7fk85505dnjdy0ebx3deda018jpv40.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503551578": {
+        "isNew": true,
+        "color": "Negro /Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7emakp5c6vrhmjfkyhj3g1yn8jmt31.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503584346": {
+        "isNew": true,
+        "color": "Negro /Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7dyqkvmhc0m45k7c4epa1skx8jmax4.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503617114": {
+        "isNew": true,
+        "color": "Negro /Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ackt6cfpb98nmxw6qy04pa18jmwfn.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503649882": {
+        "isNew": true,
+        "color": "Negro /Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd76edx3e6b2f93r3344ttnvd58jngkm.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/27764997423194": {
+        "isNew": false,
+        "color": "Negro/ Letras Rojas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_gadz1cgadz1cgadz_2__9_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27764997390426": {
+        "isNew": false,
+        "color": "Blanco / Letras Negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_fmmhbdfmmhbdfmmh_1__8_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "street-tank-training-tank-top": {
+    "title": "STREET TANK Training Tank Top",
+    "colors": [
+      "Beige  / Letras Blancas",
+      "Negro/ Estampado Gris"
+    ],
+    "sellable": [
+      "Beige  / Letras Blancas",
+      "Negro/ Estampado Gris"
+    ],
+    "units90": {
+      "Beige  / Letras Blancas": 3,
+      "Negro/ Estampado Gris": 5
+    },
+    "units730": {
+      "Beige  / Letras Blancas": 17,
+      "Negro/ Estampado Gris": 14
+    },
+    "winner_auto": "Negro/ Estampado Gris",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609503682650": {
+        "isNew": true,
+        "color": "Negro/ Estampado Gris",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd73bhwe859qpvt8f3ffmtnc7s8jmw6f.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503715418": {
+        "isNew": true,
+        "color": "Negro/ Estampado Gris",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd73akqajyepwst7fc8f3t5gn58jnxnn.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503748186": {
+        "isNew": true,
+        "color": "Negro/ Estampado Gris",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7e60bp0f5ywrdd8yjfs6fhss8jnqye.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503780954": {
+        "isNew": true,
+        "color": "Negro/ Estampado Gris",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd71m8t37spjnrcr057v7p77gn8jn4ez.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503813722": {
+        "isNew": true,
+        "color": "Beige  / Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7bzk6x7tyxy5ja58as7fk00s8jm51m.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "revenge-tee-training-shirt": {
+    "title": "REVENGE TEE Training Shirt",
+    "colors": [
+      "Acid Negro/  Letras Grises",
+      "Acid gris oscuro/ Letras Blancas"
+    ],
+    "sellable": [
+      "Acid Negro/  Letras Grises",
+      "Acid gris oscuro/ Letras Blancas"
+    ],
+    "units90": {
+      "Acid Negro/  Letras Grises": 8,
+      "Acid gris oscuro/ Letras Blancas": 0
+    },
+    "units730": {
+      "Acid Negro/  Letras Grises": 22,
+      "Acid gris oscuro/ Letras Blancas": 0
+    },
+    "winner_auto": "Acid Negro/  Letras Grises",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609503846490": {
+        "isNew": true,
+        "color": "Acid Negro/  Letras Grises",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7e95j83gpmg7cs8a41bzm0ss8jnc2k.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503879258": {
+        "isNew": true,
+        "color": "Acid Negro/  Letras Grises",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7cfqgb33kkgxwhw6r5z1fr998jm8hr.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503912026": {
+        "isNew": true,
+        "color": "Acid Negro/  Letras Grises",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7618v4yg5yq597jzhc9teg8d8jngpv.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609503944794": {
+        "isNew": true,
+        "color": "Acid Negro/  Letras Grises",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd731zyncmfy6m57qx409z6p3x8jnph5.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "galaxy-tee-training-shirt": {
+    "title": "GALAXY TEE Training Shirt",
+    "colors": [
+      "Acid Negro/ Logo gris",
+      "Acid Rojo / Logo Crema"
+    ],
+    "sellable": [
+      "Acid Negro/ Logo gris"
+    ],
+    "units90": {
+      "Acid Negro/ Logo gris": 9,
+      "Acid Rojo / Logo Crema": 0
+    },
+    "units730": {
+      "Acid Negro/ Logo gris": 20,
+      "Acid Rojo / Logo Crema": 3
+    },
+    "winner_auto": "Acid Negro/ Logo gris",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609503977562": {
+        "isNew": true,
+        "color": "Acid Negro/ Logo gris",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7592whqg4bmf3xws2aygcahs8jmne7.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504010330": {
+        "isNew": true,
+        "color": "Acid Negro/ Logo gris",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd718a3zeem4wsvn2d5nttjf0n8jnxby.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504043098": {
+        "isNew": true,
+        "color": "Acid Negro/ Logo gris",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd73zqznbts5bkgf62c4zxv7f18jnfn8.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504075866": {
+        "isNew": true,
+        "color": "Acid Negro/ Logo gris",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd797aztdpfagw3epjjzrvh3zd8jm9m6.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/27120864100442": {
+        "isNew": false,
+        "color": "Acid Rojo / Logo Crema",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/4005_brown-wash_004_06_18_deek_ecomm.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "regular-tee-training-shirt": {
+    "title": "REGULAR TEE Training Shirt",
+    "colors": [
+      "Acid negro / Letras Blancas"
+    ],
+    "sellable": [
+      "Acid negro / Letras Blancas"
+    ],
+    "units90": {
+      "Acid negro / Letras Blancas": 4
+    },
+    "units730": {
+      "Acid negro / Letras Blancas": 8
+    },
+    "winner_auto": "Acid negro / Letras Blancas",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609504108634": {
+        "isNew": true,
+        "color": "Acid negro / Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7exhzt421n6e4ar7bpxf5tr18jm7vn.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504141402": {
+        "isNew": true,
+        "color": "Acid negro / Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7fmr344e1dn215jg8eqd1zmh8jn310.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504174170": {
+        "isNew": true,
+        "color": "Acid negro / Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd72cq6wbrwknmms7mjwjsv9d58jmyk4.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504206938": {
+        "isNew": true,
+        "color": "Acid negro / Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75f49c4p36v0rbmbbdpbk0cn8jmz71.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "dark-beast-training-shirt": {
+    "title": "DARK BEAST Training Shirt",
+    "colors": [
+      "Blanco / Letras Negras"
+    ],
+    "sellable": [
+      "Blanco / Letras Negras"
+    ],
+    "units90": {
+      "Blanco / Letras Negras": 2
+    },
+    "units730": {
+      "Blanco / Letras Negras": 5
+    },
+    "winner_auto": "Blanco / Letras Negras",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609504567386": {
+        "isNew": true,
+        "color": "Blanco / Letras Negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7fajqtsvekb6rts10ezb5gpx8jmn6e.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504600154": {
+        "isNew": true,
+        "color": "Blanco / Letras Negras",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd76x6s9wwaak39rk2765fe8wx8jm2wz.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504632922": {
+        "isNew": true,
+        "color": "Blanco / Letras Negras",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd714596dag4k2h18gew5bc8md8jngkj.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504665690": {
+        "isNew": true,
+        "color": "Blanco / Letras Negras",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7fbsksw6r729wdb9y93ceqhd8jm007.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "inquebrantable-training-shirt": {
+    "title": "INQUEBRANTABLE Training Shirt",
+    "colors": [
+      "Negro/ Letras Blancas",
+      "Blanco / Letras Negras"
+    ],
+    "sellable": [
+      "Negro/ Letras Blancas",
+      "Blanco / Letras Negras"
+    ],
+    "units90": {
+      "Negro/ Letras Blancas": 5,
+      "Blanco / Letras Negras": 0
+    },
+    "units730": {
+      "Negro/ Letras Blancas": 20,
+      "Blanco / Letras Negras": 3
+    },
+    "winner_auto": "Negro/ Letras Blancas",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609504698458": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7d02mn864d53qcnys4ztqt5s8jnggb.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504731226": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd78zbdzr6n8r75rrqvecwgxvn8jmkzs.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504763994": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7fhjdjzwy4hk2jjh9881bd658jn7cy.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504796762": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ax38af0r1sqfz7bjemkbsb18jn1ts.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504829530": {
+        "isNew": true,
+        "color": "Blanco / Letras Negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd78b7fz6rprrqt434nr95zdpd8jmbpa.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "green-barbell-training-shirt": {
+    "title": "GREEN BARBELL - Training shirt",
+    "colors": [
+      "Negro"
+    ],
+    "sellable": [
+      "Negro"
+    ],
+    "units90": {
+      "Negro": 1
+    },
+    "units730": {
+      "Negro": 1
+    },
+    "winner_auto": "Negro",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609504862298": {
+        "isNew": true,
+        "color": "Negro",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd737acg30ccpz036j1eeg0b5n8jmxrp.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504895066": {
+        "isNew": true,
+        "color": "Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7aecd2vrw1w2zvqsw8m4y6y58jneqa.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504927834": {
+        "isNew": true,
+        "color": "Negro",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd726bz3bmetb6wjx622q14v4s8jnpmz.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609504960602": {
+        "isNew": true,
+        "color": "Negro",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd78c55t4cqebyg62y8ze2tqm58jna7q.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "atlas-shark-training-shirt": {
+    "title": "Atlas Shark Training Shirt",
+    "colors": [
+      "Negro/ Letras Blancas"
+    ],
+    "sellable": [
+      "Negro/ Letras Blancas"
+    ],
+    "units90": {
+      "Negro/ Letras Blancas": 6
+    },
+    "units730": {
+      "Negro/ Letras Blancas": 28
+    },
+    "winner_auto": "Negro/ Letras Blancas",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609505026138": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ac6yfpvthq5kbbzcxthbtnx8jmnnw.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505058906": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ep20j27k1yg4ks3f5nq484x8jnxd8.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505091674": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7dzhqgefrjw9d7q5pf0me11x8jn9ea.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505124442": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7c6ag0bmdjefg2f18e2n45558jnwy7.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "bulking-season-training-shirt": {
+    "title": "BULKING SEASON Training Shirt",
+    "colors": [
+      "Negro/ Letras Blancas",
+      "Blanco / Letras Negras"
+    ],
+    "sellable": [
+      "Negro/ Letras Blancas",
+      "Blanco / Letras Negras"
+    ],
+    "units90": {
+      "Negro/ Letras Blancas": 5,
+      "Blanco / Letras Negras": 0
+    },
+    "units730": {
+      "Negro/ Letras Blancas": 17,
+      "Blanco / Letras Negras": 1
+    },
+    "winner_auto": "Negro/ Letras Blancas",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609505189978": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7d8pq1rd5q79fmfwrasd314h8jmeca.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505222746": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ec3bw736217s0heqnd3zmv58jneq4.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505255514": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75gg48tr9twpz36d3rtsjzhs8jnjr0.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505288282": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75ryyrc21ex1vyqvx9yf6k1h8jmwjq.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "lifting-shark-training-shirt": {
+    "title": "Lifting Shark Training Shirt",
+    "colors": [
+      "Negro/ Letras rojas"
+    ],
+    "sellable": [
+      "Negro/ Letras rojas"
+    ],
+    "units90": {
+      "Negro/ Letras rojas": 5
+    },
+    "units730": {
+      "Negro/ Letras rojas": 13
+    },
+    "winner_auto": "Negro/ Letras rojas",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609505321050": {
+        "isNew": true,
+        "color": "Negro/ Letras rojas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd797b3kdj6w0hm5x65bkeapn58jn5hk.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505353818": {
+        "isNew": true,
+        "color": "Negro/ Letras rojas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ehvn2gjrh2cvzmnq2wjg7bx8jnqfq.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505386586": {
+        "isNew": true,
+        "color": "Negro/ Letras rojas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7c45pt8r4vbvndt1hnesgx9s8jma53.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505419354": {
+        "isNew": true,
+        "color": "Negro/ Letras rojas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd74f2krjdemtqqegz2ch42n1s8jmn34.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "basic-gymshark-short": {
+    "title": "BASIC Gymshark Short",
+    "colors": [
+      "Negro/ Logo Blanco",
+      "Negro / Logo Negro"
+    ],
+    "sellable": [
+      "Negro/ Logo Blanco",
+      "Negro / Logo Negro"
+    ],
+    "units90": {
+      "Negro/ Logo Blanco": 18,
+      "Negro / Logo Negro": 1
+    },
+    "units730": {
+      "Negro/ Logo Blanco": 35,
+      "Negro / Logo Negro": 6
+    },
+    "winner_auto": "Negro/ Logo Blanco",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609505714266": {
+        "isNew": true,
+        "color": "Negro/ Logo Blanco",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd74vyf9cy4b2an2gd59e1cbd58jmx39.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505747034": {
+        "isNew": true,
+        "color": "Negro/ Logo Blanco",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd79r6jyzw9m6g5mneqrtca5ed8jnaaq.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505779802": {
+        "isNew": true,
+        "color": "Negro/ Logo Blanco",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7dx4cqyw8szvxyssdc9ejzk58jmx68.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505812570": {
+        "isNew": true,
+        "color": "Negro/ Logo Blanco",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd70z5qxrb4a0zw51h5fm32yv18jnqjv.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "monster-shrt-training-short": {
+    "title": "MONSTER SHRT Training Short",
+    "colors": [
+      "Negro/ Letras Blancas"
+    ],
+    "sellable": [
+      "Negro/ Letras Blancas"
+    ],
+    "units90": {
+      "Negro/ Letras Blancas": 2
+    },
+    "units730": {
+      "Negro/ Letras Blancas": 2
+    },
+    "winner_auto": "Negro/ Letras Blancas",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609505943642": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7aqwef5qeses8h3hfbgz4mm58jnrdz.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609505976410": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd75fgsv5ynh08h8xq84x9p8sx8jmk9h.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609506009178": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7cs16wkssxgk3yd8r6mmfg8x8jnsvj.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609506041946": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7fzc436qmf6fwk1eyy2eexsn8jm72y.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "legendary-training-shirt": {
+    "title": "LEGENDARY Training Shirt",
+    "colors": [
+      "Blanco / Estampado Negro",
+      "Negro/ Estampado Gris"
+    ],
+    "sellable": [
+      "Blanco / Estampado Negro",
+      "Negro/ Estampado Gris"
+    ],
+    "units90": {
+      "Blanco / Estampado Negro": 1,
+      "Negro/ Estampado Gris": 2
+    },
+    "units730": {
+      "Blanco / Estampado Negro": 20,
+      "Negro/ Estampado Gris": 7
+    },
+    "winner_auto": "Negro/ Estampado Gris",
+    "print_side": "espalda",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/46102766616666": {
+        "isNew": false,
+        "color": "Blanco / Estampado Negro",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46102766485594": {
+        "isNew": false,
+        "color": "Blanco / Estampado Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_3.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46102766518362": {
+        "isNew": false,
+        "color": "Blanco / Estampado Negro",
+        "view": "detalle",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_2.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46102766551130": {
+        "isNew": false,
+        "color": "Negro/ Estampado Gris",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_7.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46102766583898": {
+        "isNew": false,
+        "color": "Negro/ Estampado Gris",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_1.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      }
+    }
+  },
+  "inquebrantable-camiseta-oversized-para-mujeres": {
+    "title": "INQUEBRANTABLE Oversized training shirt",
+    "colors": [
+      "Negro / Letra Blanca",
+      "Blanco / Letras Negras"
+    ],
+    "sellable": [
+      "Negro / Letra Blanca",
+      "Blanco / Letras Negras"
+    ],
+    "units90": {
+      "Negro / Letra Blanca": 0,
+      "Blanco / Letras Negras": 1
+    },
+    "units730": {
+      "Negro / Letra Blanca": 2,
+      "Blanco / Letras Negras": 2
+    },
+    "winner_auto": "Negro / Letra Blanca",
+    "print_side": "espalda",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/26305752105050": {
+        "isNew": false,
+        "color": "Negro / Letra Blanca",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Mujer-1-espalda.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26305752039514": {
+        "isNew": false,
+        "color": "Negro / Letra Blanca",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Mujer-1-de-frente.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26305752137818": {
+        "isNew": false,
+        "color": "Negro / Letra Blanca",
+        "view": "otra",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/T-shirt-Inquebrantable.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "basic-tee-training-shirt": {
+    "title": "BASIC TEE Training Shirt",
+    "colors": [
+      "Vainilla / Letras Grises",
+      "Negro/ Letras Blancas",
+      "Blanco / Letras Negras"
+    ],
+    "sellable": [
+      "Vainilla / Letras Grises",
+      "Negro/ Letras Blancas",
+      "Blanco / Letras Negras"
+    ],
+    "units90": {
+      "Vainilla / Letras Grises": 0,
+      "Negro/ Letras Blancas": 5,
+      "Blanco / Letras Negras": 5
+    },
+    "units730": {
+      "Vainilla / Letras Grises": 5,
+      "Negro/ Letras Blancas": 17,
+      "Blanco / Letras Negras": 7
+    },
+    "winner_auto": "Negro/ Letras Blancas",
+    "print_side": "frente",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/46099092045914": {
+        "isNew": false,
+        "color": "Blanco / Letras Negras",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_24_1.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46099092013146": {
+        "isNew": false,
+        "color": "Blanco / Letras Negras",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_22_1.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46099091947610": {
+        "isNew": false,
+        "color": "Blanco / Letras Negras",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_23_1.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46099092078682": {
+        "isNew": false,
+        "color": "Vainilla / Letras Grises",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_18_1.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46099091980378": {
+        "isNew": false,
+        "color": "Negro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_20_1.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      }
+    }
+  },
+  "power-oversized-training-shirt": {
+    "title": "POWER Oversized training shirt",
+    "colors": [
+      "Negro / Letra Negro",
+      "Blanco / Letra Negra",
+      "Blanco /Letra Azul",
+      "Negro / Letras Rojas"
+    ],
+    "sellable": [
+      "Negro / Letra Negro",
+      "Blanco / Letra Negra",
+      "Blanco /Letra Azul",
+      "Negro / Letras Rojas"
+    ],
+    "units90": {
+      "Negro / Letra Negro": 6,
+      "Blanco / Letra Negra": 0,
+      "Blanco /Letra Azul": 1,
+      "Negro / Letras Rojas": 1
+    },
+    "units730": {
+      "Negro / Letra Negro": 25,
+      "Blanco / Letra Negra": 4,
+      "Blanco /Letra Azul": 5,
+      "Negro / Letras Rojas": 1
+    },
+    "winner_auto": "Negro / Letra Negro",
+    "print_side": "espalda",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/28045655539802": {
+        "isNew": false,
+        "color": null,
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Rosada_1.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26336212779098": {
+        "isNew": false,
+        "color": "Negro / Letra Negro",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GymsharkPowerOversizedT-ShirtGSBlackB4A7O-BB2J2_1920x_170c0cc6-2b0b-4f46-9fc7-229ef2851971.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26336212877402": {
+        "isNew": false,
+        "color": "Blanco /Letra Azul",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GymsharkPowerOversizedT-ShirtGSWhiteGSBarbellBlueB4A7O-WDJ8-1291-0199_1920x_f4783cc3-dd34-4317-8cf0-4b405503b97b.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26336212648026": {
+        "isNew": false,
+        "color": "Blanco / Letra Negra",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GSPOWEROVERSIZEDT-SHIRT-GSWhite-B4A7O-WB57-0909_1920x_07ce60f9-1b1c-40ae-97f7-f52a12bdefe8.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26336212680794": {
+        "isNew": false,
+        "color": "Blanco / Letra Negra",
+        "view": "detalle",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GSPOWEROVERSIZEDT-SHIRT-GSWhite-B4A7O-WB57-0912_1920x_2ea6e8b1-250a-4566-a178-7fa80061839e.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26336212746330": {
+        "isNew": false,
+        "color": "Negro / Letra Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GymsharkPowerOversizedT-ShirtGSBlackB4A7O-BB2J_1920x_56c8358b-f020-4362-b96e-0e8caf6ba583.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26336212811866": {
+        "isNew": false,
+        "color": "Negro / Letra Negro",
+        "view": "detalle",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GymsharkPowerOversizedT-ShirtGSBlackB4A7O-BB2J3_1920x_c467e4f3-c652-41a5-aa4a-58b88da4f07c.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26336212713562": {
+        "isNew": false,
+        "color": "Blanco / Letra Negra",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GSPOWEROVERSIZEDT-SHIRT-GSWhite-B4A7O-WB57-0921_1920x_e0d41d42-416b-4183-a8ba-d4c64ce21d79.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/28046885486682": {
+        "isNew": false,
+        "color": "Negro / Letras Rojas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Negro_Rojo_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "respect-the-codes-training-shirt": {
+    "title": "RESPECT THE CODES Training Shirt",
+    "colors": [
+      "Acid Negro/Letras Blancas",
+      "Acid gris oscuro/ Letras Blancas"
+    ],
+    "sellable": [
+      "Acid Negro/Letras Blancas",
+      "Acid gris oscuro/ Letras Blancas"
+    ],
+    "units90": {
+      "Acid Negro/Letras Blancas": 1,
+      "Acid gris oscuro/ Letras Blancas": 0
+    },
+    "units730": {
+      "Acid Negro/Letras Blancas": 1,
+      "Acid gris oscuro/ Letras Blancas": 0
+    },
+    "winner_auto": "Acid Negro/Letras Blancas",
+    "print_side": "espalda",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/26561915158618": {
+        "isNew": false,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC00162.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26561915191386": {
+        "isNew": false,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC00168.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/26561917845594": {
+        "isNew": false,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "otra",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC00170.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      }
+    }
+  },
+  "fitness-shark-short": {
+    "title": "FITNESS SHARK Short",
+    "colors": [
+      "Negro/ Letras Blancas",
+      "Negro/  Letras negras"
+    ],
+    "sellable": [
+      "Negro/ Letras Blancas",
+      "Negro/  Letras negras"
+    ],
+    "units90": {
+      "Negro/ Letras Blancas": 4,
+      "Negro/  Letras negras": 1
+    },
+    "units730": {
+      "Negro/ Letras Blancas": 6,
+      "Negro/  Letras negras": 2
+    },
+    "winner_auto": "Negro/ Letras Blancas",
+    "print_side": "frente",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/27280541679706": {
+        "isNew": false,
+        "color": "Negro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GraphicArrivalShortsGSBlackA1C4N-BB2J-0929_1920x_1a5faa2c-85bb-4a9e-b39d-dff3e360bf34.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27280541712474": {
+        "isNew": false,
+        "color": "Negro/  Letras negras",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GraphicArrivalShortsGSBlackA1C4N-BB2J-0934_1920x_2d2e0237-2bb7-4c37-af5a-a7d6d063b97b.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27280541745242": {
+        "isNew": false,
+        "color": "Negro/ Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GraphicArrivalShortsGSBlackA1C4N-BB2J-0936_1920x_dc0c5b0c-7ab1-4ee5-93af-d81a075d32d3.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "shadow-wolf-training-tank-top": {
+    "title": "SHADOW WOLF Training Tank Top",
+    "colors": [
+      "Acid gris claro / Letras blancas",
+      "Acid gris oscuro/ Letras Blancas"
+    ],
+    "sellable": [
+      "Acid gris claro / Letras blancas",
+      "Acid gris oscuro/ Letras Blancas"
+    ],
+    "units90": {
+      "Acid gris claro / Letras blancas": 0,
+      "Acid gris oscuro/ Letras Blancas": 0
+    },
+    "units730": {
+      "Acid gris claro / Letras blancas": 0,
+      "Acid gris oscuro/ Letras Blancas": 1
+    },
+    "winner_auto": "Acid gris oscuro/ Letras Blancas",
+    "print_side": "frente",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/27797635301466": {
+        "isNew": false,
+        "color": "Acid gris oscuro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03976_2_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27797635268698": {
+        "isNew": false,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03975_1_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27797635334234": {
+        "isNew": false,
+        "color": "Acid gris oscuro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03978_1__3_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27797635432538": {
+        "isNew": false,
+        "color": "Acid gris oscuro/ Letras Blancas",
+        "view": "detalle",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03982_3_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27797635399770": {
+        "isNew": false,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03980_5_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27797710307418": {
+        "isNew": false,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "detalle",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03981_2_11zon_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27797710340186": {
+        "isNew": false,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "detalle",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03984_4_11zon_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "loyal-wolf-training-tank-top-1": {
+    "title": "LOYAL WOLF Training Tank Fem",
+    "colors": [
+      "Acid Negro/Letras Blancas",
+      "Acid gris claro / Letras blancas"
+    ],
+    "sellable": [
+      "Acid Negro/Letras Blancas",
+      "Acid gris claro / Letras blancas"
+    ],
+    "units90": {
+      "Acid Negro/Letras Blancas": 0,
+      "Acid gris claro / Letras blancas": 1
+    },
+    "units730": {
+      "Acid Negro/Letras Blancas": 0,
+      "Acid gris claro / Letras blancas": 2
+    },
+    "winner_auto": "Acid gris claro / Letras blancas",
+    "print_side": "frente",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/27774500733018": {
+        "isNew": false,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03841_2_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27774500765786": {
+        "isNew": false,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03848_4_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27774509744218": {
+        "isNew": false,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03839_1_11zon_14_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27774509809754": {
+        "isNew": false,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "detalle",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03850_5_11zon_16_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27774509842522": {
+        "isNew": false,
+        "color": "Acid gris claro / Letras blancas",
+        "view": "detalle",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03851_6_11zon_17_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/27774509776986": {
+        "isNew": false,
+        "color": "Acid Negro/Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03843_3_11zon_15_11zon.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "gymshark-icon-compress-shirt": {
+    "title": "YOUNGLA SUPERMAN Compress Shirt",
+    "colors": [
+      "Negro",
+      "Rojo"
+    ],
+    "sellable": [
+      "Rojo"
+    ],
+    "units90": {
+      "Negro": 1,
+      "Rojo": 0
+    },
+    "units730": {
+      "Negro": 1,
+      "Rojo": 0
+    },
+    "winner_auto": "Rojo",
+    "print_side": "frente",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/45820105228378": {
+        "isNew": false,
+        "color": "Rojo",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male-_7.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/45820108210266": {
+        "isNew": false,
+        "color": "Rojo",
+        "view": "detalle",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male-_5__1.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/45820105195610": {
+        "isNew": false,
+        "color": "Rojo",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male-_6.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/45820105162842": {
+        "isNew": false,
+        "color": "Rojo",
+        "view": "otra",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male-_4.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/45820251734106": {
+        "isNew": false,
+        "color": "Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_cmxbxucmxbxucmxb.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "active-monster-training-shirt-copia": {
+    "title": "HEAVY MONSTER - Training shirt",
+    "colors": [
+      "Negro",
+      "Blanco"
+    ],
+    "sellable": [
+      "Negro",
+      "Blanco"
+    ],
+    "units90": {
+      "Negro": 1,
+      "Blanco": 0
+    },
+    "units730": {
+      "Negro": 1,
+      "Blanco": 0
+    },
+    "winner_auto": "Negro",
+    "print_side": "espalda",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/46185308160090": {
+        "isNew": false,
+        "color": "Blanco",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_4.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46191499870298": {
+        "isNew": false,
+        "color": "Negro",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/back_1_7342eb3e-9b3d-468b-9c8e-dd8c5f7f58ce.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46191499903066": {
+        "isNew": false,
+        "color": "Negro",
+        "view": "otra",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/parkinglot.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46185304817754": {
+        "isNew": false,
+        "color": "Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_3.webp",
+        "mime": "image/webp",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46185305210970": {
+        "isNew": false,
+        "color": "Negro",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_2.webp",
+        "mime": "image/webp",
+        "manual": true
+      }
+    }
+  },
+  "varsity-66-training-tank-top": {
+    "title": "VARSITY66 Training Tank Top",
+    "colors": [
+      "Negro/ Letras rojas",
+      "Blanco"
+    ],
+    "sellable": [
+      "Negro/ Letras rojas",
+      "Blanco"
+    ],
+    "units90": {
+      "Negro/ Letras rojas": 0,
+      "Blanco": 0
+    },
+    "units730": {
+      "Negro/ Letras rojas": 0,
+      "Blanco": 0
+    },
+    "winner_auto": "Negro/ Letras rojas",
+    "print_side": "espalda",
+    "in_plan": false,
+    "media": {
+      "gid://shopify/MediaImage/46521319915610": {
+        "isNew": false,
+        "color": "Negro/ Letras rojas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_afviwuafviwuafvi.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46521319948378": {
+        "isNew": false,
+        "color": "Negro/ Letras rojas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_g7vbccg7vbccg7vb.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      },
+      "gid://shopify/MediaImage/46521320603738": {
+        "isNew": false,
+        "color": "Blanco",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_b2e6dgb2e6dgb2e6.jpg",
+        "mime": "image/jpeg",
+        "manual": true
+      }
+    }
+  },
+  "gymthark-cbum-training-shirt": {
+    "title": "GMTHARK CBUM Training Shirt",
+    "colors": [
+      "Negro/ Letras Blancas"
+    ],
+    "sellable": [
+      "Negro/ Letras Blancas"
+    ],
+    "units90": {
+      "Negro/ Letras Blancas": 16
+    },
+    "units730": {
+      "Negro/ Letras Blancas": 30
+    },
+    "winner_auto": "Negro/ Letras Blancas",
+    "print_side": "espalda",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609598775386": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7bks2wct6frphxqscs8g6vwh8jq9ff.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609598808154": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ds4f8f9vp1agq6x9w703fb98jpynj.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609598840922": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7dzxcfedh7k316tz9s9nv8r18jp796.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609598873690": {
+        "isNew": true,
+        "color": "Negro/ Letras Blancas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd750t04h38mmaxj0trb8pj8hn8jpmkm.webp",
+        "mime": "image/webp"
+      }
+    }
+  },
+  "gymshark-necklace-training-shirt": {
+    "title": "GYMSHARK NECKLACE Training Shirt",
+    "colors": [
+      "Negro/ Letras Rojas"
+    ],
+    "sellable": [
+      "Negro/ Letras Rojas"
+    ],
+    "units90": {
+      "Negro/ Letras Rojas": 14
+    },
+    "units730": {
+      "Negro/ Letras Rojas": 14
+    },
+    "winner_auto": "Negro/ Letras Rojas",
+    "print_side": "frente",
+    "in_plan": true,
+    "media": {
+      "gid://shopify/MediaImage/46609598971994": {
+        "isNew": true,
+        "color": "Negro/ Letras Rojas",
+        "view": "frente",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd71yj8y3n22h8myc62jzr94498jp26f.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609599004762": {
+        "isNew": true,
+        "color": "Negro/ Letras Rojas",
+        "view": "espalda",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd76qff69a7cvnwxeysczspfsx8jp853.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609599037530": {
+        "isNew": true,
+        "color": "Negro/ Letras Rojas",
+        "view": "tres cuartos",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd77fg8r7mtn15jp6pvw87dg898jpepz.webp",
+        "mime": "image/webp"
+      },
+      "gid://shopify/MediaImage/46609599070298": {
+        "isNew": true,
+        "color": "Negro/ Letras Rojas",
+        "view": "detalle del estampado",
+        "url": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/pd7ac1v5gb70ya6r2sj8f75jwn8jp8g8.webp",
+        "mime": "image/webp"
+      }
+    }
+  }
+}

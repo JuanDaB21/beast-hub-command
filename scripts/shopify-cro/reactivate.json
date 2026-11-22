@@ -1,0 +1,100 @@
+{
+  "_doc": "Reactivación de colores agotados y variantes nuevas (2026-11-21). Lo usa reactivate.cjs. Precio = costo + margen_bruto, redondeado hacia arriba a .900. Costo = base + print_height_cm × printing_cost_per_meter/100 (+ procesos, hoy 0).",
+  "margen_bruto": 30000,
+  "new_raw_materials": [
+    {
+      "supplier": "Vega Penn",
+      "category": "Camisetas",
+      "subcategory": "Camiseta Slim",
+      "name": "Camiseta Slim",
+      "unit_price": 23000,
+      "sizes": ["S", "M", "L", "XL"],
+      "colors": [
+        { "label": "Negro costura negra", "color": "011-Negro" },
+        { "label": "Blanco costura blanca", "color": "001-Blanco" }
+      ]
+    }
+  ],
+  "new_designs": [
+    { "name": "GYMSHARK CRACKED", "hex": "#2b2b2b", "children": [
+      { "name": "GYMSHARK CRACKED LETRAS NEGRAS", "hex": "#2b2b2b" },
+      { "name": "GYMSHARK CRACKED LETRAS ROJAS", "hex": "#c62828" },
+      { "name": "GYMSHARK CRACKED LETRAS AZULES", "hex": "#1e88e5" },
+      { "name": "GYMSHARK CRACKED LETRAS VERDES", "hex": "#43a047" }
+    ] },
+    { "name": "GYMSHARK LEGACY", "hex": "#2b2b2b", "children": [
+      { "name": "GYMSHARK LEGACY LETRA NEGRA", "hex": "#2b2b2b" },
+      { "name": "GYMSHARK LEGACY LETRA ROJA", "hex": "#c62828" }
+    ] },
+    { "name": "Gymshark Training Letras Verdes", "hex": "#43a047" },
+    { "name": "Gymshark Training Letras Azules", "hex": "#1e88e5" }
+  ],
+  "products": [
+    {
+      "handle": "gymshark-cracked-training-shirt",
+      "bh_parent": { "sku": "gymshark-cracked-training-shirt", "name": "\"GYMSHARK CRACKED\" Training Shirt", "create": true },
+      "processes": [],
+      "print_height_cm": 12,
+      "colors": [
+        { "shopify": "Negro/ Letras negras", "base": "Camiseta Oversized 200 gr - 011-Negro", "base_color": "011-Negro", "design": "GYMSHARK CRACKED LETRAS NEGRAS" },
+        { "shopify": "Negro/ Letras Rojas", "base": "Camiseta Oversized 200 gr - 011-Negro", "base_color": "011-Negro", "design": "GYMSHARK CRACKED LETRAS ROJAS" },
+        { "shopify": "Negro / Letras Azules", "base": "Camiseta Oversized 200 gr - 011-Negro", "base_color": "011-Negro", "design": "GYMSHARK CRACKED LETRAS AZULES" },
+        { "shopify": "Negro / Letras Verdes", "base": "Camiseta Oversized 200 gr - 011-Negro", "base_color": "011-Negro", "design": "GYMSHARK CRACKED LETRAS VERDES" },
+        { "shopify": "Blanco / Letras Negras", "base": "Camiseta Oversized 200 gr - 001-Blanco", "base_color": "001-Blanco", "design": "GYMSHARK CRACKED LETRAS NEGRAS" }
+      ],
+      "activate_product": "after_photos"
+    },
+    {
+      "handle": "essential-training-shirt",
+      "bh_parent": { "sku": "essential-shark-training-shirt", "name": "\"ESSENTIAL SHARK\" Training Shirt", "create": true },
+      "processes": [],
+      "print_height_cm": 5,
+      "colors": [
+        { "shopify": "Negro / Logo Blanco", "base": "Camiseta Oversized 200 gr - 011-Negro", "base_color": "011-Negro", "design": "LOGO GYMSHARK BLANCO" },
+        { "shopify": "Blanco/ Logo Negro", "base": "Camiseta Oversized 200 gr - 001-Blanco", "base_color": "001-Blanco", "design": "LOGO GYMSHARK NEGRO" }
+      ]
+    },
+    {
+      "handle": "slim-legacy-training-shirt",
+      "bh_parent": { "sku": "slim-legacy-training-shirt", "name": "\"SLIM LEGACY\" Training Shirt", "create": true },
+      "processes": [],
+      "print_height_cm": 25,
+      "colors": [
+        { "shopify": "Negro/ Letra Negra", "base": "Camiseta Slim - Negro costura negra", "base_color": "Negro costura negra", "design": "GYMSHARK LEGACY LETRA NEGRA" },
+        { "shopify": "Negro/ Letra Roja", "base": "Camiseta Slim - Negro costura negra", "base_color": "Negro costura negra", "design": "GYMSHARK LEGACY LETRA ROJA" },
+        { "shopify": "Blanco / Letra Negra", "base": "Camiseta Slim - Blanco costura blanca", "base_color": "Blanco costura blanca", "design": "GYMSHARK LEGACY LETRA NEGRA" }
+      ]
+    },
+    {
+      "handle": "spand-slim-training-shirt",
+      "bh_parent": { "sku": "spand-shark-training-shirt", "name": "\"SPAND SHARK\" Training Shirt", "create": true },
+      "processes": [],
+      "print_height_cm": 5,
+      "colors": [
+        { "shopify": "Blanco/ Logo Negro", "base": "Camiseta Slim - Blanco costura blanca", "base_color": "Blanco costura blanca", "design": "LOGO GYMSHARK NEGRO" },
+        { "shopify": "Negro / Logo Blanco", "base": "Camiseta Slim - Negro costura negra", "base_color": "Negro costura negra", "design": "LOGO GYMSHARK BLANCO" }
+      ]
+    },
+    {
+      "handle": "gs-tank-training-tank-top",
+      "bh_parent": { "sku": "GS-TANK-training-tank-top" },
+      "processes": "copy_from_sibling",
+      "print_height_cm": 19,
+      "keep_price": true,
+      "colors": [
+        { "shopify": "Arena/ Letras Blancas", "base": "Camiseta C4 200 gr - 010-Vainilla", "base_color": "010-Vainilla", "design": "\"GS TANK\" letras blancas", "sizes_extra": { "2XL": "XXL" } }
+      ]
+    },
+    {
+      "handle": "gym-shark-training-shirt",
+      "bh_parent": { "sku": "gymshark-tshirttraining-men" },
+      "processes": "copy_from_sibling",
+      "print_height_cm": 12,
+      "keep_price": true,
+      "colors": [
+        { "shopify": "Negro/ Letras Verdes", "create_in_shopify": true, "base": "Camiseta Oversized 200 gr - 011-Negro", "base_color": "011-Negro", "design": "Gymshark Training Letras Verdes" },
+        { "shopify": "Negro/ Letras Azules", "create_in_shopify": true, "base": "Camiseta Oversized 200 gr - 011-Negro", "base_color": "011-Negro", "design": "Gymshark Training Letras Azules" }
+      ]
+    }
+  ]
+}

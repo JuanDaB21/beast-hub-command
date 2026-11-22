@@ -1,0 +1,1450 @@
+{
+  "_doc": "Plan de fotos de catálogo (estándar: estudio gris 4:5 en modelo musculoso). Lo usa photos-run.cjs. Cada producto: referencias (primero la más fiel: foto real > vector > Shopify), horma real de la base, estampado, modelo y tomas. Una toma 'photoshoot' cuesta 2 créditos y da 4 fotos; 'single' 1 crédito por imagen.",
+  "defaults": {
+    "photography_style_id": "sty_gjH1ypXYmnFrNWg0FIbS1Q_1",
+    "background": {
+      "type": "background",
+      "background_id": "bkg_GpVjx8j4PH0wB23ADHAO0Q_3"
+    },
+    "aspect_ratio": "4:5",
+    "resolution": "2k",
+    "output_format": "webp",
+    "directions": "Premium e-commerce catalog photo for a Colombian gym-wear brand. Seamless soft light-grey studio sweep, broad even soft light, subtle floor shadow. The model is a visibly muscular fitness athlete (gym bodybuilder build, not a slim fashion model): very broad shoulders and traps, big defined biceps and forearms filling the sleeves, thick chest, lean waist, confident relaxed expression. Hair must never cover the print. He wears {outfit}, no jewelry, no other logos. GARMENT: {garment}. PRINT: {print}. Reproduce the garment exactly as in the reference photos: same base color, same fabric texture, same print artwork, lettering, size and placement. Do not invent, remove, mirror or alter any logo, text or graphic. The garment fits exactly as described (do not make it tighter or looser). {extra} Only one garment in the scene, worn by the model: no clothing rack, no hanger, no second or floating garment. No props, no added text, no watermark.",
+    "outfit": "plain black training shorts and white sneakers"
+  },
+  "models": {
+    "Daniel": "mdl_Z9rJGcCgkDtolDQC2hsAGw_34",
+    "Malik": "mdl_Z9rJGcCgkDtolDQC2hsAGw_61",
+    "Diego": "mdl_Z9rJGcCgkDtolDQC2hsAGw_39",
+    "Yusuf": "mdl_Z9rJGcCgkDtolDQC2hsAGw_57",
+    "Hassan": "mdl_Z9rJGcCgkDtolDQC2hsAGw_28",
+    "Theo": "mdl_Z9rJGcCgkDtolDQC2hsAGw_40",
+    "Jefte": "mdl_rJfLkact2J1KphNGtDoz2Q_0"
+  },
+  "products": [
+    {
+      "handle": "gym-shark-training-shirt",
+      "tanda": "CP2",
+      "color": "Negro/ Letras Rojas",
+      "model": "Daniel",
+      "garment": "oversized200",
+      "print": "large red 'GYMSHARK' wordmark in bold condensed capitals arched across the upper back between the shoulder blades; small red shark-fin logo on the left chest",
+      "refs": [
+        {
+          "key": "real:gymshark-training-back",
+          "src": "../../../Fotos Reales/Gymshark Training/WhatsApp Image 2026-05-22 at 07.28.48.jpeg"
+        },
+        {
+          "key": "real:gymshark-training-front",
+          "src": "../../../Fotos Reales/Gymshark Training/WhatsApp Image 2026-05-22 at 07.28.47.jpeg"
+        },
+        {
+          "key": "shopify:gym-shark-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Both_reference_images_are_the_exact_same_shirt___one_is_the_front__the_other_is__24.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "gymshark-cracked-training-shirt",
+      "tanda": "CP2",
+      "color": "Negro/ Letras negras",
+      "model": "Malik",
+      "garment": "oversized200",
+      "print": "large 'GYMSHARK' wordmark in bold condensed capitals with a cracked, distressed texture, printed in charcoal-black tone-on-tone across the upper back; plain front",
+      "refs": [
+        {
+          "key": "shopify:gymshark-cracked-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_vma52mvma52mvma5.webp"
+        },
+        {
+          "key": "shopify:gymshark-cracked-training-shirt:1",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/front.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the cracked back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the cracked texture of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "chaos-tank-training-tank-top",
+      "tanda": "CP2",
+      "color": "Acid gris claro/ Letras Blancas",
+      "model": "Diego",
+      "garment": "light-grey acid-wash (mineral wash, mottled) heavyweight sleeveless tank top, oversized cut with deep wide armholes and raw cut edges, hem at hip level",
+      "print": "large white gothic spiky metal-style logo covering most of the back, exactly as in the reference; small white logo on the front chest",
+      "refs": [
+        {
+          "key": "shopify:chaos-tank-training-tank-top:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Back_1.webp"
+        },
+        {
+          "key": "shopify:chaos-tank-training-tank-top:1",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Front_7afe38b7-6f51-42c7-9620-2242809edaa8.webp"
+        },
+        {
+          "key": "shopify:chaos-tank-training-tank-top:2",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Detalle_1.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view showing the arm and the armhole cut; close-up of the acid-wash texture and the print."
+        }
+      ]
+    },
+    {
+      "handle": "gymshark-cracked-training-shirt",
+      "tanda": "A",
+      "color": "Negro/ Letras Rojas",
+      "model": "Malik",
+      "garment": "oversized200",
+      "print": "large 'GYMSHARK' wordmark in bold condensed capitals with a cracked, distressed texture, printed in red and gently arched across the upper back; plain front",
+      "refs": [
+        {
+          "key": "shopify:cracked:rojas",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Rojo2.webp"
+        },
+        {
+          "key": "shopify:gymshark-cracked-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_vma52mvma52mvma5.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-rojas",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "gymshark-cracked-training-shirt",
+      "tanda": "A",
+      "color": "Negro / Letras Azules",
+      "model": "Malik",
+      "garment": "oversized200",
+      "print": "large 'GYMSHARK' wordmark in bold condensed capitals with a cracked, distressed texture, printed in bright blue and gently arched across the upper back; plain front",
+      "refs": [
+        {
+          "key": "shopify:cracked:azules",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/azul.webp"
+        },
+        {
+          "key": "shopify:gymshark-cracked-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_vma52mvma52mvma5.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-azules",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "gymshark-cracked-training-shirt",
+      "tanda": "A",
+      "color": "Negro / Letras Verdes",
+      "model": "Malik",
+      "garment": "oversized200",
+      "print": "large 'GYMSHARK' wordmark in bold condensed capitals with a cracked, distressed texture, printed in bright green and gently arched across the upper back; plain front",
+      "refs": [
+        {
+          "key": "shopify:cracked:verdes",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/verde.webp"
+        },
+        {
+          "key": "shopify:gymshark-cracked-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_vma52mvma52mvma5.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-verdes",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "gymshark-cracked-training-shirt",
+      "tanda": "A",
+      "color": "Blanco / Letras Negras",
+      "model": "Malik",
+      "garment": "oversized200",
+      "print": "large black 'GYMSHARK' wordmark in bold condensed capitals with a cracked, distressed texture, gently arched across the upper back of a WHITE shirt; plain front",
+      "refs": [
+        {
+          "key": "shopify:cracked:blanco",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/blanconegro.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-blanco",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "essential-training-shirt",
+      "tanda": "A",
+      "color": "Negro / Logo Blanco",
+      "model": "Yusuf",
+      "garment": "oversized200",
+      "print": "only a small white shark-fin logo (about 5 cm) on the left chest; the back is completely plain",
+      "refs": [
+        {
+          "key": "shopify:essential:black",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/EssentialOversizedT-Shirt-Black-A1A3E-BBBB-1557_1920x_5a1ba726-1eeb-4c66-8d09-ec5e43106c6c.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the small chest logo visible (hero); back view full body; three-quarter front view; close-up of the chest logo and the fabric."
+        }
+      ]
+    },
+    {
+      "handle": "essential-training-shirt",
+      "tanda": "A",
+      "color": "Blanco/ Logo Negro",
+      "model": "Yusuf",
+      "garment": "oversized200",
+      "print": "only a small black shark-fin logo (about 5 cm) on the left chest of a WHITE shirt; the back is completely plain",
+      "refs": [
+        {
+          "key": "shopify:essential:white",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/EssentialOversizedT-ShirtWhite-White-A1A3E-WBBM-1544_1920x_5baf2f4e-9b56-4579-adbb-21afda50775a.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-blanco",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: front view, full body, arms relaxed, the chest print fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "slim-legacy-training-shirt",
+      "tanda": "A",
+      "color": "Negro/ Letra Negra",
+      "model": "Hassan",
+      "garment": "slim",
+      "print": "large circular emblem (about 25 cm) centered on the upper back: 'GYMSHARK' arched on top and 'FITNESS' below around an illustration of a flexing bodybuilder, printed tone-on-tone in charcoal grey on the black shirt; front plain",
+      "refs": [
+        {
+          "key": "shopify:legacy:black-back",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/LegacyT-Shirt-GSBlack-A5A3B-BB2J-0342_1920x_d8d98bbe-f3af-4f4e-9db6-d6ec7e1cb192.webp"
+        },
+        {
+          "key": "shopify:legacy:black-front",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/LegacyT-Shirt-GSBlack-A5A3B-BB2J-0328_1920x_45cfa0f3-048d-45cb-9137-afed48ad94de.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the circular back emblem centered and fully legible (hero); front view full body showing how tight the shirt fits the chest and arms; three-quarter back view; close-up of the back emblem."
+        }
+      ]
+    },
+    {
+      "handle": "slim-legacy-training-shirt",
+      "tanda": "A",
+      "color": "Negro/ Letra Roja",
+      "model": "Hassan",
+      "garment": "slim",
+      "print": "large circular emblem (about 25 cm) centered on the upper back: 'GYMSHARK' arched on top and 'FITNESS' below around an illustration of a flexing bodybuilder, printed in red on the black shirt; front plain",
+      "refs": [
+        {
+          "key": "shopify:legacy:red",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/LegacyT-ShirtGSBlack-GSConditioningRedA5A3B-BC1D-0415_1920x_c672baa7-4266-4dc4-96e6-4170e7373b7e.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-roja",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "slim-legacy-training-shirt",
+      "tanda": "A",
+      "color": "Blanco / Letra Negra",
+      "model": "Hassan",
+      "garment": "slim",
+      "print": "large circular emblem (about 25 cm) centered on the upper back: 'GYMSHARK' arched on top and 'FITNESS' below around an illustration of a flexing bodybuilder, printed in black on a WHITE shirt; front plain",
+      "refs": [
+        {
+          "key": "shopify:legacy:white",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/LegacyT-Shirt-GSWhite-A5A3B-WB57-0259_1920x_68540bab-5d26-4183-a8ab-ec38cb0eaacc.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-blanco",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "spand-slim-training-shirt",
+      "tanda": "A",
+      "color": "Blanco/ Logo Negro",
+      "model": "Theo",
+      "garment": "slim",
+      "print": "only a small black shark-fin logo (about 5 cm) on the left chest of a WHITE shirt; the back is completely plain",
+      "refs": [
+        {
+          "key": "shopify:spand:white",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/ArrivalT-Shirt-White-A2A1K-WBBM-0077_1920x_8ab88e3b-85e9-4117-bc19-ad0982d91cc5.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body showing how tight the shirt fits the chest and arms (hero); back view full body; three-quarter front view; close-up of the chest logo. Only one garment in the scene, worn by the model: no clothing rack, no hanger, no second shirt."
+        }
+      ]
+    },
+    {
+      "handle": "spand-slim-training-shirt",
+      "tanda": "A",
+      "color": "Negro / Logo Blanco",
+      "model": "Theo",
+      "garment": "slim",
+      "print": "only a small white shark-fin logo (about 5 cm) on the left chest of a BLACK shirt; the back is completely plain",
+      "refs": [
+        {
+          "key": "shopify:spand:black-front",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/images-A2A1K_BBBB_ArrivalT_Shirt_Black_0029_1920x_831e85be-704c-4488-ba37-8132024fb825.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-negro",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: front view, full body, arms relaxed, the chest print fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "gs-tank-training-tank-top",
+      "tanda": "A",
+      "color": "Arena/ Letras Blancas",
+      "model": "Jefte",
+      "garment": "c4tank",
+      "print": "large white 'GYMSHARK' wordmark in bold condensed capitals arched across the upper back of a warm vanilla-cream (sand) tank; small white shark-fin logo on the front chest",
+      "refs": [
+        {
+          "key": "shopify:gs-tank:oat",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/A_PowerOriginalsCutOffTankGSOatWhiteA2C9M-WC1V_1015_1920x_1c425bfb-7289-4990-bfb8-8614b5e2597e.webp"
+        },
+        {
+          "key": "real:gs-tank-flat-front",
+          "src": "../../../Fotos Reales/GS TANK MEN/WhatsApp Image 2026-07-01 at 15.16.09.jpeg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-arena",
+          "mode": "single",
+          "count": 2,
+          "camera_distance": "far",
+          "extra": "Two frames: (1) back view full body with the back wordmark centered and fully legible; (2) front view full body.",
+          "colorway": {
+            "name": "vanilla cream sand",
+            "hex": "#E6DCC6"
+          }
+        }
+      ]
+    },
+    {
+      "handle": "gym-shark-training-shirt",
+      "tanda": "A",
+      "color": "Negro/ Letras Verdes",
+      "model": "Daniel",
+      "garment": "oversized200",
+      "print": "large lime green 'GYMSHARK' wordmark in bold condensed capitals arched across the upper back between the shoulder blades; small lime green shark-fin logo on the left chest. Same artwork as the red version in the reference, only the ink color changes",
+      "refs": [
+        {
+          "key": "real:gymshark-training-back",
+          "src": "../../../Fotos Reales/Gymshark Training/WhatsApp Image 2026-05-22 at 07.28.48.jpeg"
+        },
+        {
+          "key": "real:gymshark-green",
+          "src": "../../../Fotos Reales/e38d78a3-21de-4c8a-94a7-91b5fc9c1629.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-verdes",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "gym-shark-training-shirt",
+      "tanda": "A",
+      "color": "Negro/ Letras Azules",
+      "model": "Daniel",
+      "garment": "oversized200",
+      "print": "large light sky blue 'GYMSHARK' wordmark in bold condensed capitals arched across the upper back between the shoulder blades; small light sky blue shark-fin logo on the left chest. Same artwork as the red version in the reference, only the ink color changes",
+      "refs": [
+        {
+          "key": "real:gymshark-training-back",
+          "src": "../../../Fotos Reales/Gymshark Training/WhatsApp Image 2026-05-22 at 07.28.48.jpeg"
+        },
+        {
+          "key": "real:gymshark-blue",
+          "src": "../../../Fotos Reales/cd88c59b-bfcb-496d-83a7-a7943b824228.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-azules",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "gym-shark-training-shirt",
+      "tanda": "B",
+      "color": "Negro/  Letras negras",
+      "model": "Daniel",
+      "garment": "oversized200",
+      "print": "large 'GYMSHARK' wordmark in bold condensed capitals arched across the upper back, printed tone-on-tone in dark charcoal grey on the black shirt; small dark-grey shark-fin logo on the left chest",
+      "refs": [
+        {
+          "key": "real:gymshark-training-back",
+          "src": "../../../Fotos Reales/Gymshark Training/WhatsApp Image 2026-05-22 at 07.28.48.jpeg"
+        },
+        {
+          "key": "shopify:gym-shark:dark",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Change_the_color_of_the_stamp_to_dark_grey.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-negras",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "heavy-duty-training-shirt",
+      "tanda": "B",
+      "color": "Negro/ Letras Crema",
+      "model": "Diego",
+      "garment": "oversized200",
+      "print": "large cream-colored back print covering most of the back: 'HEAVY DUTY' arched on top, a wireframe globe with a bold 'GYMSHARK' wordmark across it, 'LIFTING APPAREL' arched below; small cream shark-fin logo on the left chest",
+      "refs": [
+        {
+          "key": "shopify:heavy:black-back",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GFXHeavyDutyApparelEssentialOST-ShirtGSBlackA6A4P-BB2J-0781_1920x_d5aa6870-27dd-42d2-99ff-7c641cc0fd3c.webp"
+        },
+        {
+          "key": "shopify:heavy:black-detail",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GFXHeavyDutyApparelEssentialOST-ShirtGSBlackA6A4P-BB2J-0785_1920x_970377de-7b61-46b4-acd0-1219518d952e.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "heavy-duty-training-shirt",
+      "tanda": "B",
+      "color": "Blanco / Letras Negras",
+      "model": "Diego",
+      "garment": "oversized200",
+      "print": "large black back print covering most of the back of a WHITE shirt: 'HEAVY DUTY' arched on top, a wireframe globe with a bold 'GYMSHARK' wordmark across it, 'LIFTING APPAREL' arched below; small black shark-fin logo on the left chest",
+      "refs": [
+        {
+          "key": "shopify:heavy:white-back",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GFXHeavyDutyApparelEssentialOST-ShirtGSWhiteA6A4P-WB576028_1920x_8f50cc0e-9f87-4d8d-bca5-20daa09c1e2c.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-blanco",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "runtech-tank-training-tank-top",
+      "tanda": "B",
+      "color": "Negro/ Letras Blancas",
+      "model": "Yusuf",
+      "garment": "c4tank",
+      "print": "white 'YOUNGLA' text in wide-spaced capitals printed straight across the middle of the back (about 7 cm tall); on the front, a small white 'YL' monogram logo (about 4 cm) centered on the chest a few cm below the collar, as in the front reference photo",
+      "refs": [
+        {
+          "key": "shopify:runtech:black-back",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/05_07_24_Axel___Dorian_Gym0431.webp"
+        },
+        {
+          "key": "shopify:runtech:black-front",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/05_07_24_Axel___Dorian_Gym0448.webp"
+        },
+        {
+          "key": "local:runtech-front-logo",
+          "src": ".out/nightjar/refs/runtech-front-logo.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back text centered and legible (hero); front view full body with the small chest monogram visible; three-quarter front view showing the arm and the armhole cut; close-up of the front chest monogram."
+        }
+      ]
+    },
+    {
+      "handle": "runtech-tank-training-tank-top",
+      "tanda": "B",
+      "color": "Blanco / Letras Negras",
+      "model": "Yusuf",
+      "garment": "c4tank",
+      "print": "black 'YOUNGLA' text in wide-spaced capitals printed straight across the middle of the back of a WHITE tank (about 7 cm tall); on the front, a small black 'YL' monogram logo (about 4 cm) centered on the chest a few cm below the collar, as in the front reference photo",
+      "refs": [
+        {
+          "key": "shopify:runtech:black-back",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/05_07_24_Axel___Dorian_Gym0431.webp"
+        },
+        {
+          "key": "shopify:runtech:white",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/05_07_24_Axel___Dorian_Gym0698.webp"
+        },
+        {
+          "key": "local:runtech-front-logo",
+          "src": ".out/nightjar/refs/runtech-front-logo.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-blanco",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible.",
+          "colorway": {
+            "name": "white",
+            "hex": "#F5F5F2"
+          }
+        }
+      ]
+    },
+    {
+      "handle": "chaos-tee-training-shirt",
+      "tanda": "B",
+      "color": "Blanco / Estampado Negro",
+      "model": "Hassan",
+      "garment": "oversized200",
+      "print": "large black gothic spiky metal-style 'YOUNGLA' logo covering most of the back; small black 'YOUNGLA' text on the front chest",
+      "refs": [
+        {
+          "key": "real:chaos-tee-flat",
+          "src": "../../../Fotos Reales/Chaos Tee men/WhatsApp Image 2026-07-02 at 14.34.40.jpeg"
+        },
+        {
+          "key": "shopify:chaos-tee:white-back",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Both_reference_images_are_the_exact_same_shirt___one_is_the_front__the_other_is__19.webp"
+        },
+        {
+          "key": "shopify:chaos-tee:white-front",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Both_reference_images_are_the_exact_same_shirt___one_is_the_front__the_other_is__20.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back logo centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back logo."
+        }
+      ]
+    },
+    {
+      "handle": "chaos-tee-training-shirt",
+      "tanda": "B",
+      "color": "Negro/ Estampado Gris",
+      "model": "Hassan",
+      "garment": "oversized200",
+      "print": "large grey gothic spiky metal-style 'YOUNGLA' logo covering most of the back of a BLACK shirt; small grey 'YOUNGLA' text on the front chest",
+      "refs": [
+        {
+          "key": "shopify:chaos-tee:black-back",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Change_the_color_of_the_stamp_to_dark_gray.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-negro",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "basic-gs-tank-training-tank-top",
+      "tanda": "B",
+      "color": "Negro / Logo Blanco",
+      "model": "Theo",
+      "garment": "oversizedTank",
+      "print": "only a small WHITE shark-fin logo (about 3 cm) on the left chest (the reference shows it in red: it must be white); the back is completely plain",
+      "refs": [
+        {
+          "key": "shopify:basic-gs:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_2_1_3910f8d1-c5f7-41be-8470-d5f4de0c1189.jpg"
+        },
+        {
+          "key": "shopify:basic-gs:1",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_5_1_ec80228e-457f-4131-9f57-ef09307c18cb.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body (hero); back view full body; three-quarter front view showing the arm and the armhole cut; close-up of the chest logo."
+        }
+      ]
+    },
+    {
+      "handle": "basic-gs-tank-training-tank-top",
+      "tanda": "B",
+      "color": "Blanco/ Logo Negro",
+      "model": "Theo",
+      "garment": "oversizedTank",
+      "print": "only a small BLACK shark-fin logo (about 3 cm) on the left chest of a WHITE tank; the back is completely plain",
+      "refs": [
+        {
+          "key": "shopify:basic-gs:1",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_5_1_ec80228e-457f-4131-9f57-ef09307c18cb.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-blanco",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: front view, full body, arms relaxed, the chest print fully legible.",
+          "colorway": {
+            "name": "white",
+            "hex": "#F5F5F2"
+          }
+        }
+      ]
+    },
+    {
+      "handle": "huge-tank-training-tank-top",
+      "tanda": "B",
+      "color": "Acid Negro/Letras Blancas",
+      "model": "Malik",
+      "garment": "hugeTank",
+      "print": "large white collegiate arched 'YOUNGLA' wordmark across the chest on an acid-wash black (mottled charcoal) tank; plain back. The fit reference photo shows only the garment shape: ignore its color and print",
+      "refs": [
+        {
+          "key": "local:huge-fit-back",
+          "src": ".out/nightjar/refs/huge-fit-back.jpg"
+        },
+        {
+          "key": "shopify:huge:acid-negro-detail",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_14_1.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the chest wordmark fully legible (hero); back view full body; three-quarter front view showing the arm and the armhole cut; close-up of the wordmark and the acid-wash texture."
+        }
+      ]
+    },
+    {
+      "handle": "huge-tank-training-tank-top",
+      "tanda": "B",
+      "color": "Acid Claro/ Letras Blancas",
+      "model": "Malik",
+      "garment": "hugeTank",
+      "print": "large white collegiate arched 'YOUNGLA' wordmark across the chest, same artwork, size and placement as the reference; plain back. Same tank shape, length and armholes as the reference; only the fabric color changes to a light-grey acid wash (mottled marbled light grey)",
+      "refs": [
+        {
+          "key": "local:huge-hero-fit",
+          "src": ".out/nightjar/refs/huge-hero-fit.jpg"
+        },
+        {
+          "key": "local:huge-fit-back",
+          "src": ".out/nightjar/refs/huge-fit-back.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-acid-claro",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: front view, full body, arms relaxed, the chest print fully legible.",
+          "colorway": {
+            "name": "light grey acid wash",
+            "hex": "#A8A8A4"
+          }
+        }
+      ]
+    },
+    {
+      "handle": "huge-tank-training-tank-top",
+      "tanda": "B",
+      "color": "Blanco/ Letras Negras",
+      "model": "Malik",
+      "garment": "hugeTankPlain",
+      "print": "large BLACK collegiate arched 'YOUNGLA' wordmark across the chest, same artwork, size and placement as the reference but printed in black ink; plain back. Same tank shape, length and armholes as the reference; only the fabric color changes to plain white cotton (no acid wash)",
+      "refs": [
+        {
+          "key": "local:huge-hero-fit",
+          "src": ".out/nightjar/refs/huge-hero-fit.jpg"
+        },
+        {
+          "key": "local:huge-fit-back",
+          "src": ".out/nightjar/refs/huge-fit-back.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-blanco",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: front view, full body, arms relaxed, the chest print fully legible.",
+          "colorway": {
+            "name": "white",
+            "hex": "#F5F5F2"
+          }
+        }
+      ]
+    },
+    {
+      "handle": "cropped-tee-training-shirt",
+      "tanda": "B",
+      "color": "Acid Negro/Letras Blancas",
+      "model": "Jefte",
+      "garment": "croppedAcid",
+      "print": "small white 'YOUNGLA' wordmark in bold stencil-like capitals with a dripping-paint effect under the letters (about 8 cm wide), centered on the upper chest just below the collar, exactly as in the close-up reference photo; plain back. The acid-black flat-lay reference is only for the fabric color: ignore its logo",
+      "refs": [
+        {
+          "key": "real:cropped-detail",
+          "src": "../../../Fotos Reales/Cropped Tee/WhatsApp Image 2026-06-30 at 08.07.22.jpeg"
+        },
+        {
+          "key": "real:galaxy-flat",
+          "src": "../../../Fotos Reales/WhatsApp Image 2026-11-05 at 12.02.20 (3).jpeg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the chest wordmark legible and the raw scissor-cut hem visible just below the jogger waistband (hero); back view full body; three-quarter front view; close-up of the chest wordmark and the acid-wash texture."
+        }
+      ],
+      "outfit": "black tapered cotton joggers with cuffed ankles (no logos) and white sneakers"
+    },
+    {
+      "handle": "motor-youngla-training-tank-top",
+      "tanda": "B",
+      "color": "Acid Negro / Estampado Motor",
+      "model": "Daniel",
+      "garment": "oversizedTank",
+      "print": "large full-color front graphic exactly as in the references: chrome 'Youngla' script logo over a motorcycle V-twin engine with a skull and orange flames, small text below; on the back, a chrome 'Youngla' script with 'x Tery Tech' underneath. Acid-wash black (mottled charcoal) tank",
+      "refs": [
+        {
+          "key": "real:motor-front",
+          "src": "../../../Fotos Reales/Motor Youngla Tank/WhatsApp Image 2026-06-30 at 08.13.12.jpeg"
+        },
+        {
+          "key": "real:motor-back",
+          "src": "../../../Fotos Reales/Motor Youngla Tank/WhatsApp Image 2026-06-30 at 08.13.18.jpeg"
+        },
+        {
+          "key": "shopify:motor:detail",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Both_reference_images_are_the_exact_same_shirt___one_is_the_front__the_other_is_-_1.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the front graphic fully legible (hero); back view full body; three-quarter front view showing the arm and the armhole cut; close-up of the front graphic."
+        }
+      ]
+    },
+    {
+      "handle": "shadow-toffer-training-shirt",
+      "tanda": "C",
+      "color": "Acid Negro/Letras Blancas",
+      "model": "Diego",
+      "garment": "heavyweight acid-wash oversized cotton t-shirt (220 g) in washed black with strong light-grey marbled mottling exactly as in the real flat-lay reference, boxy fit with dropped shoulders and wide short sleeves reaching the elbow, hem at hip level",
+      "print": "white spiky gothic metal-style 'YOUNGLA' logo with sharp flared strokes (about 10 cm wide) centered on the upper chest just below the collar, exactly as in the references; plain back",
+      "refs": [
+        {
+          "key": "real:shadow-toffer-flat",
+          "src": "../../../Fotos Reales/WhatsApp Image 2026-10-14 at 10.46.49.jpeg"
+        },
+        {
+          "key": "shopify:shadow-toffer:detail",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_44.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the chest logo fully legible (hero); back view full body; three-quarter front view; close-up of the chest logo and the acid-wash marbling."
+        }
+      ]
+    },
+    {
+      "handle": "twin-badass-tank-training-tank-top",
+      "tanda": "C",
+      "color": "Acid negro/ Letras grises",
+      "model": "Yusuf",
+      "garment": "acidTank",
+      "print": "acid-wash black (mottled charcoal) tank. Front: huge distressed light-grey athletic block letters 'TEENTECH' across the whole chest with small 'YOUNGLA' spaced text below and a small emblem above, exactly as in the references; small emblem at the upper back",
+      "refs": [
+        {
+          "key": "shopify:twin-badass-tank-training-tank-top:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/3044_black_004_07_23_joe_ecomm.webp"
+        },
+        {
+          "key": "real:13",
+          "src": "../../../Fotos Reales/9dd58153-c8ec-4e4e-a5de-5cc3868e060d.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the front print fully legible (hero); back view full body; three-quarter front view; close-up of the front print."
+        }
+      ]
+    },
+    {
+      "handle": "twin-badass-tank-training-tank-top",
+      "tanda": "C",
+      "color": "Acid gris claro / Letras blancas",
+      "model": "Yusuf",
+      "garment": "acidTank",
+      "print": "light-grey acid-wash (mottled) tank. Front: huge distressed WHITE athletic block letters 'TEENTECH' across the whole chest with small 'YOUNGLA' spaced text below and a small emblem above, same artwork as the reference",
+      "refs": [
+        {
+          "key": "real:0",
+          "src": "../../../Fotos Reales/057f3349-9858-4604-ad6f-29b68f50512f.jpg"
+        },
+        {
+          "key": "shopify:twin-badass-tank-training-tank-top:2",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/3044_grey_016_07_23_joe_ecomm.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-gris-claro",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: front view, full body, arms relaxed, the front print fully legible.",
+          "colorway": {
+            "name": "light grey acid wash",
+            "hex": "#A8A8A4"
+          }
+        }
+      ]
+    },
+    {
+      "handle": "training-beast-training-shirt",
+      "tanda": "C",
+      "color": "Negro /Letras Blancas",
+      "model": "Hassan",
+      "garment": "oversized200",
+      "print": "back: large white bold collegiate 'BEAST CLUB' wordmark gently arched across the upper back; front: small white Beast Club logo on the left chest",
+      "refs": [
+        {
+          "key": "shopify:training-beast-training-shirt:1",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03866_1__5_11zon.webp"
+        },
+        {
+          "key": "shopify:training-beast-training-shirt:4",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC03862_4_11zon_2_11zon.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "street-tank-training-tank-top",
+      "tanda": "C",
+      "color": "Negro/ Estampado Gris",
+      "model": "Theo",
+      "garment": "oversizedTank",
+      "print": "front: 'youngla' in wide-spaced grey gothic lowercase letters across the chest, each letter ending in a long thin vertical drip line running down the torso, exactly as in the references; plain back",
+      "refs": [
+        {
+          "key": "real:70",
+          "src": "../../../Fotos Reales/db0d91db-f914-4137-b25f-ef7526c33896.jpg"
+        },
+        {
+          "key": "shopify:street-tank-training-tank-top:4",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/323A2001.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the front print fully legible (hero); back view full body; three-quarter front view; close-up of the front print."
+        }
+      ]
+    },
+    {
+      "handle": "street-tank-training-tank-top",
+      "tanda": "C",
+      "color": "Beige  / Letras Blancas",
+      "model": "Theo",
+      "garment": "oversizedTank",
+      "print": "sand-beige tank. Front: 'youngla' in wide-spaced WHITE gothic lowercase letters across the chest, each letter ending in a long thin vertical drip line, same artwork as the references; plain back",
+      "refs": [
+        {
+          "key": "real:4",
+          "src": "../../../Fotos Reales/2229f7dc-5f6c-4439-896e-89a104dd3088.jpg"
+        },
+        {
+          "key": "shopify:street-tank-training-tank-top:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/07_10_24_Fillers2984.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-beige",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: front view, full body, arms relaxed, the front print fully legible.",
+          "colorway": {
+            "name": "sand beige",
+            "hex": "#CDB89A"
+          }
+        }
+      ]
+    },
+    {
+      "handle": "revenge-tee-training-shirt",
+      "tanda": "C",
+      "color": "Acid Negro/  Letras Grises",
+      "model": "Malik",
+      "garment": "acidTee",
+      "print": "acid-wash black (mottled charcoal) t-shirt. Front: very large light-grey spiky gothic metal-style 'YOUNGLA' logo running vertically down the whole chest and torso, exactly as in the references",
+      "refs": [
+        {
+          "key": "shopify:revenge-tee-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/4156_2088_Radio_Tower_Shoot_2088_Radio_Tower_Shoot0586.webp"
+        },
+        {
+          "key": "shopify:revenge-tee-training-shirt:1",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC01954.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the front print fully legible (hero); back view full body; three-quarter front view; close-up of the front print."
+        }
+      ]
+    },
+    {
+      "handle": "galaxy-tee-training-shirt",
+      "tanda": "C",
+      "color": "Acid Negro/ Logo gris",
+      "model": "Daniel",
+      "garment": "acidTeeShort",
+      "print": "washed black acid t-shirt with strong light-grey marbled mottling. Front: small light-grey gothic blackletter 'youngla' logo with sharp flared strokes (about 8 cm wide) centered on the upper chest just below the collar, exactly as in the real photos; plain back",
+      "refs": [
+        {
+          "key": "real:galaxy-flat",
+          "src": "../../../Fotos Reales/WhatsApp Image 2026-11-05 at 12.02.20 (3).jpeg"
+        },
+        {
+          "key": "real:galaxy-logo",
+          "src": "../../../Fotos Reales/WhatsApp Image 2026-11-05 at 12.02.20.jpeg"
+        },
+        {
+          "key": "shopify:galaxy-tee-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/323A4681.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the front print fully legible (hero); back view full body; three-quarter front view; close-up of the front print."
+        }
+      ]
+    },
+    {
+      "handle": "regular-tee-training-shirt",
+      "tanda": "C",
+      "color": "Acid negro / Letras Blancas",
+      "model": "Diego",
+      "garment": "acidTee",
+      "print": "acid-wash black t-shirt. Back: white line-art print exactly as in the flat-lay reference: an arc of East-Asian characters around a small line-art emblem, 'ALWAYS IMPROVING' in spaced capitals below and two small lines of text under it; front: small white 'YOUNGLA' text on the left chest",
+      "refs": [
+        {
+          "key": "shopify:regular-tee-training-shirt:2",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DayinHeaven.webp"
+        },
+        {
+          "key": "shopify:regular-tee-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/IMG_0425.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "dark-beast-training-shirt",
+      "tanda": "C",
+      "color": "Blanco / Letras Negras",
+      "model": "Jefte",
+      "garment": "oversized200",
+      "print": "WHITE t-shirt. Back: large black distressed gothic 'beastclub' logo with long dripping spikes running down the back, exactly as in the references; front: small black Beast Club emblem centered on the chest",
+      "refs": [
+        {
+          "key": "real:22",
+          "src": "../../../Fotos Reales/Dark Beast BC Men/WhatsApp Image 2026-06-30 at 12.42.227.jpeg"
+        },
+        {
+          "key": "real:24",
+          "src": "../../../Fotos Reales/Dark Beast BC Men/WhatsApp Image 2026-06-30 at 12.43.6.jpeg"
+        },
+        {
+          "key": "shopify:dark-beast-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Both_reference_images_are_the_exact_same_shirt___one_is_the_front__the_other_is_-_4.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "inquebrantable-training-shirt",
+      "tanda": "C",
+      "color": "Negro/ Letras Blancas",
+      "model": "Yusuf",
+      "garment": "oversized200",
+      "print": "back: large white gothic blackletter 'Inquebrantable' across the upper back, 'Hierro y Fuego' in white script below it and a thin line of small capitals underneath; front: small white 'Hierro y Fuego' script on the chest",
+      "refs": [
+        {
+          "key": "shopify:inquebrantable-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC00129.webp"
+        },
+        {
+          "key": "shopify:inquebrantable-training-shirt:2",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/DSC00124_1_11zon.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "inquebrantable-training-shirt",
+      "tanda": "C",
+      "color": "Blanco / Letras Negras",
+      "model": "Yusuf",
+      "garment": "oversized200",
+      "print": "WHITE t-shirt. Back: large black gothic blackletter 'Inquebrantable' across the upper back, 'Hierro y Fuego' in black script below and a thin line of small capitals underneath, exactly as in the real photo",
+      "refs": [
+        {
+          "key": "real:7",
+          "src": "../../../Fotos Reales/33aebc12-d0de-47fa-b552-76fe268cc457.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-blanco",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "green-barbell-training-shirt",
+      "tanda": "D",
+      "color": "Negro",
+      "model": "Hassan",
+      "garment": "oversized200",
+      "print": "back: large print covering most of the back exactly as in the reference: distressed white weight plates and barbell collars framing a green claw logo, 'BARBELL' arched on top, '25 KGS' and '55 LBS' on the sides and 'STANDARD' arched below; plain front",
+      "refs": [
+        {
+          "key": "shopify:green-barbell-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/WhatsAppImage2026-11-02at09.46.32.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "atlas-shark-training-shirt",
+      "tanda": "D",
+      "color": "Negro/ Letras Blancas",
+      "model": "Theo",
+      "garment": "oversized200",
+      "print": "back: large white print of the titan Atlas kneeling and carrying a globe, 'GYMSHARK' arched above him and small lines of text below, exactly as in the references; front: small white shark-fin logo on the left chest",
+      "refs": [
+        {
+          "key": "shopify:atlas-shark-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GFXHeroLiftingRDET-ShirtGSBlackA2B7U-BB2J-0103-0300_1920x_fe2f1e2e-8366-4292-ac55-9c87635ed7ac.webp"
+        },
+        {
+          "key": "real:14",
+          "src": "../../../Fotos Reales/Atlas Shark/WhatsApp Image 2026-06-18 at 07.58.17.jpeg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "bulking-season-training-shirt",
+      "tanda": "D",
+      "color": "Negro/ Letras Blancas",
+      "model": "Malik",
+      "garment": "oversized200",
+      "print": "back: white 'BULKING' in bold arched capitals with 'SEASON' below and a small shark-fin logo; front: small white shark-fin logo on the left chest",
+      "refs": [
+        {
+          "key": "shopify:bulking-season-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GFXBulkingSeasonEssentialOSSST-ShirtGSBlackA7A3C-BB2J-0417_1920x_30eaf5a5-7c70-48ff-8031-fb4e414d4c72.webp"
+        },
+        {
+          "key": "shopify:bulking-season-training-shirt:1",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GFXBulkingSeasonEssentialOSSST-ShirtGSBlackA7A3C-BB2J-0411_1920x_91f1f784-a088-4cf1-abd7-2463843776aa.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "lifting-shark-training-shirt",
+      "tanda": "D",
+      "color": "Negro/ Letras rojas",
+      "model": "Daniel",
+      "garment": "oversized200",
+      "print": "back: large red print exactly as in the reference: gothic 'gymshark' arched on top, a bodybuilder lifting a barbell in the middle, 'lifting' and 'club' in red gothic letters below; front: small red shark-fin logo on the left chest",
+      "refs": [
+        {
+          "key": "shopify:lifting-shark-training-shirt:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GFXGymsharkLiftingClubGraphicTShirtGSBlack-GSConditioningRedA1C8B-BC1D-0339-0004_1920x_93b57d80-98ce-4e73-aac7-7c56feb17a4a.webp"
+        },
+        {
+          "key": "shopify:lifting-shark-training-shirt:1",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/GFXGymsharkLiftingClubGraphicTShirtGSBlack-GSConditioningRedA1C8B-BC1D-0342_1920x_f67b285d-baa4-4838-a347-09fd63dc3f21.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view looking over the shoulder; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "basic-gymshark-short",
+      "tanda": "E",
+      "color": "Negro/ Logo Blanco",
+      "model": "Diego",
+      "garment": "softShort",
+      "outfit": "a plain black fitted crew-neck t-shirt (no logos, tucked out) and white sneakers with white crew socks",
+      "print": "only a small white shark-fin logo (about 5 cm) on the lower front of the left leg; nothing else",
+      "refs": [
+        {
+          "key": "shopify:basic-gymshark-short:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Arrival7ShortsBlackA2A1L-BBBB-1828_A-Edit_1920x_509c0124-4d14-4dc4-aef1-a1f2b221578b.webp"
+        },
+        {
+          "key": "shopify:basic-gymshark-short:2",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Arrival7ShortsBlackA2A1L-BBBB-1279-Edit_1920x_23bd667f-f9a8-4d6d-92b2-00ad525dddc4.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body, the shorts and their print clearly visible (hero); back view full body; three-quarter side view walking; close-up of the shorts print from the waist to mid-thigh."
+        }
+      ]
+    },
+    {
+      "handle": "monster-shrt-training-short",
+      "tanda": "E",
+      "color": "Negro/ Letras Blancas",
+      "model": "Jefte",
+      "garment": "softShort",
+      "outfit": "a plain black fitted crew-neck t-shirt (no logos, tucked out) and white sneakers with white crew socks",
+      "print": "on the lower front of the left leg: white 'MONSTER' wordmark with 'ENERGY' below and a green claw logo under it (about 15 cm tall), exactly as in the reference; nothing else",
+      "refs": [
+        {
+          "key": "shopify:monster-shrt-training-short:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/WhatsAppImage2026-11-02at13.34.14.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body, the shorts and their print clearly visible (hero); back view full body; three-quarter side view walking; close-up of the shorts print from the waist to mid-thigh."
+        }
+      ]
+    },
+    {
+      "handle": "training-beast-training-shirt",
+      "tanda": "F",
+      "color": "Negro/ Letras negras",
+      "model": "Hassan",
+      "garment": "oversized200",
+      "print": "back: large bold collegiate 'BEAST CLUB' wordmark gently arched across the upper back, printed tone-on-tone in dark charcoal grey on the black shirt (subtle, as in the reference); front: small dark-grey Beast Club logo on the left chest. Same artwork, size and placement as the white-letter reference, only the ink color changes",
+      "refs": [
+        {
+          "key": "local:training-beast-hero",
+          "src": ".out/nightjar/training-beast-training-shirt/shoot-0.webp"
+        },
+        {
+          "key": "shopify:training-beast:dark",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/Gemini_Generated_Image_ws2cjmws2cjmws2c_2__10_11zon.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-negras",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "gs-tank-training-tank-top",
+      "tanda": "G",
+      "color": "Negro/ Letras negras",
+      "model": "Diego",
+      "garment": "oversizedTank",
+      "print": "black tank. Back: large 'GYMSHARK' wordmark in bold condensed capitals arched across the upper back, printed tone-on-tone in dark charcoal grey; front: small dark-grey shark-fin logo on the left chest",
+      "refs": [
+        {
+          "key": "shopify:gs-tank:negras",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/PowerOriginalsCutOffTankGSBlackA2C9M-BB2J_1004_1920x_2d71f5f0-13d9-4375-96fd-7fd95516f04c.webp"
+        },
+        {
+          "key": "real:gs-tank-flat-front",
+          "src": "../../../Fotos Reales/GS TANK MEN/WhatsApp Image 2026-07-01 at 15.16.09.jpeg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot-negras",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view showing the arm and the armhole cut; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "gs-tank-training-tank-top",
+      "tanda": "G",
+      "color": "Negro/ Letras rojas",
+      "model": "Diego",
+      "garment": "oversizedTank",
+      "print": "black tank. Back: large RED 'GYMSHARK' wordmark in bold condensed capitals arched across the upper back; front: small red shark-fin logo on the left chest, exactly as in the real photos",
+      "refs": [
+        {
+          "key": "real:gs-tank-back-red",
+          "src": "../../../Fotos Reales/GS TANK MEN/WhatsApp Image 2026-07-01 at 15.16.10.jpeg"
+        },
+        {
+          "key": "shopify:gs-tank:rojas",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/PowerOriginalsCutOffTankGSBlack-GSConditioningRedA2C9M-BC1D-0235-Edit_1920x_2d9fc957-0bec-47cd-9a53-ff9d2885ce6e.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "color-rojas",
+          "mode": "single",
+          "count": 1,
+          "camera_distance": "far",
+          "extra": "Single frame: back view, full body, the back print centered, flat and fully legible."
+        }
+      ]
+    },
+    {
+      "handle": "gymthark-cbum-training-shirt",
+      "tanda": "G",
+      "color": "Negro/ Letras Blancas",
+      "model": "Yusuf",
+      "garment": "oversized200",
+      "print": "back: large white 'GYMTHARK' wordmark in bold condensed capitals arched across the upper back; front: small white shark-fin logo on the left chest",
+      "refs": [
+        {
+          "key": "shopify:cbum:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_14_2.jpg"
+        },
+        {
+          "key": "shopify:cbum:2",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/nightjar_image_Professional_fashion_photography_for_a_premium_streetwear_e-commerce_brand._Male_12_1.jpg"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: back view full body with the back print centered and fully legible (hero); front view full body; three-quarter back view showing the arm and the armhole cut; close-up of the back print."
+        }
+      ]
+    },
+    {
+      "handle": "gymshark-necklace-training-shirt",
+      "tanda": "G",
+      "color": "Negro/ Letras Rojas",
+      "model": "Malik",
+      "garment": "oversized200",
+      "print": "front: large red gothic blackletter 'gymshark' with a distressed halftone fade, arched across the upper chest from shoulder to shoulder like a necklace, with small white 'GYMSHARK LIFTING CLUB' text on the chest below it, exactly as in the references; plain back",
+      "refs": [
+        {
+          "key": "shopify:necklace:0",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/1_0741e174-fc94-4379-af59-667359a98fe8.webp"
+        },
+        {
+          "key": "shopify:necklace:3",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/4_086d1c13-c147-4250-a5d4-6fc38bb880b0.webp"
+        },
+        {
+          "key": "shopify:necklace:4",
+          "src": "https://cdn.shopify.com/s/files/1/0635/2663/3562/files/5_ee2dca77-4bec-400c-b9ba-65c4f36f6323.webp"
+        }
+      ],
+      "shots": [
+        {
+          "key": "shoot",
+          "mode": "photoshoot",
+          "extra": "Four frames of the same model and look: front view full body with the front print fully legible (hero); back view full body; three-quarter front view; close-up of the front print."
+        }
+      ]
+    }
+  ],
+  "garments": {
+    "oversized200": "heavyweight cotton oversized t-shirt (200 g), boxy fit with dropped shoulders and wide short sleeves reaching the elbow, hem at hip level",
+    "slim": "fitted slim-fit cotton-stretch t-shirt that hugs the chest, shoulders and arms, short sleeves tight around the biceps, straight hem at the hip; the seams are stitched tone-on-tone in the same color as the fabric (no contrast piping)",
+    "c4tank": "sleeveless tank made from a 200 g regular-fit cotton t-shirt with the sleeves cut off just outside the shoulder seam (clean raw cut edges, moderately deep armholes), hem at hip level",
+    "oversizedTank": "sleeveless tank made from a 200 g oversized cotton t-shirt with the sleeves cut off (wide raw-cut armholes showing the sides of the torso), boxy cut, hem at hip level",
+    "hugeTank": "boxy sleeveless tank made from a heavyweight acid-wash oversized t-shirt with the sleeves removed at the dropped shoulder seam (wide raw-cut armholes), wide straight body, hem at hip level well below the waistband (NOT cropped), exactly like the fit reference photo of the man seen from the back",
+    "croppedAcid": "heavyweight acid-wash oversized cotton t-shirt (220 g) in washed black with strong light-grey marbled mottling (fabric color exactly like the acid-black reference flat-lay photo), boxy with dropped shoulders and wide short sleeves; the body is shortened so the hem ends about 5 cm below the waistband of the joggers (slightly cropped, not a crop top), with a raw scissor-cut bottom edge (unfinished, no stitched hem, slightly uneven)",
+    "hugeTankPlain": "boxy sleeveless tank made from a heavyweight 200 g cotton oversized t-shirt with the sleeves removed at the dropped shoulder seam (wide raw-cut armholes), wide straight body, hem at hip level well below the waistband (NOT cropped), exactly like the fit reference photo of the man seen from the back",
+    "acidTee": "heavyweight acid-wash oversized cotton t-shirt (220 g), boxy fit with dropped shoulders and wide short sleeves reaching the elbow, hem at hip level",
+    "acidTeeShort": "heavyweight acid-wash oversized cotton t-shirt (220 g), boxy fit with dropped shoulders and wide short sleeves, body slightly shortened so the clean hem sits at the top of the hips",
+    "acidTank": "heavyweight acid-wash oversized sleeveless tank with the sleeves removed at the dropped shoulder seam (wide raw-cut armholes), boxy and wide, hem at hip level",
+    "softShort": "black lightweight soft-touch training shorts with an elastic waistband and drawcord, side pockets, mid-thigh length (about 7-inch inseam), relaxed athletic fit"
+  }
+}

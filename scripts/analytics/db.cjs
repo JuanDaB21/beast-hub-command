@@ -21,4 +21,4 @@ async function readOnly(fn) {
   }
 }
 
-module.exports = { readOnly };
+module.exports = { readOnly, dbUrl };
