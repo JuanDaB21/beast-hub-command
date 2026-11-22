@@ -1,10 +1,13 @@
-// Sube archivos locales a un tema NO publicado. Se niega a escribir sobre el tema MAIN.
-// Uso: node scripts/shopify-cro/theme-push.cjs <themeId numérico> <archivo relativo>... [--dir carpeta]
+// Sube archivos locales a un tema NO publicado. Se niega a escribir sobre el tema MAIN salvo con --allow-main,
+// que solo se usa con OK explícito del dueño para ESOS archivos.
+// Uso: node scripts/shopify-cro/theme-push.cjs <themeId numérico> <archivo relativo>... [--dir carpeta] [--allow-main]
 const fs = require('fs');
 const path = require('path');
 const { gql, ROOT } = require('./shopifyCro.cjs');
 
 const args = process.argv.slice(2);
+const mainFlag = args.indexOf('--allow-main');
+const ALLOW_MAIN = mainFlag >= 0 && args.splice(mainFlag, 1).length > 0;
 const dirFlag = args.indexOf('--dir');
 const dir = path.resolve(dirFlag >= 0 ? args.splice(dirFlag, 2)[1] : path.join(ROOT, '..', 'beastclub-theme'));
 const [themeNum, ...files] = args;
@@ -14,7 +17,7 @@ const themeId = `gid://shopify/OnlineStoreTheme/${themeNum}`;
 (async () => {
   const { theme } = await gql(`query($id: ID!) { theme(id: $id) { name role } }`, { id: themeId });
   if (!theme) throw new Error(`Tema ${themeNum} no existe`);
-  if (theme.role === 'MAIN') throw new Error('Bloqueado: no se escribe sobre el tema publicado (MAIN).');
+  if (theme.role === 'MAIN' && !ALLOW_MAIN) throw new Error('Bloqueado: no se escribe sobre el tema publicado (MAIN). Solo con OK del dueño: --allow-main.');
 
   const payload = files.map((f) => ({
     filename: f.replace(/\\/g, '/'),
